@@ -62,12 +62,11 @@ if (isVJudge) testcases = [];
     <% } %>
     <% if (!contest) { %>
         <div class="row" style="margin-top: -23px">
-          <% if (!(problem.is_anonymous && !problem.allowedManage)) { %>
+          <% if (problem.allowedManage || !problem.is_anonymous) { %>
             <span class="ui label">上传者：
               <a href="<%= syzoj.utils.makeUrl(['user', problem.user_id]) %>"><%= problem.user.username %></a>
             </span>
           <% } %>
-
           <% if (problem.allowedManage) { %>
             <span class="ui label">公开者：
               <% if (problem.publicizer) { %>
