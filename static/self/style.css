@@ -81,6 +81,7 @@ th {
 pre {
     tab-size: 4;
     overflow: auto;
+    position: relative;
 }
 
 img {
@@ -311,4 +312,33 @@ code {
 .ui.selection.dropdown .menu>.item {
   padding-left: 0.8rem !important;
   padding-right: 0 !important;
+}
+
+/* --theme-button-foreground: rgba(0, 0, 0, .6);
+  --theme-button-background: #E0E1E2; */
+
+/* copy-button.css */
+
+.code-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-top: 1em;
+}
+
+.copy-button {
+  position: absolute;
+  top: -35px;
+  right: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.copy-button:hover {
+  background: #e0e0e0;
 }
