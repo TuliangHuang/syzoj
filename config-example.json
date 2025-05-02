@@ -1,5 +1,5 @@
 {
-  "title": "SYZOJ",
+  "title": "Nekko",
   "hostname": "127.0.0.1",
   "port": "5283",
   "db": {
@@ -11,9 +11,9 @@
     "cache_size": 1000
   },
   "logo": {
-    "url": null,
+    "url": "/mygo.png",
     "width": null,
-    "height": null
+    "height": 36
   },
   "register_mail": false,
   "email": {
@@ -27,8 +27,8 @@
   "upload_dir": "uploads",
   "default": {
     "problem": {
-      "time_limit": 1000,
-      "memory_limit": 256
+      "time_limit": 2000,
+      "memory_limit": 512
     },
     "user": {
       "show": true,
