@@ -319,16 +319,13 @@ code {
 
 /* copy-button.css */
 
-.code-wrapper {
-  position: relative;
-  display: inline-block;
-  margin-top: 1em;
-}
+/* .code-wrapper {
+} */
 
 .copy-button {
   position: absolute;
-  top: -35px;
-  right: 0;
+  bottom: 5px;
+  right: 4px;
   padding: 4px 8px;
   font-size: 12px;
   background: #f5f5f5;

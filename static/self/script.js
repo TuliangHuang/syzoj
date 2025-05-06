@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
   codeBlocks.forEach((block) => {
     // 创建包装器
     const wrapper = document.createElement('div');
-    wrapper.className = 'code-block-wrapper';
+    wrapper.className = 'code-wrapper';
 
     // 克隆代码块并添加到包装器中
     const clonedBlock = block.cloneNode(true);
