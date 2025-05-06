@@ -217,6 +217,24 @@ module.exports = {
         res.spj = !!config.specialJudge;
       }
 
+      // 提取 fmt_lang 文件中的语言标识
+      const fmts = [];
+      for (const file of list) {
+        if (file.startsWith('fmt_')) {
+          const parsed = path.parse(file);
+          const match = parsed.name.match(/^fmt_(\w+)$/);
+          if (match) {
+            const lang = match[1];
+            if (!fmts.includes(lang)) {
+              fmts.push(lang);
+            }
+          }
+        }
+      }
+
+      // 在返回结果中添加 fmts 属性
+      res.fmts = fmts;
+
       return res;
     } catch (e) {
       console.log(e);
