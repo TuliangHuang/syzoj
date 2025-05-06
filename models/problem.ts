@@ -273,6 +273,24 @@ export default class Problem extends Model {
     }
   }
 
+  async getFormatCode(lang) {
+    if (typeof lang !== 'string') return null;
+
+    try {
+      let dir = this.getTestdataPath();
+      const files = await fs.readdir(dir);
+      const targetFile = files.find(file => file.startsWith(`fmt_${lang}.`));
+      if (!targetFile) return null;
+
+      const filePath = path.join(dir, targetFile);
+      const content = await fs.readFile(filePath, 'utf8');
+      return content;
+    } catch (err) {
+      console.error(`读取 fmt_${lang} 文件时出错:`, err);
+      return null;
+    }
+  }
+
   async updateFile(path, type, noLimit) {
     let file = await File.upload(path, type, noLimit);
 

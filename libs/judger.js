@@ -263,6 +263,12 @@ module.exports.judge = async function (judge_state, problem, priority) {
   }
 
   let type, param, extraData = null;
+
+  const lang = (problem.getVJudgeLanguages() || syzoj.languages)[judge_state.language];
+  let fmt = await problem.getFormatCode(lang.editor);
+  let running_code = fmt ? await syzoj.utils.insertCodeWithIndentation(fmt, judge_state.code) : judge_state.code;
+  if (!running_code) throw new ErrorMessage('插入代码模板失败。');
+
   switch (problem.type) {
     case 'submit-answer':
       type = enums.ProblemType.AnswerSubmission;
@@ -273,7 +279,7 @@ module.exports.judge = async function (judge_state, problem, priority) {
       type = enums.ProblemType.Interaction;
       param = {
         language: judge_state.language,
-        code: judge_state.code,
+        code: running_code,
         timeLimit: problem.time_limit,
         memoryLimit: problem.memory_limit,
       }
@@ -282,7 +288,7 @@ module.exports.judge = async function (judge_state, problem, priority) {
       type = enums.ProblemType.Standard;
       param = {
         language: judge_state.language,
-        code: judge_state.code,
+        code: running_code,
         timeLimit: problem.time_limit,
         memoryLimit: problem.memory_limit,
         fileIOInput: problem.file_io ? problem.file_io_input_name : null,

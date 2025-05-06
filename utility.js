@@ -241,6 +241,33 @@ module.exports = {
       return { error: e };
     }
   },
+  async insertCodeWithIndentation(fmt, code) {
+    if (typeof fmt !== 'string' || typeof code !== 'string') return null;
+
+    const placeholderRegex = /\$\{[^}]*\}/;
+    const match = fmt.match(placeholderRegex);
+    if (!match) return null;
+
+    const index = match.index;
+
+    // 查找占位符所在行的起始位置
+    const beforePlaceholder = fmt.slice(0, index);
+    const lineStart = beforePlaceholder.lastIndexOf('\n') + 1;
+    const line = fmt.slice(lineStart, index);
+
+    // 提取缩进（前导空白字符）
+    const indentMatch = line.match(/^\s*/);
+    const indent = indentMatch ? indentMatch[0] : '';
+
+    // 处理 code 的每一行，添加缩进
+    const codeLines = code.split('\n');
+    const indentedImpl = codeLines
+      .map((line, i) => (i === 0 ? line : indent + line))
+      .join('\n');
+
+    // 替换占位符为处理后的 code
+    return fmt.replace(placeholderRegex, indentedImpl);
+  },
   ansiToHTML(s) {
     let Convert = require('ansi-to-html');
     let convert = new Convert({ escapeXML: true });
