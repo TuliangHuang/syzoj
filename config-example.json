@@ -68,42 +68,14 @@
     "edit_problem_tag_list": 10
   },
   "enabled_languages": [
-    "cpp",
-    "cpp11",
     "cpp17",
-    "cpp-noilinux",
-    "cpp11-noilinux",
-    "cpp11-clang",
-    "cpp17-clang",
-    "c",
-    "c-noilinux",
-    "csharp",
     "java",
-    "pascal",
-    "python2",
-    "python3",
-    "nodejs",
-    "ruby",
-    "haskell"
+    "python3"
   ],
   "filter_enabled_languages": [
-    "cpp",
-    "cpp11",
     "cpp17",
-    "cpp-noilinux",
-    "cpp11-noilinux",
-    "cpp11-clang",
-    "cpp17-clang",
-    "c",
-    "c-noilinux",
-    "csharp",
     "java",
-    "pascal",
-    "python2",
-    "python3",
-    "nodejs",
-    "ruby",
-    "haskell"
+    "python3"
   ],
   "links": [
     {
