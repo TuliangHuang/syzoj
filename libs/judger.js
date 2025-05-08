@@ -263,11 +263,14 @@ module.exports.judge = async function (judge_state, problem, priority) {
   }
 
   let type, param, extraData = null;
-
-  const lang = (problem.getVJudgeLanguages() || syzoj.languages)[judge_state.language];
-  let fmt = await problem.getFormatCode(lang.editor);
-  let running_code = fmt ? await syzoj.utils.insertCodeWithIndentation(fmt, judge_state.code) : judge_state.code;
-  if (!running_code) throw new ErrorMessage('插入代码模板失败。');
+  let running_code;
+  if (problem.type === 'submit-answer') {
+    running_code = judge_state.code;
+  } else {
+    const lang = (problem.getVJudgeLanguages() || syzoj.languages)[judge_state.language];
+    const fmt = await problem.getFormatCode(lang.editor);
+    running_code = fmt ? await syzoj.utils.insertCodeWithIndentation(fmt, judge_state.code) : judge_state.code;
+  }
 
   switch (problem.type) {
     case 'submit-answer':
