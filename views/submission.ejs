@@ -51,17 +51,17 @@
     </tbody>
   </table>
 
-  <code-box no-escape v-bind:content="code">
-    <% if (formattedCode !== null) { %>
-      <a onclick="toggleFormattedCode()" class="ui button" style="position: absolute; top: 0px; right: -4px; border-top-left-radius: 0; border-bottom-right-radius: 0; ">
+  <code-box no-escape :key="codeKey" v-bind:content="code">
+    <template v-if="formattedCode !== null">
+      <a @click="toggleFormattedCode" class="codebox mini ui button">
         <template v-if="currentFormatted">
-          显示原始代码
+          Raw
         </template>
-        <template v-if="!currentFormatted">
-          格式化代码
+        <template v-else>
+          Format
         </template>
       </a>
-    <% } %>
+    </template>
   </code-box>
   <code-box v-if="detailResult && detailResult.compile" no-escape title="编译信息" v-bind:content="detailResult.compile.message"></code-box>
   <code-box v-if="detailResult" title="系统信息" v-bind:content="detailResult.systemMessage"></code-box>
@@ -199,16 +199,6 @@ const TaskStatus = {};
 const unformattedCode = <%- serializejs(code) %>;
 const formattedCode = <%- serializejs(formattedCode) %>;
 
-function toggleFormattedCode() {
-  if (vueApp.currentFormatted) {
-    vueApp.currentFormatted = false;
-    vueApp.code = unformattedCode;
-  } else {
-    vueApp.currentFormatted = true;
-    vueApp.code = formattedCode;
-  }
-}
-
 const vueApp = new Vue({
   el: '#vueAppFuckSafari',
   data: {
@@ -218,6 +208,7 @@ const vueApp = new Vue({
       running: false,
       displayConfig: displayConfig
     },
+    codeKey: 0,
     code: <%- serializejs(preferFormattedCode && formattedCode !== null) -%> ? formattedCode : unformattedCode,
     currentFormatted: <%- serializejs(preferFormattedCode && formattedCode !== null) -%>,
     detailResult: <%- serializejs(detailResult) %>,
@@ -297,6 +288,11 @@ const vueApp = new Vue({
       };
 
       return typeof index === 'undefined' ? allProgress : subtaskProgress[index];
+    },
+    toggleFormattedCode() {
+      this.currentFormatted = !this.currentFormatted;
+      this.code = this.currentFormatted ? formattedCode : unformattedCode;
+      this.codeKey += 1; // 更新 key，强制组件重新渲染
     }
   },
   mounted() {

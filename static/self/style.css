@@ -314,28 +314,12 @@ code {
   padding-right: 0 !important;
 }
 
-/* --theme-button-foreground: rgba(0, 0, 0, .6);
-  --theme-button-background: #E0E1E2; */
-
-/* copy-button.css */
-
-/* .code-wrapper {
-} */
-
-.copy-button {
+.codebox.ui.button {
   position: absolute;
-  bottom: 5px;
-  right: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  background: #f5f5f5;
-  color: #333;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
-}
-
-.copy-button:hover {
-  background: #e0e0e0;
+  top: 0px;
+  right: -3px;
+  border-top-left-radius: 0;
+  border-bottom-right-radius: 0;
+  z-index: 10;
+  padding: 7px 7px;
 }
