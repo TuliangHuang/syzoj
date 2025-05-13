@@ -74,7 +74,7 @@ module.exports = {
     if (ts == null) {
       return "Unknown";
     }
-    let m = moment(ts * 1000);
+    let m = moment(ts * 1000, "Asia/Shanghai");
     m.locale('eu');
     return m.format(format || 'L H:mm:ss');
   },
