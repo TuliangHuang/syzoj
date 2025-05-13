@@ -19,7 +19,8 @@ let Promise = require('bluebird');
 let path = require('path');
 let fs = Promise.promisifyAll(require('fs-extra'));
 let util = require('util');
-let moment = require('moment');
+let moment = require('moment-timezone');
+let { fromZonedTime } = require('date-fns-tz');
 let url = require('url');
 let querystring = require('querystring');
 let gravatar = require('gravatar');
@@ -74,7 +75,8 @@ module.exports = {
     if (ts == null) {
       return "Unknown";
     }
-    let m = moment(ts * 1000);
+    let timezone = 'Asia/Shanghai';
+    let m = moment.tz(ts * 1000, timezone);
     m.locale('eu');
     return m.format(format || 'L H:mm:ss');
   },
@@ -105,7 +107,8 @@ module.exports = {
     return JSON.stringify(url.resolve(syzoj.config.judge_server_addr, suffix));
   },
   parseDate(s) {
-    return parseInt(+new Date(s) / 1000);
+    let timezone = 'Asia/Shanghai';
+    return parseInt(fromZonedTime(new Date(s), timezone) / 1000);
   },
   getCurrentDate(removeTime) {
     let d = new Date;
