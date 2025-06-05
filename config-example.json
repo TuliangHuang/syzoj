@@ -15,7 +15,7 @@
     "width": null,
     "height": 36
   },
-  "register_mail": false,
+  "register_mail": true,
   "email": {
     "method": "aliyundm",
     "options": {
