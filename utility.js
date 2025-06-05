@@ -367,9 +367,11 @@ module.exports = {
     });
   },
   getCurrentLocation(req, hostOnly) {
-    const currentProto = req.get("X-Forwarded-Proto") || req.protocol,
-          host = currentProto + '://' + req.get('host');
-    if (hostOnly) return host;
-    else return host + req.originalUrl;
+    const currentProto = req.get("X-Forwarded-Proto") || req.protocol;
+    const host = req.get('host');
+    // nginx config:   
+    //  proxy_set_header Host $http_host;
+    const baseUrl = `${currentProto}://${host}`;
+    return hostOnly ? baseUrl : baseUrl + req.originalUrl;
   }
 };
