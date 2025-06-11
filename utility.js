@@ -309,6 +309,11 @@ module.exports = {
   removeTitleTag(s) {
     return s.replace(/「[\S\s]+?」/, '');
   },
+  prefixWithLetter(i, str) {
+    str = this.removeTitleTag(str);
+    const letter = String.fromCharCode(64 + i); // 1:A 2:B, ...
+    return `${letter}. ${str}`;
+  },
   md5(data) {
     let crypto = require('crypto');
     let md5 = crypto.createHash('md5');
