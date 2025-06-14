@@ -193,6 +193,84 @@ app.get('/problems/tag/:tagIDs', async (req, res) => {
   }
 });
 
+app.get('/batch', async (req, res) => {
+  try {
+    if (!res.locals.user) {
+      throw new ErrorMessage('请登录后继续。', {
+        '登录': syzoj.utils.makeUrl(['login'], { 'url': req.originalUrl })
+      });
+    }
+    if (!await res.locals.user.hasPrivilege('manage_problem')) {
+      throw new ErrorMessage('您没有权限进行此操作。');
+    }
+    res.render('batch', {});
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
+app.post('/batch', async (req, res) => {
+  try {
+    if (!res.locals.user) {
+      throw new ErrorMessage('请登录后继续。', {
+        '登录': syzoj.utils.makeUrl(['login'], { 'url': req.originalUrl })
+      });
+    }
+    if (!await res.locals.user.hasPrivilege('manage_problem')) {
+      throw new ErrorMessage('您没有权限进行此操作。');
+    }
+
+    let { move_ids } = req.body;
+    if (move_ids) {
+      const parts = move_ids.split(/[\s,]+/).filter(v => v);
+      if (parts.length % 2 !== 0) {
+        throw new Error(`需提供偶数个编号，当前为 ${parts.length} 个`);
+      }
+      const nums = parts.map((v, i) => {
+        if (!/^[1-9]\d*$/.test(v)) {
+          throw new Error(`第 ${i / 2 + 1} 组 "${v}" 不是有效的正整数`);
+        }
+        return parseInt(v, 10);
+      });
+      const seen = new Set();
+      for (const n of nums) {
+        if (seen.has(n)) {
+          throw new Error(`编号 ${n} 出现重复`);
+        }
+        seen.add(n);
+      }
+      const result = [];
+      for (let i = 0; i < nums.length; i += 2) {
+        const oldId = nums[i];
+        const newId = nums[i + 1];
+        const problem = await Problem.findById(oldId);
+        if (!problem) {
+          throw new Error(`编号 ${oldId} 未找到对应题目`);
+        }
+        const new_problem = await Problem.findById(newId);
+        if (new_problem) {
+          throw new Error(`编号为 ${newId} 的题目已经存在`);
+        }
+        result.push({ problem, new_id: newId });
+      }
+      for (const { problem, new_id } of result) {
+        await problem.changeID(new_id); // 假设这是异步方法，内部更新 ID 字段
+        await problem.save();
+      }
+    }
+
+    res.redirect(syzoj.utils.makeUrl(['problems']));
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
 app.get('/problem/:id', async (req, res) => {
   try {
     let id = parseInt(req.params.id);

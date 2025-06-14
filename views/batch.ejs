@@ -1,0 +1,21 @@
+<% this.title = '批量操作' %>
+<% include header %>
+
+<div class="padding">
+  <div style="margin-bottom: 30px; ">
+    <h1 style="margin-bottom: 10px; ">批量处理</h1>
+  </div>
+  <form class="ui form" method="post" action="batch">
+    <div class="field">
+      <label>题目批量迁移</label>
+      <textarea name="move_ids" placeholder="请输入要迁移的题目编号和新编号，以换行或空格分隔"></textarea>
+    </div>
+    <div style="text-align: center; ">
+      <button type="submit" class="ui labeled submit icon button">
+        <i class="icon edit"></i> 提交
+      </button>
+    </div>
+  </form>
+</div>
+
+<% include footer %>
