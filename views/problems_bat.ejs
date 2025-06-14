@@ -1,0 +1,14 @@
+<% this.title = '批量操作' %>
+<% include header %>
+
+<div class="padding">
+  <form class="ui form" method="post" action="/problems/bat">
+    <div class="field">
+      <label>题目批量迁移</label>
+      <textarea name="move_ids" placeholder="请输入要迁移的题目编号和新编号，以换行或空格分隔"></textarea>
+    </div>
+    <button class="ui orange button" type="submit">提交</button>
+  </form>
+</div>
+
+<% include footer %>
