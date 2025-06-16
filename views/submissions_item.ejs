@@ -47,6 +47,9 @@ Vue.component('submission-item', {
     }
   },
   methods: {
+    cleanTitle(s) {
+      return s.replace(/「[\S\s]+?」/, '');
+    },
     alpha(number) {
       if (number && parseInt(number) == number && parseInt(number) > 0) return String.fromCharCode('A'.charCodeAt(0) + parseInt(number) - 1);
     }
@@ -64,7 +67,12 @@ Vue.component('submission-item', {
   <% } else { %>
   <td><b>#{{ data.info.submissionId }}</b></td>
   <% } %>
-  <td ref="problemLabel"><a ref="problemLabelTextFit" style="width: 230px; height: 22px; display: block; margin: 0 auto; line-height: 22px;" :href="problemLink"><b>#{{ config.inContest ? alpha(data.info.problemId) : data.info.problemId }}.</b> {{ data.info.problemName }}</a></td>
+  <td ref="problemLabel">
+    <a ref="problemLabelTextFit" style="width: 230px; height: 22px; display: block; margin: 0 auto; line-height: 22px;" :href="problemLink">
+      <b> #{{ config.inContest ? alpha(data.info.problemId) : data.info.problemId }}. </b>
+      {{ cleanTitle(data.info.problemName) }}
+    </a>
+  </td>
   <% if (active === 'submissions') { %>
   <td><a :href="submissionLink"><b><status-label :status="statusString" :progress="progress"></status-label></b></a></td>
   <% } else { %>
