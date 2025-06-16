@@ -320,6 +320,7 @@ app.get('/problem/:id/export', async (req, res) => {
     let id = parseInt(req.params.id);
     let problem = await Problem.findById(id);
     if (!problem || !problem.is_public) throw new ErrorMessage('无此题目。');
+    if (!await problem.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
 
     let obj = {
       title: problem.title,
