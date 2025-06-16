@@ -220,13 +220,6 @@ if (isVJudge) testcases = [];
     });
     </script>
   <% } %>
-    <% let noSubmit = false; %>
-    <%
-    if (typeof contest !== 'undefined' && contest && contest.ended || (!testcases || testcases.error)) {
-      noSubmit = true;
-    }
-    %>
-    <% if (!noSubmit) { %>
     <div class="row">
         <div class="column">
           <%
@@ -359,7 +352,6 @@ if (isVJudge) testcases = [];
           </form>
         </div>
     </div>
-    <% } %>
 </div>
 
 <% if (problem.type !== 'submit-answer') { %>
