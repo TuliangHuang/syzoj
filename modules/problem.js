@@ -230,38 +230,57 @@ app.post('/batch', async (req, res) => {
         throw new Error(`需提供偶数个编号，当前为 ${parts.length} 个`);
       }
       const nums = parts.map((v, i) => {
-        if (!/^[1-9]\d*$/.test(v)) {
-          throw new Error(`第 ${i / 2 + 1} 组 "${v}" 不是有效的正整数`);
+        // 先尝试转换为数字
+        const num = Number(v);
+        // 验证是否为整数
+        if (!Number.isInteger(num)) {
+          throw new Error(`第 ${Math.floor(i / 2) + 1} 组 "${v}" 不是有效的整数`);
         }
-        return parseInt(v, 10);
+        return num;
       });
-      const seen = new Set();
-      for (const n of nums) {
-        if (seen.has(n)) {
-          throw new Error(`编号 ${n} 出现重复`);
-        }
-        seen.add(n);
-      }
-      const result = [];
+      const oldSeen = new Set();
+      const newSeen = new Set();
       for (let i = 0; i < nums.length; i += 2) {
         const oldId = nums[i];
         const newId = nums[i + 1];
+        if (oldSeen.has(oldId)) {
+          throw new Error(`旧编号 ${oldId} 出现重复`);
+        }
+        if (newSeen.has(newId)) {
+          throw new Error(`新编号 ${newId} 出现重复`);
+        }
+        oldSeen.add(oldId);
+        newSeen.add(newId);
+      }
+
+      const result = [];
+      for (let i = 0; i < nums.length; i += 2) {
+        const oldId = nums[i];
         const problem = await Problem.findById(oldId);
         if (!problem) {
           throw new Error(`编号 ${oldId} 未找到对应题目`);
         }
+        const newId = nums[i + 1];
         const new_problem = await Problem.findById(newId);
-        if (new_problem) {
-          throw new Error(`编号为 ${newId} 的题目已经存在`);
+        if (new_problem && !oldSeen.has(newId)) {
+          throw new Error(`编号为 ${newId} 的题目已经存在且没有在此次迁移中被迁移到其他编号`);
         }
-        result.push({ problem, new_id: newId });
+        const gapId = -oldId;
+        const gap = await Problem.findById(gapId);
+        if (gap) {
+          throw new Error(`临时编号 ${gapId} 上已经存在题目`);
+        }
+        result.push({ problem, old_id: oldId, new_id: newId });
+      }
+      for (const { problem, old_id } of result) {
+        await problem.changeID(-old_id);
+        await problem.save();
       }
       for (const { problem, new_id } of result) {
-        await problem.changeID(new_id); // 假设这是异步方法，内部更新 ID 字段
+        await problem.changeID(new_id);
         await problem.save();
       }
     }
-
     res.redirect(syzoj.utils.makeUrl(['problems']));
   } catch (e) {
     syzoj.log(e);
