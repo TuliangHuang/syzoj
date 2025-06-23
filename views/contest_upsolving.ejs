@@ -1,0 +1,61 @@
+<% this.title = '补题 - ' + contest.title %>
+<% include header %>
+<style>
+.submit_time {
+  font-size: 0.8em;
+  margin-top: 5px;
+  color: #000;
+}
+</style>
+<div class="padding">
+<h1 class="ui center aligned header" style="margin-bottom: 30px; "><%= contest.title %></h1>
+        <table class="ui very basic center aligned table">
+            <thead>
+            <tr>
+                <th>用户名</th>
+                <th>总题</th>
+                <% for (let i = 0; i < problems.length; i++) { %>
+                <th>
+                  <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i + 1]) %>">
+                    <%= String.fromCharCode(65 + i) %>
+                  </a>
+                </th>
+                <% } %>
+            </tr>
+            </thead>
+            <tbody>
+            <%
+            for (const item of ranklist) {
+            %>
+            <tr>
+                <td><a href="<%= syzoj.utils.makeUrl(['user', item.user.id]) %>"><%= item.user.username %></a><% if (item.user.nameplate) { %><%- item.user.nameplate %><% } %></td>
+                <td> <%= item.total %> </td>
+                <% for (const problem of problems) { %>
+                <td>
+                    <% 
+                    if (problem.playerStatusMap.has(item.user.id)) { 
+                     const judge_state = problem.playerStatusMap.get(item.user.id);
+                    %>
+                    <a href="<%= syzoj.utils.makeUrl(['submission', judge_state.id]) %>">
+                      <span class="status <%= judge_state.status.toLowerCase().split(' ').join('_') %>">
+                        <i class="<%= icon[judge_state.status] || 'remove' %> icon"></i>
+                      </span>
+                    </a>
+                    <% } %>
+                  </td>
+                <% } %>
+            </tr>
+            <% } %>
+            </tbody>
+        </table>
+<% if (!ranklist.length) { %>
+<div style="background-color: #fff; height: 18px; margin-top: -18px; "></div>
+<div class="ui placeholder segment" style="margin-top: 0px; ">
+  <div class="ui icon header">
+    <i class="ui file icon" style="margin-bottom: 20px; "></i>
+    暂无选手提交
+  </div>
+</div>
+<% } %>
+</div>
+<% include footer %>

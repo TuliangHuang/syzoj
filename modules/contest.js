@@ -296,6 +296,70 @@ app.get('/contest/:id/ranklist', async (req, res) => {
   }
 });
 
+app.get('/contest/:id/upsolving', async (req, res) => {
+  try {
+    let contest_id = parseInt(req.params.id);
+    let contest = await Contest.findById(contest_id);
+    const curUser = res.locals.user;
+
+    if (!contest) throw new ErrorMessage('无此比赛。');
+    // if contest is non-public, both system administrators and contest administrators can see it.
+    if (!contest.is_public && (!res.locals.user || (!res.locals.user.is_admin && !contest.admins.includes(res.locals.user.id.toString())))) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
+
+    if ([contest.allowedSeeingResult() && contest.allowedSeeingOthers(),
+    contest.isEnded(),
+    await contest.isSupervisior(curUser)].every(x => !x))
+      throw new ErrorMessage('您没有权限进行此操作。');
+
+    await contest.loadRelationships();
+
+    let problems_id = await contest.getProblems();
+    let problems = await problems_id.mapAsync(async id => await Problem.findById(id));
+
+    let players_id = [];
+    for (let i = 1; i <= contest.ranklist.ranklist.player_num; i++) players_id.push(contest.ranklist.ranklist[i]);
+
+    let ranklist = await players_id.mapAsync(async player_id => {
+      let player = await ContestPlayer.findById(player_id);
+      let user = await User.findById(player.user_id);
+      return {
+        user: user,
+        player: player,
+        total: 0,
+      };
+    });
+
+    await problems.forEachAsync(async (problem) => {
+      const statusMap = new Map();
+      await Promise.all(ranklist.map(async (item) => {
+        const judge_state = await problem.getJudgeState(item.user, true);
+        if (judge_state) statusMap.set(item.user.id, judge_state);
+      }));
+      problem.playerStatusMap = statusMap;
+    });
+
+    for (const item of ranklist) {
+      for (const problem of problems) {
+        if (problem.playerStatusMap.has(item.user.id)) {
+          item.total += await problem.playerStatusMap.get(item.user.id).isAccepted();
+        }
+      }
+    }
+    ranklist.sort((a, b) => b.total - a.total);
+
+    res.render('contest_upsolving', {
+      contest: contest,
+      ranklist: ranklist,
+      problems: problems
+    });
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
 function getDisplayConfig(contest) {
   return {
     showScore: contest.allowedSeeingScore(),

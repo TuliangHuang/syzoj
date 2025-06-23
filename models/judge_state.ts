@@ -152,6 +152,10 @@ export default class JudgeState extends Model {
     }
   }
 
+  async isAccepted(status) {
+    return this.status === Status.ACCEPTED;
+  }
+
   async rejudge() {
     await syzoj.utils.lock(['JudgeState::rejudge', this.id], async () => {
       await this.loadRelationships();
