@@ -198,6 +198,13 @@ app.get('/contest/:id', async (req, res) => {
 
       await contest.loadRelationships();
       let players = await contest.ranklist.getPlayers();
+
+      if (hasStatistics) {
+        await problems.forEachAsync(async (item) => {
+          item.judge_state = await item.problem.getJudgeState(res.locals.user, true);
+        });
+      }
+
       for (let problem of problems) {
         problem.statistics = { attempt: 0, accepted: 0 };
 
