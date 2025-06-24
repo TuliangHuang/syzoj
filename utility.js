@@ -90,6 +90,17 @@ module.exports = {
     }
     return sgn + util.format('%s:%s:%s', toStringWithPad(x / 3600), toStringWithPad(x / 60 % 60), toStringWithPad(x % 60));
   },
+  formatDuration(x) {
+    const sgn = x < 0 ? '-' : '';
+    x = Math.abs(x);
+    const hours = Math.floor(x / 3600);
+    const minutes = x / 60 % 60;
+    let duration = sgn;
+    if (hours) { duration += hours + " hour" + ((hours > 1) ? 's' : ''); }
+    if (minutes) { duration += (hours ? ' ' : '') + minutes + " minute" + ((minutes > 1) ? 's' : ''); }
+    if (duration === '') duration = "0 hours";
+    return sgn + duration;
+  },
   formatSize(x, precision) {
       if (typeof x !== 'number') return '0 B';
       let unit = 'B', units = ['K', 'M', 'G', 'T'];
