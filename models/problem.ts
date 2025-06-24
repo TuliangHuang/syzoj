@@ -508,7 +508,19 @@ export default class Problem extends Model {
       return ProblemTag.findById(tagID);
     });
 
+    const sortOrder = [
+      "black", "blue", "violet", "pink", "olive", "yellow", "orange", "teal"
+    ];
+    const orderMap = {};
+    sortOrder.forEach((color, idx) => {
+      if (!(color in orderMap)) {
+        orderMap[color] = idx;
+      }
+    });
     res.sort((a, b) => {
+      const ia = orderMap[a.color];
+      const ib = orderMap[b.color];
+      if (ia !== undefined && ib !== undefined) return ib - ia;
       return a.color > b.color ? 1 : -1;
     });
 
