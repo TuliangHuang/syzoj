@@ -857,6 +857,7 @@ app.get('/problem/:id/testdata', async (req, res) => {
     let problem = await Problem.findById(id);
 
     if (!problem) throw new ErrorMessage('无此题目。');
+    if (!await problem.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     if (!await problem.isAllowedUseBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
 
     let testdata = await problem.listTestdata();
