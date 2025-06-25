@@ -166,7 +166,12 @@ if (isVJudge) testcases = [];
   <% if (problem.input_format) { %>
   <div class="row">
     <div class="column">
-        <h4 class="ui top attached block header">输入格式</h4>
+        <h4 class="ui top attached block header">
+          输入格式 
+          <% if (problem.file_io) { %>
+            <code style="margin-left: 4px;"><%= problem.file_io_input_name %></code>
+          <% } %>
+        </h4>
         <div class="ui bottom attached segment font-content"><%- problem.input_format %></div>
     </div>
   </div>
@@ -174,7 +179,12 @@ if (isVJudge) testcases = [];
   <% if (problem.output_format) { %>
     <div class="row">
         <div class="column">
-          <h4 class="ui top attached block header">输出格式</h4>
+          <h4 class="ui top attached block header">
+            输出格式 
+            <% if (problem.file_io) { %>
+              <code style="margin-left: 4px;"><%= problem.file_io_output_name %></code>
+            <% } %>
+          </h4>
           <div class="ui bottom attached segment font-content"><%- problem.output_format %></div>
         </div>
     </div>
