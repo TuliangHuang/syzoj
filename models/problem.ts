@@ -521,12 +521,13 @@ export default class Problem extends Model {
       }
     });
     res.sort((a, b) => {
+      if (a.color === b.color) return a.name < b.name;
       const ia = orderMap[a.color];
       const ib = orderMap[b.color];
-      if (ia !== undefined && ib !== undefined) return ib - ia;
-      return a.color > b.color ? 1 : -1;
+      if (ia !== undefined && ib !== undefined) return ia - ib;
+      return a.color < b.color;
     });
-
+    res.reverse();
     return res;
   }
 
