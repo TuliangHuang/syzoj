@@ -521,7 +521,7 @@ export default class Problem extends Model {
       }
     });
     res.sort((a, b) => {
-      if (a.color === b.color) return a.name < b.name;
+      if (a.color === b.color) return a.name.localeCompare(b.name, 'zh');
       const ia = orderMap[a.color];
       const ib = orderMap[b.color];
       if (ia !== undefined && ib !== undefined) return ia - ib;
