@@ -68,7 +68,7 @@ Vue.component('submission-item', {
   <td><b>#{{ data.info.submissionId }}</b></td>
   <% } %>
   <td ref="problemLabel">
-    <a ref="problemLabelTextFit" style="width: 230px; height: 22px; display: block; margin: 0 auto; line-height: 22px;" :href="problemLink">
+    <a ref="problemLabelTextFit" style="width: 300px; height: 22px; display: block; margin: 0 auto; line-height: 22px;" :href="problemLink">
       <b> #{{ config.inContest ? alpha(data.info.problemId) : data.info.problemId }}. </b>
       {{ cleanTitle(data.info.problemName) }}
     </a>
