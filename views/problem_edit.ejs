@@ -27,7 +27,8 @@
           <% } %>
           <label for="title">题目名称</label>
           <input class="font-content" type="text" id="title" name="title" value="<%= problem.title %>">
-        
+          <label style="margin-top: 15px; " for="source">原题链接</label>
+          <input class="font-content" type="text" id="source" name="source" value="<%= problem.source %>">
           <label style="margin-top: 15px; " for="description">题目描述</label>
           <textarea class="markdown-edit" rows="15" id="description" name="description"><%= problem.description %></textarea>
           <label style="margin-top: 15px; " for="input_format">输入格式</label>

@@ -47,8 +47,8 @@ if (isVJudge) testcases = [];
           <% } %>
       </div>
     <% } %>
-    <div class="row" style="margin-top: -<%= problem.type === 'submit-answer' ? 15 : 23 %>px">
-      <% if (problem.type !== 'interaction') { %>
+    <% if (problem.type !== 'interaction') { %>
+        <div class="row" style="margin-top: -<%= problem.type === 'submit-answer' ? 15 : 23 %>px">
           <div class="ui label">
             题目类型
             <div class="detail">
@@ -61,8 +61,10 @@ if (isVJudge) testcases = [];
               <%= isVJudge ? "VJudge" : (testcases && !testcases.error) ? (testcases.spj ? 'Special Judge' : '文本比较') : '无测试数据' %>
             </div>
           </div>
-      <% } %>
-      <% if (!contest) { %>
+        </div>
+    <% } %>
+    <% if (!contest) { %>
+      <div class="row" style="margin-top: -<%= problem.type === 'submit-answer' ? 15 : 23 %>px">
         <% if (problem.allowedManage || !problem.is_anonymous) { %>
           <div class="ui label">
             上传者
@@ -79,8 +81,14 @@ if (isVJudge) testcases = [];
             <% } %>
           </div>
         <% } %>
-      <% } %>
-    </div>
+        <% if (problem.source) { %>
+          <div class="ui label">
+            题目来源
+            <a class="detail" href="<%= problem.source %>"><%= syzoj.utils.parseUrl(problem.source) %></a>
+          </div>
+        <% } %>
+     </div>
+    <% } %>
 </div>
 <div class="ui grid">
   <div class="row">

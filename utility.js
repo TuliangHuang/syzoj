@@ -145,6 +145,40 @@ module.exports = {
     if (encoded) res += '?' + encoded;
     return res;
   },
+  parseUrl(url) {
+    try {
+      const u = new URL(url);
+      let host = u.hostname.toLowerCase();
+
+      // 定义需要剔除的常见顶级域后缀
+      const suffixes = [
+        '.com', '.net', '.org', '.io', '.co', '.co.uk', '.edu',
+        '.gov', '.cn', '.com.cn', '.jp', '.de', '.fr', '.ru', '.info',
+        '.biz', '.name', '.xyz', '.top', '.site', '.tech',
+        '.ai', '.me', '.uk', '.us', '.ca', '.au', '.in', '.kr',
+        '.br', '.za', '.ac'
+      ];
+      // 按长度降序排序，先匹配长后缀（例如 .co.uk 早于 .uk）
+      suffixes.sort((a, b) => b.length - a.length);
+
+      // 如果 host 以某个 suffix 结尾，移除它
+      for (const s of suffixes) {
+        if (host.endsWith(s)) {
+          host = host.slice(0, host.length - s.length);
+          break;
+        }
+      }
+
+      // host 中可能还有多个级别，用 split 分隔
+      const parts = host.split('.').filter(Boolean);
+
+      // 返回最后一个单词，如果没有，返回空字符串
+      return parts.length ? parts[parts.length - 1] : '';
+    } catch (e) {
+      console.error('Invalid URL:', e);
+      return 'unknown';
+    }
+  },
   highlight(code, lang) {
     return new Promise((resolve, reject) => {
       renderer.highlight(code, lang, res => {

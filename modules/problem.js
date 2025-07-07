@@ -442,6 +442,7 @@ app.post('/problem/:id/edit', async (req, res) => {
 
     if (!req.body.title.trim()) throw new ErrorMessage('题目名不能为空。');
     problem.title = req.body.title;
+    problem.source = req.body.source;
     problem.description = req.body.description;
     problem.input_format = req.body.input_format;
     problem.output_format = req.body.output_format;

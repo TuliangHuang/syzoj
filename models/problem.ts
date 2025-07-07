@@ -61,6 +61,9 @@ export default class Problem extends Model {
   is_anonymous: boolean;
 
   @TypeORM.Column({ nullable: true, type: "text" })
+  source: string;
+
+  @TypeORM.Column({ nullable: true, type: "text" })
   description: string;
 
   @TypeORM.Column({ nullable: true, type: "text" })
