@@ -40,11 +40,8 @@ function success() {
 }
 
 function mail_required() {
-    alert("注册确认邮件已经发送到您的邮箱的垃圾箱，点击邮件内的链接即可完成注册。");
-    var s = $("#email").val();
-    var mailWebsite = 'https://mail.' + s.substring(s.indexOf('@') + 1, s.length);
-    if (mailWebsite === 'https://mail.gmail.com') mailWebsite = 'https://mail.google.com';
-    window.location.href = mailWebsite;
+    alert("注册确认邮件已经发送到管理员的邮箱，请联系管理员完成审核，");
+    window.location.href = location.protocol + '//' + location.host + <%- serializejs(req.query.url || '/') %>;
 }
 
 function submit() {

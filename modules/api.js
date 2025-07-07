@@ -94,9 +94,9 @@ app.post('/api/sign_up', async (req, res) => {
 
       const vurl = syzoj.utils.getCurrentLocation(req, true) + syzoj.utils.makeUrl(['api', 'sign_up_confirm'], { token: token });
       try {
-        await Email.send(req.body.email,
+        await Email.send(syzoj.config.email.admin,
           `${req.body.username} 的 ${syzoj.config.title} 注册验证邮件`,
-          `<p>请点击该链接完成您在 ${syzoj.config.title} 的注册：</p><p><a href="${vurl}">${vurl}</a></p><p>如果您不是 ${req.body.username}，请忽略此邮件。</p>`
+          `<p>请点击该链接完成用户在 ${syzoj.config.title} 的注册：</p><p><a href="${vurl}">${vurl}</a></p>`
         );
       } catch (e) {
         return res.send({
