@@ -39,7 +39,14 @@ app.get('/submissions', async (req, res) => {
     }
 
     if (!req.query.contest) {
-      query.andWhere('type = 0');
+      let contests = await Contest.find();
+      type_infos = [];
+      for (let contest of contests) {
+        if (contest.is_public && contest.isEnded()) {
+          type_infos.push(contest.id);
+        }
+      }
+      query.andWhere('(type = 0 OR (type = 1 AND type_info IN (:...type_infos)))', { type_infos });
     } else {
       const contestId = Number(req.query.contest);
       const contest = await Contest.findById(contestId);
