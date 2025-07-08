@@ -40,8 +40,7 @@ if (isVJudge) testcases = [];
           <% if (problem.type === 'interaction') { %>
             <div class="ui label">题目类型<div class="detail">交互</div></div>
           <% } else if (problem.file_io) { %>
-            <div class="ui label">输入文件<div class="detail"><%= problem.file_io_input_name %></div></div>
-            <div class="ui label">输出文件<div class="detail"><%= problem.file_io_output_name %></div></div>
+            <div class="ui label">文件输入输出<div class="detail"><%= problem.file_io_input_name %> ≫ <%= problem.file_io_output_name %></div></div>
           <% } else { %>
             <div class="ui label">标准输入输出</div>
           <% } %>
