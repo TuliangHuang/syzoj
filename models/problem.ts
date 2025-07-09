@@ -527,7 +527,6 @@ export default class Problem extends Model {
       if (ia !== undefined && ib !== undefined) return ia - ib;
       return a.color < b.color;
     });
-    res.reverse();
     return res;
   }
 

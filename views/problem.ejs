@@ -236,7 +236,10 @@ if (isVJudge) testcases = [];
         $('#show_tag_title_div').addClass('top attached');
         $('#show_tag_title_div').text('分类标签');
         $('#show_tag_div').css('display', '');
-      })
+      });
+      if (<%= problem.allowedManage %>) {
+        $('#show_tag_button').click();
+      }
     });
     </script>
   <% } %>
