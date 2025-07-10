@@ -179,6 +179,50 @@ module.exports = {
       return 'unknown';
     }
   },
+  parseMarkdown(code) {
+    const lines = code.split('\n');
+    const result = {
+      description: '',
+      input_format: '',
+      output_format: '',
+      example: '',
+      limit_and_hint: ''
+    };
+
+    let current = null;
+    const map = {
+      '## 题目描述': 'description',
+      '## 输入格式': 'input_format',
+      '## 输出格式': 'output_format',
+      '## 说明/提示': 'limit_and_hint'
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // 检查是否是 ## 开头
+      if (line.startsWith('## ')) {
+        // 特殊处理“输入输出样例...”开头
+        if (line.startsWith('## 输入输出样例')) {
+          current = 'example';
+          continue;
+        }
+        // 普通标题匹配
+        const key = map[line.trim()];
+        if (key) {
+          current = key;
+        } else {
+          current = null;
+        }
+        continue;
+      }
+
+      if (current) {
+        result[current] += (result[current] ? '\n' : '') + line;
+      }
+    }
+    return result;
+  },
   highlight(code, lang) {
     return new Promise((resolve, reject) => {
       renderer.highlight(code, lang, res => {

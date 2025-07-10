@@ -10,6 +10,7 @@
       <div class="ui top attached tabular menu">
         <a class="item active" data-tab="edit">编辑</a>
         <a class="item" data-tab="preview" id="preview_tab">预览</a>
+        <a class="item" data-tab="import" id="import_tab">导入</a>
       </div>
       <div class="ui bottom attached tab segment active" data-tab="edit">
         <div class="ui form"><div class="field">
@@ -65,6 +66,12 @@
         <div class="font-content" id="pv-example"></div>
         <h2 class="ui header">数据范围与提示</h2>
         <div class="font-content" id="pv-hint"></div>
+      </div>
+      <div class="ui bottom attached tab segment" data-tab="import" id="import">
+        <div class="ui form"><div class="field">
+          <label style="margin-top: 15px; " for="import_code">导入源码</label>
+          <textarea class="markdown-edit" rows="50" id="import_code" name="import_code"></textarea>
+        </div></div>
       </div>
       <% if (problem.allowedEdit) { %>
       <div style="text-align: center; ">

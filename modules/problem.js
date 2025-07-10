@@ -450,6 +450,15 @@ app.post('/problem/:id/edit', async (req, res) => {
     problem.limit_and_hint = req.body.limit_and_hint;
     problem.is_anonymous = (req.body.is_anonymous === 'on');
 
+    if (req.body.import_code) {
+      const result = syzoj.utils.parseMarkdown(req.body.import_code);
+      problem.description = result.description;
+      problem.input_format = result.input_format;
+      problem.output_format = result.output_format;
+      problem.example = result.example;
+      problem.limit_and_hint = result.limit_and_hint;
+    }
+
     // Save the problem first, to have the `id` allocated
     await problem.save();
 
