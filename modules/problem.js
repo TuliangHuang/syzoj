@@ -440,7 +440,6 @@ app.post('/problem/:id/edit', async (req, res) => {
       }
     }
 
-    if (!req.body.title.trim()) throw new ErrorMessage('题目名不能为空。');
     problem.title = req.body.title;
     problem.source = req.body.source;
     problem.description = req.body.description;
@@ -452,12 +451,15 @@ app.post('/problem/:id/edit', async (req, res) => {
 
     if (req.body.import_code) {
       const result = syzoj.utils.parseMarkdown(req.body.import_code);
+      if (result.title) problem.title = result.title;
       problem.description = result.description;
       problem.input_format = result.input_format;
       problem.output_format = result.output_format;
       problem.example = result.example;
       problem.limit_and_hint = result.limit_and_hint;
     }
+
+    if (!problem.title) throw new ErrorMessage('题目名不能为空。');
 
     // Save the problem first, to have the `id` allocated
     await problem.save();

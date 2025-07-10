@@ -181,42 +181,64 @@ module.exports = {
   },
   parseMarkdown(code) {
     const lines = code.split('\n');
-    const result = {
-      description: '',
-      input_format: '',
-      output_format: '',
-      example: '',
-      limit_and_hint: ''
+    const result = { title: null, description: '', input_format: '', output_format: '', example: '', limit_and_hint: '' };
+
+    const cfPattern = /^#\s*CF(\d+)([A-Z])\b[:\s-]*(.+)/;
+    const usacoPattern = /^#\s*P\d+\s*\[USACO(\d{2})([A-Z]{3})\]\s*(.+)/;
+
+    const tierMap = { B: 'Bronze', S: 'Silver', G: 'Gold', P: 'Platinum' };
+    const tierOrder = ['B', 'S', 'G', 'P'];
+    function pickTier(str) {
+      const letters = (str.match(/[BSGP]/g) || []);
+      for (let d of tierOrder) {
+        if (letters.includes(d)) return tierMap[d];
+      }
+      return null;
+    }
+
+    const monthMap = {
+      JAN: '1', FEB: '2', MAR: '3', APR: '4', MAY: '5', JUN: '6',
+      JUL: '7', AUG: '8', SEP: '9', OCT: '10', NOV: '11', DEC: '12'
     };
+
+    for (const line of lines) {
+      if (!line.startsWith('# ')) continue;
+
+      let m;
+      if (m = line.match(cfPattern)) {
+        const [, num, prob, rest] = m;
+        result.title = `「Codeforces ${num} ${prob}」${rest.trim()}`;
+      } else if (m = line.match(usacoPattern)) {
+        const [, yy, mon, restFull] = m;
+        const yyyy = '20' + yy;
+        const mm = monthMap[mon] || mon;
+
+        // 将 restFull 按空格拆分，最后一部分视作难度字母组合
+        const parts = restFull.trim().split(/\s+/);
+        let last = parts.pop();
+        const tier = pickTier(last) || 'Unknown';
+        const name = parts.join(' ');
+
+        result.title = `「USACO ${yyyy}.${mm} ${tier}」${name}`;
+      } else {
+        result.title = line.slice(2).trim();
+      }
+      break;
+    }
 
     let current = null;
     const map = {
       '## 题目描述': 'description',
       '## 输入格式': 'input_format',
       '## 输出格式': 'output_format',
-      '## 说明/提示': 'limit_and_hint'
+      '## 说明/提示': 'limit_and_hint',
+      '## 数据范围与提示': 'limit_and_hint'
     };
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-
-      // 检查是否是 ## 开头
+    for (const line of lines) {
       if (line.startsWith('## ')) {
-        // 特殊处理“输入输出样例...”开头
-        if (line.startsWith('## 输入输出样例')) {
-          current = 'example';
-          continue;
-        }
-        // 普通标题匹配
-        const key = map[line.trim()];
-        if (key) {
-          current = key;
-        } else {
-          current = null;
-        }
+        current = line.startsWith('## 输入输出样例') ? 'example' : map[line.trim()] || null;
         continue;
       }
-
       if (current) {
         result[current] += (result[current] ? '\n' : '') + line;
       }
