@@ -46,7 +46,7 @@
     }
   },
   "limit": {
-    "time_limit": 10000,
+    "time_limit": 300000,
     "memory_limit": 1024,
     "data_size": 209715200,
     "testdata": 209715200,
@@ -70,12 +70,14 @@
   "enabled_languages": [
     "cpp17",
     "java",
-    "python3"
+    "python3",
+    "python2"
   ],
   "filter_enabled_languages": [
     "cpp17",
     "java",
-    "python3"
+    "python3",
+    "python2"
   ],
   "links": [
     {
