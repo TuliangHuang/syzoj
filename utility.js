@@ -184,7 +184,7 @@ module.exports = {
     const result = { title: null, description: '', input_format: '', output_format: '', example: '', limit_and_hint: '' };
 
     const cfPattern = /^#\s*CF(\d+)([A-Z])\b[:\s-]*(.+)/;
-    const usacoPattern = /^#\s*P\d+\s*\[USACO(\d{2})([A-Z]{3})\]\s*(.+)/;
+    const usacoPattern = /^#\s*P\d+\s*\[USACO(\d{2})([A-Z]{3,4})\]\s*(.+)/;
 
     const tierMap = { B: 'Bronze', S: 'Silver', G: 'Gold', P: 'Platinum' };
     const tierOrder = ['B', 'S', 'G', 'P'];
@@ -211,7 +211,9 @@ module.exports = {
       } else if (m = line.match(usacoPattern)) {
         const [, yy, mon, restFull] = m;
         const yyyy = '20' + yy;
-        const mm = monthMap[mon] || mon;
+        let mm = monthMap[mon];
+        if (mm) mm = '.' + mm;
+        else mm = ' Open';
 
         // 将 restFull 按空格拆分，最后一部分视作难度字母组合
         const parts = restFull.trim().split(/\s+/);
@@ -219,7 +221,7 @@ module.exports = {
         const tier = pickTier(last) || 'Unknown';
         const name = parts.join(' ');
 
-        result.title = `「USACO ${yyyy}.${mm} ${tier}」${name}`;
+        result.title = `「USACO ${yyyy}${mm} ${tier}」${name}`;
       } else {
         result.title = line.slice(2).trim();
       }
