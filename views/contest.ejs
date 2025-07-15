@@ -105,7 +105,25 @@
                   <% } %>
                 <% } %>
                 </td>
-                <td><a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i]) %>"><%= syzoj.utils.prefixWithLetter(i, problem.problem.title) %></a></td>
+                <td>
+                  <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i]) %>"><%= syzoj.utils.prefixWithLetter(i, problem.problem.title) %></a>
+                  <div class="show_tag_controled" style="float: right; ">
+                    <%
+                    if (problem.tags) {
+                      for (let tag of problem.tags.slice().reverse()) {
+                        let url = syzoj.utils.makeUrl(['problems', 'tag', tag.id]);
+                    %>
+                      <span class="ui header">
+                        <a href="<%= url %>" class="ui tiny <%= tag.color %> label">
+                          <%= tag.name %>
+                        </a>
+                      </span>
+                    <%
+                      }
+                    }
+                    %>
+                  </div>
+                </td>
                 <% if (hasStatistics) { %>
                   <td class="center aligned" style="white-space: nowrap; ">
                   <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'submissions'], { problem_id: i, status: 'Accepted' }) %>"><%= problem.statistics.accepted %></a>

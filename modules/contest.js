@@ -202,6 +202,7 @@ app.get('/contest/:id', async (req, res) => {
       if (hasStatistics) {
         await problems.forEachAsync(async (item) => {
           item.judge_state = await item.problem.getJudgeState(res.locals.user, true);
+          item.tags = await item.problem.getTags();
         });
       }
 
