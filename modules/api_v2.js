@@ -87,7 +87,16 @@ app.get('/api/v2/search/tags/:keyword*?', async (req, res) => {
         name: 'ASC'
       }
     });
-
+    tags.sort((a, b) => {
+      const pa = a.name.startsWith(keyword),
+        pb = b.name.startsWith(keyword);
+      if (pa && !pb) return -1;
+      if (!pa && pb) return 1;
+      const ia = a.name.indexOf(keyword),
+        ib = b.name.indexOf(keyword);
+      if (ia !== ib) return ia - ib;
+      return a.name.localeCompare(b.name, 'zh');
+    });
     let result = tags.slice(0, syzoj.config.page.edit_problem_tag_list);
 
     result = result.map(x => ({ name: x.name, value: x.id }));
