@@ -5,18 +5,18 @@
     <div class="eleven wide column">
       <h4 class="ui top attached block header"><i class="ui bullhorn icon"></i>公告</h4>
       <div class="ui bottom attached segment">
-        <table class="ui very basic table">
+        <table class="ui very basic table" style="padding: 10px;">
           <thead>
             <tr>
               <th>标题</th>
-              <th>时间</th>
+              <th class="right aligned">时间</th>
             </tr>
           </thead>
           <tbody>
             <% for (let item of notices) { %>
                 <tr>
                     <td><a href="<%= item.url %>"><%= item.title %></a></td>
-                    <td><%= item.date %></td>
+                    <td class="right aligned"><%= item.date %></td>
                 </tr>
             <% } %>
           </tbody>
@@ -27,18 +27,18 @@
         <% if (!contests || !contests.length) { %>
         还没有举行过任何比赛
         <% } else { %>
-        <table class="ui very basic center aligned table">
+        <table class="ui very basic table" style="padding: 10px;">
           <thead>
             <tr>
               <th>比赛名称</th>
-              <th>开始时间</th>
+              <th class="right aligned">开始时间</th>
               </tr>
               </thead>
           <tbody>
             <% for (let contest of contests) { %>
             <tr>
               <td><a href="<%= syzoj.utils.makeUrl(['contest', contest.id]) %>"><%= contest.title %></a></td>
-              <td><%= syzoj.utils.formatDate(contest.start_time) %></td>
+              <td class="right aligned"><%= syzoj.utils.formatDate(contest.start_time) %></td>
             </tr>
             <% } %>
           </tbody>
@@ -47,22 +47,22 @@
       </div>
       <h4 class="ui top attached block header"><i class="ui book icon"></i>最新题目</h4>
       <div class="ui bottom attached segment">
-        <table class="ui very basic center aligned table">
+        <table class="ui very basic table" style="padding: 10px;">
           <thead>
             <tr>
               <th width="70%">题目</th>
-              <th width="30%">更新时间</th>
+              <th class="right aligned" width="30%">更新时间</th>
             </tr>
           </thead>
           <tbody>
             <% for (let problem of problems) { %>
             <tr>
               <td><a href="<%= syzoj.utils.makeUrl(['problem', problem.id]) %>"><%= problem.title %></a></td>
-              <td><%= problem.time %></td>
+              <td class="right aligned"><%= problem.time %></td>
             </tr>
           <% } %>
           </tbody>
-          </table>
+        </table>
       </div>
       </div>
       <div class="right floated five wide column">
