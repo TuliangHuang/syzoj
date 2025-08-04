@@ -35,6 +35,37 @@ app.get('/problem/:id/import', async (req, res) => {
   }
 });
 
+async function importFromSyzoj(problem, url) {
+  let request = require('request-promise');
+  let json = await request({
+    uri: url + (url.endsWith('/') ? 'export' : '/export'),
+    timeout: 1500,
+    json: true
+  });
+
+  if (!json.success) throw new ErrorMessage('题目加载失败。', null, json.error);
+
+  if (!json.obj.title.trim()) throw new ErrorMessage('题目名不能为空。');
+  problem.title = json.obj.title;
+  problem.description = json.obj.description;
+  problem.input_format = json.obj.input_format;
+  problem.output_format = json.obj.output_format;
+  problem.example = json.obj.example;
+  problem.limit_and_hint = json.obj.limit_and_hint;
+  problem.time_limit = json.obj.time_limit;
+  problem.memory_limit = json.obj.memory_limit;
+  problem.file_io = json.obj.file_io;
+  problem.file_io_input_name = json.obj.file_io_input_name;
+  problem.file_io_output_name = json.obj.file_io_output_name;
+  if (json.obj.type) problem.type = json.obj.type;
+
+  let validateMsg = await problem.validate();
+  if (validateMsg) throw new ErrorMessage('无效的题目数据配置（SYZOJ）。', null, validateMsg);
+
+  let tagIDs = (await json.obj.tags.mapAsync(name => ProblemTag.findOne({ where: { name: String(name) } }))).filter(x => x).map(tag => tag.id);
+  await problem.setTags(tagIDs);
+}
+
 app.post('/problem/:id/import', async (req, res) => {
   try {
     let id = parseInt(req.params.id) || 0;
@@ -63,36 +94,8 @@ app.post('/problem/:id/import', async (req, res) => {
       if (!await problem.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     }
 
-    let request = require('request-promise');
-    let json = await request({
-      uri: req.body.url + (req.body.url.endsWith('/') ? 'export' : '/export'),
-      timeout: 1500,
-      json: true
-    });
-
-    if (!json.success) throw new ErrorMessage('题目加载失败。', null, json.error);
-
-    if (!json.obj.title.trim()) throw new ErrorMessage('题目名不能为空。');
-    problem.title = json.obj.title;
-    problem.description = json.obj.description;
-    problem.input_format = json.obj.input_format;
-    problem.output_format = json.obj.output_format;
-    problem.example = json.obj.example;
-    problem.limit_and_hint = json.obj.limit_and_hint;
-    problem.time_limit = json.obj.time_limit;
-    problem.memory_limit = json.obj.memory_limit;
-    problem.file_io = json.obj.file_io;
-    problem.file_io_input_name = json.obj.file_io_input_name;
-    problem.file_io_output_name = json.obj.file_io_output_name;
-    if (json.obj.type) problem.type = json.obj.type;
-
-    let validateMsg = await problem.validate();
-    if (validateMsg) throw new ErrorMessage('无效的题目数据配置。', null, validateMsg);
-
+    await importFromSyzoj(problem, req.body.url);
     await problem.save();
-
-    let tagIDs = (await json.obj.tags.mapAsync(name => ProblemTag.findOne({ where: { name: String(name) } }))).filter(x => x).map(tag => tag.id);
-    await problem.setTags(tagIDs);
 
     let download = require('download');
     let tmp = require('tmp-promise');
