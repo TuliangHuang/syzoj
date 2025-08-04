@@ -36,9 +36,10 @@ app.get('/problem/:id/import', async (req, res) => {
 });
 
 async function importFromSyzoj(problem, url) {
+  if (!url.endsWith('/')) url += '/';
   let request = require('request-promise');
   let json = await request({
-    uri: url + (url.endsWith('/') ? 'export' : '/export'),
+    uri: url + 'export',
     timeout: 1500,
     json: true
   });
@@ -64,6 +65,27 @@ async function importFromSyzoj(problem, url) {
 
   let tagIDs = (await json.obj.tags.mapAsync(name => ProblemTag.findOne({ where: { name: String(name) } }))).filter(x => x).map(tag => tag.id);
   await problem.setTags(tagIDs);
+  await problem.save();
+
+  let download = require('download');
+  let tmp = require('tmp-promise');
+  let tmpFile = await tmp.file();
+
+  try {
+    let data = await download(url + 'testdata/download');
+    await fs.writeFile(tmpFile.path, data);
+    await problem.updateTestdata(tmpFile.path, await res.locals.user.hasPrivilege('manage_problem'));
+    if (json.obj.have_additional_file) {
+      let additional_file = await download(url + 'download/additional_file');
+      await fs.writeFile(tmpFile.path, additional_file);
+      await problem.updateFile(tmpFile.path, 'additional_file', await res.locals.user.hasPrivilege('manage_problem'));
+    }
+  } catch (e) {
+    syzoj.log(e);
+  }
+}
+
+async function importFromLoj(problem, url) {
 }
 
 app.post('/problem/:id/import', async (req, res) => {
@@ -94,26 +116,17 @@ app.post('/problem/:id/import', async (req, res) => {
       if (!await problem.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
     }
 
-    await importFromSyzoj(problem, req.body.url);
-    await problem.save();
-
-    let download = require('download');
-    let tmp = require('tmp-promise');
-    let tmpFile = await tmp.file();
-
-    try {
-      let data = await download(req.body.url + (req.body.url.endsWith('/') ? 'testdata/download' : '/testdata/download'));
-      await fs.writeFile(tmpFile.path, data);
-      await problem.updateTestdata(tmpFile.path, await res.locals.user.hasPrivilege('manage_problem'));
-      if (json.obj.have_additional_file) {
-        let additional_file = await download(req.body.url + (req.body.url.endsWith('/') ? 'download/additional_file' : '/download/additional_file'));
-        await fs.writeFile(tmpFile.path, additional_file);
-        await problem.updateFile(tmpFile.path, 'additional_file', await res.locals.user.hasPrivilege('manage_problem'));
-      }
-    } catch (e) {
-      syzoj.log(e);
+    let url = req.body.url;
+    const syzojRe = /(https?):\/\/([^/]+)\/(problem|p)\/([0-9]+)\/?/i;
+    if (!url.match(syzojRe)) {
+      throw new ErrorMessage('This is not a valid SYZOJ/Lyrio problem detail page link.');
     }
-
+    const [, protocol, host, n, pid] = syzojRe.exec(url);
+    if (n === 'p') {
+      await importFromLoj(problem, url);
+    } else {
+      await importFromSyzoj(problem, url);
+    }
     res.redirect(syzoj.utils.makeUrl(['problem', problem.id]));
   } catch (e) {
     syzoj.log(e);
