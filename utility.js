@@ -236,10 +236,22 @@ module.exports = {
       '## 说明/提示': 'limit_and_hint',
       '## 数据范围与提示': 'limit_and_hint'
     };
-    for (const line of lines) {
+
+    const inputRe = /^```input([^}]+)/;
+    const outputRe = /^```output([^}]+)/;
+
+    for (let line of lines) {
       if (line.startsWith('## ')) {
         current = line.startsWith('## 输入输出样例') ? 'example' : map[line.trim()] || null;
         continue;
+      }
+      // 优先处理 input / output 标签行
+      if (inputRe.test(line)) {
+        current = 'example';
+        line = line.replace(inputRe, (_, X) => `### 输入 #${X}\n\`\`\`input`);
+      }
+      else if (outputRe.test(line)) {
+        line = line.replace(outputRe, (_, X) => `### 输出 #${X}\n\`\`\`output`);
       }
       if (current) {
         result[current] += (result[current] ? '\n' : '') + line;
