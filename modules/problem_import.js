@@ -1,4 +1,5 @@
 let Problem = syzoj.model('problem');
+let ProblemTag = syzoj.model('problem_tag');
 
 app.get('/problem/:id/import', async (req, res) => {
   try {
@@ -48,6 +49,7 @@ async function importFromSyzoj(problem, url) {
 
   if (!json.obj.title.trim()) throw new ErrorMessage('题目名不能为空。');
   problem.title = json.obj.title;
+  problem.source = url;
   problem.description = json.obj.description;
   problem.input_format = json.obj.input_format;
   problem.output_format = json.obj.output_format;
@@ -86,6 +88,90 @@ async function importFromSyzoj(problem, url) {
 }
 
 async function importFromLoj(problem, url) {
+  const syzojRe = /(https?):\/\/([^/]+)\/(problem|p)\/([0-9]+)\/?/i;
+  var [, protocol, host, n, pid] = syzojRe.exec(url);
+  pid = +pid;
+
+  var request = require('superagent');
+  require('superagent-proxy')(request);
+  var proxy = process.env.https_proxy || process.env.http_proxy || process.env.all_proxy || '';
+  const json = await request.post(`${protocol}://${host === 'loj.ac' ? 'api.loj.ac' : host}/api/problem/getProblem`)
+    .send({
+      displayId: pid,
+      localizedContentsOfAllLocales: true,
+      tagsOfLocale: 'zh_CN',
+      samples: true,
+      judgeInfo: true,
+      testData: true,
+      additionalFiles: true,
+    })
+    .proxy(proxy);
+
+  if (!json.body.localizedContentsOfAllLocales) {
+    throw new ErrorMessage('题目加载失败。');
+  }
+
+  let filter = require('lodash');
+  let title = [
+    ...filter(
+      json.body.localizedContentsOfAllLocales,
+      (node) => node.locale === 'zh_CN',
+    ),
+    ...json.body.localizedContentsOfAllLocales,
+  ][0].title;
+
+  for (const c of json.body.localizedContentsOfAllLocales) {
+    let locale = c.locale;
+    if (locale !== 'zh_CN') {
+      continue;
+    }
+
+    let content = '';
+    const sections = c.contentSections;
+    let add = false;
+    for (const section of sections) {
+      if (section.type === 'Sample') {
+        if (section.sampleId === 0) {
+          add = true;
+        }
+
+        content += `\
+\`\`\`input${add ? section.sampleId + 1 : section.sampleId}
+${json.body.samples[section.sampleId].inputData}
+\`\`\`
+
+\`\`\`output${add ? section.sampleId + 1 : section.sampleId}
+${json.body.samples[section.sampleId].outputData}
+\`\`\`
+
+`;
+        if (section.text) {
+          content += `
+
+${section.text}
+
+`;
+        }
+      } else {
+        content += '## ' + section.sectionTitle + '\n';
+        content += '\n' + section.text + '\n\n';
+      }
+    }
+    const result = syzoj.utils.parseMarkdown(content);
+    problem.description = result.description;
+    problem.input_format = result.input_format;
+    problem.output_format = result.output_format;
+    problem.example = result.example;
+    problem.limit_and_hint = result.limit_and_hint;
+  }
+
+  let tags = json.body.tagsOfLocale.map((node) => node.name);
+  let tagIDs = (await tags.mapAsync(name => ProblemTag.findOne({ where: { name: String(name) } }))).filter(x => x).map(tag => tag.id);
+
+  problem.title = title;
+  problem.source = url;
+  problem.setTags(tagIDs);
+  await problem.save();
 }
 
 app.post('/problem/:id/import', async (req, res) => {
