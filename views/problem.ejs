@@ -88,6 +88,15 @@ if (isVJudge) testcases = [];
         <% } %>
      </div>
     <% } %>
+    <% if (problem.tags && problem.tags.length && problem.allowedManage) { %>
+      <div class="row" style="margin-top: -23px">
+        <% for (let tag of problem.tags) { %>
+          <a href="<%= syzoj.utils.makeUrl(['problems', 'tag', tag.id]) %>" class="ui <%= tag.color %> label">
+            <%= tag.name %>
+          </a>
+        <% } %>
+      </div>
+    <% } %>
 </div>
 <div class="ui grid">
   <div class="row">
@@ -165,88 +174,53 @@ if (isVJudge) testcases = [];
       <% } %>
     </div>
   </div>
-  <% if (problem.tags && problem.tags.length && (typeof contest === 'undefined' || !contest)) { %>
-  <div class="row">
-    <div class="column">
-      <% if (!problem.allowedManage) { %>
-      <h4 class="ui block header" id="show_tag_title_div" style="margin-bottom: 0; margin-left: -1px; margin-right: -1px; "><a href="javascript:void(0)" id="show_tag_button" style="color: #000; ">显示标签</a></h4>
-      <div class="ui bottom attached segment" style="display: none; " id="show_tag_div">
-        <% for (let tag of problem.tags) { %>
-        <a href="<%= syzoj.utils.makeUrl(['problems', 'tag', tag.id]) %>" class="ui medium <%= tag.color %> label">
-          <%= tag.name %>
-        </a>
-        <% } %>
-      </div>
-      <script>
-        $(function() {
-          $('#show_tag_button').click(function(e) {
-            e.preventDefault();
-            $('#show_tag_title_div').addClass('top attached');
-            $('#show_tag_title_div').text('分类标签');
-            $('#show_tag_div').css('display', '');
-          });
-        });
-      </script>
-      <% } else { %>
-      <h4 class="ui block header top attached" id="show_tag_title_div" style="margin-bottom: 0; margin-left: -1px; margin-right: -1px; "><a href="javascript:void(0)" id="show_tag_button" style="color: #000; ">标签分类</a></h4>
-      <div class="ui bottom attached segment" id="show_tag_div">
-        <% for (let tag of problem.tags) { %>
-        <a href="<%= syzoj.utils.makeUrl(['problems', 'tag', tag.id]) %>" class="ui medium <%= tag.color %> label">
-          <%= tag.name %>
-        </a>
-        <% } %>
-      </div>
-      <% } %>
-    </div>
-  </div>
-  <% } %>
   <% if (problem.description) { %>
   <div class="row">
     <div class="column">
-      <h4 class="ui top attached block header">题目描述</h4>
-      <div class="ui bottom attached segment font-content"><%- problem.description %></div>
+      <h2 class="ui header">题目描述</h2>
+      <div><%- problem.description %></div>
     </div>
   </div>
   <% } %>
   <% if (problem.input_format) { %>
   <div class="row">
     <div class="column">
-        <h4 class="ui top attached block header">
+        <h2 class="ui header">
           输入格式 
           <% if (problem.file_io) { %>
             <code style="margin-left: 4px;"><%= problem.file_io_input_name %></code>
           <% } %>
-        </h4>
-        <div class="ui bottom attached segment font-content"><%- problem.input_format %></div>
+        </h2>
+        <div class="font-content"><%- problem.input_format %></div>
     </div>
   </div>
   <% } %>
   <% if (problem.output_format) { %>
     <div class="row">
         <div class="column">
-          <h4 class="ui top attached block header">
+          <h2 class="ui header">
             输出格式 
             <% if (problem.file_io) { %>
               <code style="margin-left: 4px;"><%= problem.file_io_output_name %></code>
             <% } %>
-          </h4>
-          <div class="ui bottom attached segment font-content"><%- problem.output_format %></div>
+          </h2>
+          <div class="font-content"><%- problem.output_format %></div>
         </div>
     </div>
   <% } %>
   <% if (problem.example) { %>
     <div class="row">
         <div class="column">
-          <h4 class="ui top attached block header">样例</h4>
-          <div class="ui bottom attached segment font-content"><%- problem.example %></div>
+          <h2 class="ui header">样例</h2>
+          <div class="font-content"><%- problem.example %></div>
         </div>
     </div>
   <% } %>
   <% if (problem.limit_and_hint) { %>
     <div class="row">
         <div class="column">
-          <h4 class="ui top attached block header">数据范围与提示</h4>
-          <div class="ui bottom attached segment font-content"><%- problem.limit_and_hint %></div>
+          <h2 class="ui header">数据范围与提示</h2>
+          <div class="font-content"><%- problem.limit_and_hint %></div>
         </div>
     </div>
   <% } %>
