@@ -185,28 +185,32 @@ if (isVJudge) testcases = [];
   <% if (problem.input_format) { %>
   <div class="row">
     <div class="column">
-        <h2 class="ui header">
-          输入格式 
-          <% if (problem.file_io) { %>
-            <code style="margin-left: 4px;"><%= problem.file_io_input_name %></code>
-          <% } %>
-        </h2>
-        <div class="font-content"><%- problem.input_format %></div>
+      <h2 class="ui header">
+        输入格式 
+        <% if (problem.file_io) { %>
+        <span class="ui small label">
+          <%= problem.file_io_input_name %>
+        </span>
+        <% } %>
+      </h2>
+      <div class="font-content"><%- problem.input_format %></div>
     </div>
   </div>
   <% } %>
   <% if (problem.output_format) { %>
-    <div class="row">
-        <div class="column">
-          <h2 class="ui header">
-            输出格式 
-            <% if (problem.file_io) { %>
-              <code style="margin-left: 4px;"><%= problem.file_io_output_name %></code>
-            <% } %>
-          </h2>
-          <div class="font-content"><%- problem.output_format %></div>
-        </div>
+  <div class="row">
+    <div class="column">
+      <h2 class="ui header">
+        输出格式 
+        <% if (problem.file_io) { %>
+        <span class="ui small label">
+          <%= problem.file_io_output_name %>
+        </span>
+        <% } %>
+      </h2>
+      <div class="font-content"><%- problem.output_format %></div>
     </div>
+  </div>
   <% } %>
   <% if (problem.example) { %>
     <div class="row">
