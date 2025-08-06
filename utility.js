@@ -153,7 +153,7 @@ module.exports = {
       // 定义需要剔除的常见顶级域后缀
       const suffixes = [
         '.com', '.net', '.org', '.io', '.co', '.co.uk', '.edu',
-        '.gov', '.cn', '.com.cn', '.jp', '.de', '.fr', '.ru', '.info', '.guru',
+        '.gov', '.cn', '.com.cn', '.edu.cn', '.jp', '.de', '.fr', '.ru', '.info', '.guru',
         '.biz', '.name', '.xyz', '.top', '.site', '.tech',
         '.ai', '.me', '.uk', '.us', '.ca', '.au', '.in', '.kr',
         '.br', '.za', '.ac'
