@@ -234,6 +234,7 @@ module.exports = {
       '## 输入格式': 'input_format',
       '## 输出格式': 'output_format',
       '## 说明/提示': 'limit_and_hint',
+      '## 数据范围': 'limit_and_hint',
       '## 数据范围与提示': 'limit_and_hint'
     };
 

@@ -134,23 +134,16 @@ async function importFromLoj(problem, url) {
         if (section.sampleId === 0) {
           add = true;
         }
-
-        content += `\
-\`\`\`input${add ? section.sampleId + 1 : section.sampleId}
-${json.body.samples[section.sampleId].inputData}
-\`\`\`
-
-\`\`\`output${add ? section.sampleId + 1 : section.sampleId}
-${json.body.samples[section.sampleId].outputData}
-\`\`\`
-
-`;
+        content += '```input' + (add ? section.sampleId + 1 : section.sampleId) + '\n';
+        content += json.body.samples[section.sampleId].inputData + '\n';
+        content += '```\n\n';
+        content += '```output' + (add ? section.sampleId + 1 : section.sampleId) + '\n';
+        content += json.body.samples[section.sampleId].outputData + '\n';
+        content += '```\n';
         if (section.text) {
-          content += `
-
-${section.text}
-
-`;
+          content += '\n';
+          content += section.text + '\n';
+          content += '\n';
         }
       } else {
         content += '## ' + section.sectionTitle + '\n';
