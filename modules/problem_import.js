@@ -69,6 +69,7 @@ async function importFromSyzoj(problem, url) {
   await problem.setTags(tagIDs);
   await problem.save();
 
+  const fs = require('fs-extra');
   let download = require('download');
   let tmp = require('tmp-promise');
   let tmpFile = await tmp.file();
@@ -76,11 +77,11 @@ async function importFromSyzoj(problem, url) {
   try {
     let data = await download(url + 'testdata/download');
     await fs.writeFile(tmpFile.path, data);
-    await problem.updateTestdata(tmpFile.path, await res.locals.user.hasPrivilege('manage_problem'));
+    await problem.updateTestdata(tmpFile.path, true);
     if (json.obj.have_additional_file) {
       let additional_file = await download(url + 'download/additional_file');
       await fs.writeFile(tmpFile.path, additional_file);
-      await problem.updateFile(tmpFile.path, 'additional_file', await res.locals.user.hasPrivilege('manage_problem'));
+      await problem.updateFile(tmpFile.path, 'additional_file', true);
     }
   } catch (e) {
     syzoj.log(e);
