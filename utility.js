@@ -235,6 +235,7 @@ module.exports = {
       '## 输出格式': 'output_format',
       '## 说明/提示': 'limit_and_hint',
       '## 数据范围': 'limit_and_hint',
+      '## 限制条件': 'limit_and_hint',
       '## 数据范围与提示': 'limit_and_hint'
     };
 
