@@ -64,6 +64,8 @@ a.black-link:hover {
   margin-bottom: 3px;
 }
 
+
+.ui.message,
 .hljs {
     background: #FFF !important;
 }
