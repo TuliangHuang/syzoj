@@ -119,9 +119,6 @@ if (isVJudge) testcases = [];
           <% } %>
           <a class="small ui positive button" href="<%= syzoj.utils.makeUrl(['submissions'], { problem_id: problem.id }) %>">提交记录</a>
           <a class="small ui orange button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'statistics', problem.type === 'submit-answer' ? 'shortest' : 'fastest']) %>">统计</a>
-          <% if (!isVJudge && problem.allowedEdit) { %>
-          <a class="small ui yellow button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'testdata']) %>">测试数据</a>
-          <% } %>
           <% if (problem.additional_file) { %>
             <a class="small ui teal button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'download', 'additional_file']) %>">附加文件</a>
           <% } %>
@@ -138,6 +135,7 @@ if (isVJudge) testcases = [];
           <% if (problem.allowedEdit) { %>
             <a class="small ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'edit']) %>">编辑</a>
             <% if (!isVJudge) { %>
+            <a class="small ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'testdata']) %>">数据</a>
             <a class="small ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'manage']) %>">管理</a>
             <% } %>
           <% } %>
