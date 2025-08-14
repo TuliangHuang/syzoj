@@ -233,22 +233,32 @@ module.exports = {
 
     let current = null;
     const map = {
-      '## 题目描述': 'description',
-      '## 输入格式': 'input_format',
-      '## 输出格式': 'output_format',
-      '## 说明/提示': 'limit_and_hint',
-      '## 数据范围': 'limit_and_hint',
-      '## 限制条件': 'limit_and_hint',
-      '## 数据范围与提示': 'limit_and_hint'
+      '题目描述': 'description',
+      '问题描述': 'description',
+      '输入格式': 'input_format',
+      '输出格式': 'output_format',
+      '说明/提示': 'limit_and_hint',
+      '数据范围': 'limit_and_hint',
+      '限制条件': 'limit_and_hint',
+      '数据范围与提示': 'limit_and_hint'
     };
 
     const inputRe = /^```input([^}]+)/;
     const outputRe = /^```output([^}]+)/;
+    const prefixRe = /^(#{2,3})\s*(.+)/;
 
     for (let line of lines) {
-      if (line.startsWith('## ')) {
-        current = line.startsWith('## 输入输出样例') ? 'example' : map[line.trim()] || null;
+      if (line.startsWith('## 输入输出样例')) {
+        current = 'example';
         continue;
+      }
+      const m = line.match(prefixRe);
+      if (m) {
+        const header = m[2].trim();
+        if (map[header]) {
+          current = map[header];
+          continue;
+        }
       }
       // 优先处理 input / output 标签行
       if (inputRe.test(line)) {
