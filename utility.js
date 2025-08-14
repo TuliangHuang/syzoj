@@ -179,6 +179,9 @@ module.exports = {
       return 'unknown';
     }
   },
+  parseLuoguUrl(url) {
+    return url.split('/').pop();
+  },
   parseMarkdown(code) {
     const lines = code.split('\n');
     const result = { title: null, description: '', input_format: '', output_format: '', example: '', limit_and_hint: '' };

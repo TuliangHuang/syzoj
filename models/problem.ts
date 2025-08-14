@@ -64,6 +64,9 @@ export default class Problem extends Model {
   source: string;
 
   @TypeORM.Column({ nullable: true, type: "text" })
+  luogu_url: string;
+
+  @TypeORM.Column({ nullable: true, type: "text" })
   description: string;
 
   @TypeORM.Column({ nullable: true, type: "text" })
