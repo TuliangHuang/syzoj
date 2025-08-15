@@ -268,7 +268,7 @@ app.get('/problem/:id/export', async (req, res) => {
   try {
     let id = parseInt(req.params.id);
     let problem = await Problem.findById(id);
-    if (!problem || !problem.is_public) throw new ErrorMessage('无此题目。');
+    if (!problem) throw new ErrorMessage('无此题目。');
     if (!await problem.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
 
     let obj = {
@@ -293,6 +293,30 @@ app.get('/problem/:id/export', async (req, res) => {
     obj.tags = tags.map(tag => tag.name);
 
     res.send({ success: true, obj: obj });
+  } catch (e) {
+    syzoj.log(e);
+    res.send({ success: false, error: e });
+  }
+});
+
+app.get('/problem/:id/raw', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const problem = await Problem.findById(id);
+
+    if (!problem) throw new ErrorMessage('无此题目。');
+    if (!await problem.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
+
+    const s = (v) => (v == null ? '' : String(v).trim()); // safe string
+    let markdown = `# ${s(problem.title)}\n\n`;
+    markdown += `## 题目描述\n\n${s(problem.description)}\n\n`;
+    markdown += `## 输入格式\n\n${s(problem.input_format)}\n\n`;
+    markdown += `## 输出格式\n\n${s(problem.output_format)}\n\n`;
+    markdown += `## 样例\n\n${s(problem.example)}\n\n`;
+    markdown += `## 数据范围与提示\n\n${s(problem.limit_and_hint)}\n`;
+
+    res.set('Content-Type', 'text/markdown; charset=utf-8'); // RFC 7763
+    res.send(markdown);
   } catch (e) {
     syzoj.log(e);
     res.send({ success: false, error: e });
