@@ -64,7 +64,7 @@
     </template>
   </code-box>
   <code-box v-if="detailResult && detailResult.compile" no-escape title="编译信息" v-bind:content="detailResult.compile.message"></code-box>
-  <code-box v-if="detailResult" title="系统信息" v-bind:content="detailResult.systemMessage"></code-box>
+  <code-box v-if="detailResult" no-escape title="系统信息" v-bind:content="detailResult.systemMessage"></code-box>
 
   <div class="ui styled fluid accordion" :class="singleSubtask ? 'single-subtask' : '' " v-if="detailResult && detailResult.judge && detailResult.judge.subtasks">
     <template v-for="subtask, $index in detailResult.judge.subtasks">
