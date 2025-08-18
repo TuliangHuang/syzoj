@@ -156,7 +156,7 @@ module.exports = {
         '.gov', '.cn', '.com.cn', '.edu.cn', '.jp', '.de', '.fr', '.ru', '.info', '.guru',
         '.biz', '.name', '.xyz', '.top', '.site', '.tech',
         '.ai', '.me', '.uk', '.us', '.ca', '.au', '.in', '.kr',
-        '.br', '.za', '.ac'
+        '.br', '.za', '.ac', '.hr'
       ];
       // 按长度降序排序，先匹配长后缀（例如 .co.uk 早于 .uk）
       suffixes.sort((a, b) => b.length - a.length);
