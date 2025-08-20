@@ -397,6 +397,7 @@ app.post('/problem/:id/edit', async (req, res) => {
     problem.title = req.body.title;
     problem.source = req.body.source;
     problem.luogu_url = req.body.luogu_url;
+    problem.bzoj_id = req.body.bzoj_id ? req.body.bzoj_id : null;
     problem.description = req.body.description;
     problem.input_format = req.body.input_format;
     problem.output_format = req.body.output_format;

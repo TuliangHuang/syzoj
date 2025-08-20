@@ -66,6 +66,9 @@ export default class Problem extends Model {
   @TypeORM.Column({ nullable: true, type: "text" })
   luogu_url: string;
 
+  @TypeORM.Column({ nullable: true, type: "integer" })
+  bzoj_id: number;
+
   @TypeORM.Column({ nullable: true, type: "text" })
   description: string;
 

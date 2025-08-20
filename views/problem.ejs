@@ -92,6 +92,12 @@ if (isVJudge) testcases = [];
             <a class="detail" href="<%= problem.luogu_url %>"><%= syzoj.utils.parseLuoguUrl(problem.luogu_url) %></a>
           </div>
         <% } %>
+        <% if (problem.bzoj_id) { %>
+          <div class="ui label">
+            BZOJ
+            <a class="detail">#<%= problem.bzoj_id %></a>
+          </div>
+        <% } %>
      </div>
     <% } %>
     <% if (problem.tags && problem.tags.length && problem.allowedManage) { %>

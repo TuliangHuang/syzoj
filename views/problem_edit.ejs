@@ -34,14 +34,18 @@
               <option value="<%= tag.id %>" selected><%= tag.name %></option>
             <% } %>
           </select>
-          <div class="two fields">
-            <div class="field">
+          <div class="fields">
+            <div class="seven wide field">
               <label style="margin-top: 15px; " for="source">原题链接</label>
             <input class="font-content" type="text" id="source" name="source" value="<%= problem.source %>">
             </div>
-            <div class="field">
+            <div class="seven wide field">
               <label style="margin-top: 15px; " for="luogu_url">洛谷链接</label>
               <input class="font-content" type="text" id="luogu_url" name="luogu_url" value="<%= problem.luogu_url %>">
+            </div>
+            <div class="two wide field">
+              <label style="margin-top: 15px; " for="bzoj_id">BZOJ</label>
+              <input class="font-content" type="number" id="bzoj_id" name="bzoj_id" value="<%= problem.bzoj_id %>">
             </div>
           </div>
           <label style="margin-top: 15px; " for="description">题目描述</label>
