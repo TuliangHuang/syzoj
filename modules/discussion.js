@@ -73,6 +73,26 @@ app.get('/discussion/problem/:pid', async (req, res) => {
   }
 });
 
+app.get('/slides/:id', async (req, res) => {
+  try {
+    let id = parseInt(req.params.id);
+    let article = await Article.findById(id);
+    if (!article) throw new ErrorMessage('无此帖子。');
+
+    await article.loadRelationships();
+    article.allowedEdit = await article.isAllowedEditBy(res.locals.user);
+    article.allowedComment = await article.isAllowedCommentBy(res.locals.user);
+    res.render('slides', {
+      article: article,
+    });
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
 app.get('/article/:id', async (req, res) => {
   try {
     let id = parseInt(req.params.id);

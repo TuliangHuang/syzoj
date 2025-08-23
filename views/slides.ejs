@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title><%= article.title %></title>
+
+		<link rel="stylesheet" href="/revealjs/dist/reset.css">
+		<link rel="stylesheet" href="/revealjs/dist/reveal.css">
+		<link rel="stylesheet" href="/revealjs/dist/theme/serif.css">
+
+		<!-- Theme used for syntax highlighted code -->
+		<link rel="stylesheet" href="/revealjs/plugin/highlight/humanoid-light.css">
+
+		<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+		<link rel="manifest" href="favicon/site.webmanifest">
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section
+					data-markdown
+					data-transition="slide"
+					data-separator="^\r?\n----\r?\n$"
+					data-separator-vertical="^\r?\n--\r?\n$"
+					data-separator-notes="^Note:"
+				>
+					<textarea data-template>
+						<%= article.content %>
+					</textarea>
+				</section>
+            </div>
+		</div>
+		<script src="/revealjs/dist/reveal.js"></script>
+		<script src="/revealjs/plugin/notes/notes.js"></script>
+		<script src="/revealjs/plugin/markdown/markdown.js"></script>
+		<script src="/revealjs/plugin/highlight/highlight.js"></script>
+		<script src="/revealjs/plugin/math/math.js"></script>
+		<script>
+			// More info about initialization & config:
+			// - https://revealjs.com/initialization/
+			// - https://revealjs.com/config/
+			Reveal.initialize({
+				hash: true,
+
+				// Learn about plugins: https://revealjs.com/plugins/
+				plugins: [RevealMarkdown, RevealHighlight, RevealNotes, RevealMath.KaTeX]
+			});
+		</script>
+	</body>
+</html>

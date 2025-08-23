@@ -18,14 +18,15 @@
     <% } %>
   </div>
   <h1><%= article.title %></h1>
- 	<p style="margin-bottom: -5px; ">
-	<img style="vertical-align: middle; margin-bottom: 2px; margin-right: 2px; " src="<%= syzoj.utils.gravatar(article.user.email, 34) %>" width="17" height="17">
+  <div class="ui grid">
+  <div class="row"><div class="column">
+	<img style="vertical-align: middle; margin-right: 2px; " src="<%= syzoj.utils.gravatar(article.user.email, 34) %>" width="17" height="17">
 	<b style="margin-right: 30px; "><a class="black-link" href="<%= syzoj.utils.makeUrl(['user', article.user_id]) %>"><%= article.user.username %></a><% if (article.user.nameplate) { %><%- article.user.nameplate %><% } %></b>
 	<b style="margin-right: 30px; "><i class="calendar icon"></i> <%= syzoj.utils.formatDate(article.public_time) %></b>
 	<% if (article.public_time !== article.update_time) { %><b style="margin-right: 30px; "><i class="edit icon"></i> <%= syzoj.utils.formatDate(article.update_time) %></b><% } %>
-        <% if (article.allowedEdit) { %>
-        <a style="margin-top: -4px; " class="ui mini right floated labeled icon button" href="<%= syzoj.utils.makeUrl(['article', article.id, 'edit']) %>"><i class="ui edit icon"></i>编辑</a>
-        <a style="margin-top: -4px; margin-right: 3px; " class="ui mini red right floated labeled icon button" onclick="$('#modal-delete').modal('show')"><i class="ui trash icon"></i>删除</a>
+  <div class="ui mini buttons right floated">
+    <% if (article.allowedEdit) { %>
+        <a class="ui red labeled icon button" onclick="$('#modal-delete').modal('show')"><i class="ui trash icon"></i>删除</a>
         <div class="ui basic modal right floated" id="modal-delete">
           <div class="ui icon header">
             <i class="trash icon"></i>
@@ -45,10 +46,15 @@
             </a>
           </div>
         </div>
-        <% } %>
- 	</p>
-  <div class="ui existing segment">
+        <a class="ui labeled icon button" href="<%= syzoj.utils.makeUrl(['article', article.id, 'edit']) %>"><i class="ui edit icon"></i>编辑</a>
+    <% } %>
+    <a class="ui teal labeled icon button" href="<%= syzoj.utils.makeUrl(['slides', article.id]) %>"><i class="ui microphone icon"></i>演示</a>
+  </div>
+ 	</div></div>
+  <div class="row"><div class="column">
 	  <div id="content" class="font-content"><%- article.content %></div>
+  </div></div>
+  <div class="row"></div>
   </div>
   <% if (comments.length) { %>
   <div class="ui comments" style="max-width: none;">
