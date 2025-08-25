@@ -11,7 +11,7 @@
 		<link rel="stylesheet" href="/revealjs/dist/theme/serif.css">
 
 		<!-- Theme used for syntax highlighted code -->
-		<link rel="stylesheet" href="/revealjs/plugin/highlight/humanoid-light.css">
+		<link rel="stylesheet" href="/revealjs/plugin/highlight/edge-light.css">
 
 		<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
@@ -23,7 +23,6 @@
 			<div class="slides">
 				<section
 					data-markdown
-					data-transition="slide"
 					data-separator="^\r?\n----\r?\n$"
 					data-separator-vertical="^\r?\n--\r?\n$"
 					data-separator-notes="^Note:"
@@ -44,6 +43,9 @@
 			// - https://revealjs.com/initialization/
 			// - https://revealjs.com/config/
 			Reveal.initialize({
+				transition: 'none',
+  				backgroundTransition: 'none',
+
 				hash: true,
 
 				// Learn about plugins: https://revealjs.com/plugins/
