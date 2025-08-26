@@ -199,12 +199,20 @@ app.post('/article/:id/edit', async (req, res) => {
 
     await article.save();
 
-    res.redirect(syzoj.utils.makeUrl(['article', article.id]));
+    if (req.xhr || (req.headers['accept'] && req.headers['accept'].includes('application/json'))) {
+      res.json({ success: true, id: article.id });
+    } else {
+      res.redirect(syzoj.utils.makeUrl(['article', article.id]));
+    }
   } catch (e) {
     syzoj.log(e);
-    res.render('error', {
-      err: e
-    });
+    if (req.xhr || (req.headers['accept'] && req.headers['accept'].includes('application/json'))) {
+      res.status(400).json({ success: false, error: e.message || '保存失败' });
+    } else {
+      res.render('error', {
+        err: e
+      });
+    }
   }
 });
 

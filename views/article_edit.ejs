@@ -19,7 +19,7 @@
         </div>
         <div class="field">
           <label for="content">内容</label>
-          <textarea rows="15" id="content" name="content" class="markdown-edit"><%= article.content %></textarea>
+          <textarea rows="30" id="content" name="content" class="markdown-edit"><%= article.content %></textarea>
         </div>
       </div>
 
@@ -36,6 +36,9 @@
       <div id="pv-content" class="font-content"></div>
     </div>
     <div style="text-align: center; ">
+    <button id="save_button" type="button" class="ui labeled submit icon button">
+      <i class="save icon"></i> 保存
+    </button>
     <button id="submit_button" type="submit" class="ui labeled submit icon button">
       <i class="icon edit"></i> 提交
     </button>
@@ -56,6 +59,39 @@ $(function () {
       render($("#pv-content"), $("#content"));
     });
     $('.tabular.menu .item').tab();
+
+    var $form = $('form');
+    $('#save_button').click(function (e) {
+      e.preventDefault();
+      var $btn = $(this).addClass('loading disabled');
+      $.ajax({
+        type: 'POST',
+        url: window.location.pathname + window.location.search,
+        data: $form.serialize(),
+        dataType: 'json'
+      }).done(function (resp) {
+        if (resp && resp.success) {
+          var newId = resp.id;
+          var match = window.location.pathname.match(/\/article\/(\d+)\/edit/);
+          if (match && parseInt(match[1]) !== newId) {
+            var newPath = '/article/' + newId + '/edit';
+            var newUrl = newPath + window.location.search;
+            history.replaceState(null, document.title, newUrl);
+          }
+          $btn.removeClass('loading').removeClass('disabled').addClass('positive').html('<i class="check icon"></i> 已保存');
+        } else {
+          var msg = (resp && resp.error) || '保存失败';
+          alert(msg);
+        }
+      }).fail(function (xhr) {
+        var msg = (xhr.responseJSON && xhr.responseJSON.error) || '保存失败';
+        alert(msg);
+      }).always(function () {
+        setTimeout(function () {
+          $btn.removeClass('positive').removeClass('loading').removeClass('disabled').html('<i class="save icon"></i> 保存');
+        }, 800);
+      });
+    });
 })
 </script>
 <% include footer %>
