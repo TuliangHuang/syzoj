@@ -76,7 +76,8 @@
             </div>
             <div class="ui bottom attached tab segment" data-tab="contest-problems">
               <div class="field">
-                <div class="ui fluid action input">
+                <label>添加题目</label>
+                <div class="ui fluid input">
                   <select class="ui fluid search dropdown" multiple="" id="search_problems"></select>
                 </div>
               </div>
@@ -84,7 +85,7 @@
                 <table class="ui very basic table" id="problems_table">
                   <thead>
                     <tr>
-                      <th>题目</th>
+                      <th>题目列表</th>
                       <th style="width: 160px;">权重</th>
                       <th style="width: 120px;">操作</th>
                     </tr>
@@ -152,8 +153,6 @@ $(function () {
 
   initSearchDropdown('#search_admins', '/api/v2/search/users/{query}');
   initSearchDropdown('#search_problems', '/api/v2/search/problems/{query}', {
-    placeholder: '添加题目...',
-    prompt: '添加题目...',
     message: { noResults: '无匹配题目' },
     onAdd: function(value, text, $choice) {
       var id = parseInt(value);
@@ -342,6 +341,7 @@ $(function () {
     #problems_table .drag-handle{cursor: grab;}\
     #problems_table .ops-cell .button, #problems_table .drag-origin .button{margin-right: .25rem;}\
     #problems_table .drag-origin .button:last-child{margin-right: .5rem;}\
+    #problems_table .drag-origin{padding-left: .5rem;}\
     #problems_table tbody tr.focused{outline: 2px solid rgba(33,133,208,.35);}\
     #problems_table tbody tr.dragging td{padding-top: .7rem; padding-bottom: .7rem;}\
     #problems_table tbody tr.drop-placeholder td{padding-top: .6rem; padding-bottom: .6rem;}\
