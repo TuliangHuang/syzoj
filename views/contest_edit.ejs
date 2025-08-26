@@ -3,6 +3,11 @@
 <div class="padding">
         <form action="<%= syzoj.utils.makeUrl(['contest', contest.id, 'edit']) %>" method="post">
           <div class="ui form">
+            <div class="ui top attached tabular menu" id="contest_tab_menu">
+              <a class="active item" data-tab="contest-info">比赛信息</a>
+              <a class="item" data-tab="contest-problems">题目管理</a>
+            </div>
+            <div class="ui bottom attached active tab segment" data-tab="contest-info">
               <div class="field">
                 <label>比赛名称</label>
                 <input type="text" name="title" id="contest_title" required value="<%= contest.title %>">
@@ -11,14 +16,7 @@
                 <label>比赛描述</label>
                 <input type="text" name="subtitle" class="markdown-edit" value="<%= contest.subtitle %>">
               </div>
-            <div class="field">
-                <label>试题列表</label>
-                <select class="ui fluid search dropdown" multiple="" id="search_problems" name="problems">
-                <% for (let problem of problems) { %>
-                <option value="<%= problem.id %>" selected>#<%= problem.id %>. <%= problem.title %></option>
-                <% } %>
-                </select>
-            </div>
+            
             <div class="field">
                 <label>比赛管理员</label>
                 <select class="ui fluid search dropdown" multiple="" id="search_admins" name="admins">
@@ -48,10 +46,7 @@
                 </div>
               </div>
             </div>
-            <div class="field">
-                <label>排行参数（格式：<code>{ "题目 ID": 分值倍数 }</code>）</label>
-                <input type="text" name="ranking_params" value="<%= contest.ranklist ? JSON.stringify(contest.ranklist.ranking_params) : '' %>">
-            </div>
+
             <div class="field">
                 <label>比赛公告</label>
                 <textarea rows="5" name="information" class="markdown-edit"><%= contest.information %></textarea>
@@ -78,14 +73,66 @@
                 <label><span style="visibility: hidden; ">　</span></label>
               </div>
             </div>
-            <div style="text-align: center; "><button id="submit_button" type="submit" class="ui labeled icon blue button"><i class="ui edit icon"></i>提交</button></div>
+            </div>
+            <div class="ui bottom attached tab segment" data-tab="contest-problems">
+              <div class="field">
+                <div class="ui fluid action input">
+                  <select class="ui fluid search dropdown" multiple="" id="search_problems"></select>
+                </div>
+              </div>
+              <div class="field">
+                <table class="ui very basic table" id="problems_table">
+                  <thead>
+                    <tr>
+                      <th>题目</th>
+                      <th style="width: 160px;">权重</th>
+                      <th style="width: 120px;">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% for (let problem of problems) { %>
+                    <tr data-problem-id="<%= problem.id %>" data-problem-title="<%= problem.title %>">
+                      <td class="drag-origin">
+                        #<%= problem.id %>. <%= problem.title %>
+                        <input type="hidden" name="problems" value="<%= problem.id %>">
+                      </td>
+                      <td>
+                        <div class="ui mini input" style="width: 120px;">
+                          <input type="text" placeholder="输入权重..." class="problem-weight" data-problem-id="<%= problem.id %>" value="<%= contest.ranklist && contest.ranklist.ranking_params && contest.ranklist.ranking_params[problem.id] ? contest.ranklist.ranking_params[problem.id] : '' %>">
+                        </div>
+                      </td>
+                      <td class="ops-cell">
+                        <button type="button" class="ui mini basic icon button move-up" title="上移">
+                          <i class="angle up icon"></i>
+                        </button>
+                        <button type="button" class="ui mini basic icon button move-down" title="下移">
+                          <i class="angle down icon"></i>
+                        </button>
+                        <button type="button" class="ui mini red basic icon button remove-problem" title="删除">
+                          <i class="trash icon"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    <% } %>
+                  </tbody>
+                </table>
+                
+                
+              </div>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+              <button id="submit_button" type="submit" class="ui labeled icon blue button"><i class="ui edit icon"></i>提交</button>
+            </div>
           </div>
         </form>
 <script>
 $(function () {
-  const initSearchDropdown = function(selector, url) {
+  // 初始化 Tab
+  $('#contest_tab_menu .item').tab();
+
+  const initSearchDropdown = function(selector, url, extraOptions) {
     var $el = $(selector);
-    $el.dropdown({
+    var baseOptions = {
       debug: false,
       saveRemoteData: false,
       apiSettings: {
@@ -99,11 +146,239 @@ $(function () {
         },
         cache: false
       }
-    });
+    };
+    $el.dropdown($.extend(true, {}, baseOptions, extraOptions || {}));
   };
 
   initSearchDropdown('#search_admins', '/api/v2/search/users/{query}');
-  initSearchDropdown('#search_problems', '/api/v2/search/problems/{query}');
+  initSearchDropdown('#search_problems', '/api/v2/search/problems/{query}', {
+    placeholder: '添加题目...',
+    prompt: '添加题目...',
+    message: { noResults: '无匹配题目' },
+    onAdd: function(value, text, $choice) {
+      var id = parseInt(value);
+      var $list = $('#problems_table tbody');
+      if ($list.find('[data-problem-id="' + id + '"]').length > 0) {
+        $('#search_problems').dropdown('remove selected', value);
+        return;
+      }
+      var title = text || '';
+      if ($choice && $choice.length) {
+        var dt = $choice.attr('data-text');
+        if (dt) { title = dt; }
+      }
+      var m = (title || '').trim().match(/^#?\s*\d+\.?\s*(.*)$/);
+      if (m && m[1]) { title = m[1].trim(); }
+
+      var $item = $('<tr draggable="true" data-problem-id="' + id + '" data-problem-title="' + title + '">\
+        <td class="drag-origin">\
+          #' + id + '. ' + title + '\
+          <input type="hidden" name="problems" value="' + id + '">\
+        </td>\
+        <td>\
+          <div class="ui mini input" style="width: 120px;">\
+            <input type="text" placeholder="输入权重..." class="problem-weight" data-problem-id="' + id + '">\
+          </div>\
+        </td>\
+        <td class="ops-cell">\
+          <button type="button" class="ui mini basic icon button move-up" title="上移">\
+            <i class="angle up icon"></i>\
+          </button>\
+          <button type="button" class="ui mini basic icon button move-down" title="下移">\
+            <i class="angle down icon"></i>\
+          </button>\
+          <button type="button" class="ui mini red basic icon button remove-problem" title="删除">\
+            <i class="trash icon"></i>\
+          </button>\
+        </td>\
+      </tr>');
+      $list.append($item);
+      $('#search_problems').dropdown('remove selected', value);
+    }
+  });
+
+  // 使用 onAdd 回调添加试题，移除了 change 监听以避免 race condition
+
+  // 删除试题
+  $(document).on('click', '.remove-problem', function() {
+    $(this).closest('tr').remove();
+  });
+
+  // 拖拽排序（委托绑定避免重复绑定）
+  (function enableDragSort() {
+    var $list = $('#problems_table tbody');
+    var dragSrcEl = null;
+    var placeholder = $('<tr class="drop-placeholder"><td colspan="3"></td></tr>');
+
+    function clearStates(){
+      $list.children('tr').removeClass('over dragging insert-before insert-after');
+      placeholder.remove();
+      dragSrcEl = null;
+    }
+
+    $list.on('dragstart', 'tr', function(e){
+      if ($(e.target).closest('.ops-cell').length) return; // 忽略在操作区开始的拖动
+      dragSrcEl = this;
+      $(this).addClass('dragging');
+      e.originalEvent.dataTransfer.effectAllowed = 'move';
+      try { e.originalEvent.dataTransfer.setData('text/plain', ''); } catch(_) {}
+      placeholder.height($(this).outerHeight());
+    });
+
+    // 行上的 dragover：根据鼠标上下半区移动占位符
+    $list.on('dragover', 'tr', function(e){
+      if (this === placeholder[0]) return;
+      e.preventDefault();
+      var rect = this.getBoundingClientRect();
+      var offset = e.originalEvent.clientY - rect.top;
+      if (offset < rect.height / 2) {
+        $(this).before(placeholder);
+      } else {
+        $(this).after(placeholder);
+      }
+    });
+
+    // tbody 上的 dragover：当不在任何行上方时，确保可以放到末尾
+    $list.on('dragover', function(e){
+      e.preventDefault();
+      if (!placeholder.parent().length) {
+        $list.append(placeholder);
+      }
+    });
+
+    // 放在某一行上
+    $list.on('drop', 'tr', function(e){
+      e.preventDefault();
+      if (!dragSrcEl) return;
+      var $drag = $(dragSrcEl);
+      if (placeholder.parent().length) {
+        placeholder.replaceWith($drag);
+      }
+      clearStates();
+    });
+
+    // 放在 tbody 空白区域/占位符上
+    $list.on('drop', function(e){
+      e.preventDefault();
+      if (!dragSrcEl) return;
+      var $drag = $(dragSrcEl);
+      if (placeholder.parent().length) {
+        placeholder.replaceWith($drag);
+      }
+      clearStates();
+    });
+
+    $list.on('dragend', 'tr', function(){
+      clearStates();
+    });
+  })();
+
+  // 允许按住题目整行或图标开启拖拽（动态设置 draggable）
+  (function enableRowDragFromTitle(){
+    var $tbody = $('#problems_table tbody');
+    $tbody.on('pointerdown', 'td.drag-origin, .drag-handle', function() {
+      var $row = $(this).closest('tr');
+      $row.attr('draggable', 'true');
+    });
+    $tbody.on('pointerup pointercancel pointerleave', function(e) {
+      var $row = $(e.target).closest('tr');
+      if ($row.length) $row.removeAttr('draggable');
+    });
+  })();
+
+  // 上下移动按钮
+  (function addMoveButtons(){
+    var $tbody = $('#problems_table tbody');
+    $tbody.on('click', '.move-up', function(){
+      var $row = $(this).closest('tr');
+      var $prev = $row.prev('tr');
+      if ($prev.length) { $prev.before($row); }
+    });
+    $tbody.on('click', '.move-down', function(){
+      var $row = $(this).closest('tr');
+      var $next = $row.next('tr');
+      if ($next.length) { $next.after($row); }
+    });
+  })();
+
+  // 提升拖拽灵敏度：仅在拖拽图标按下时启用拖拽
+  (function improveDragHandle() {
+    var $tbody = $('#problems_table tbody');
+    $tbody.on('pointerdown', '.drag-handle', function() {
+      var $row = $(this).closest('tr');
+      $row.attr('draggable', 'true');
+    });
+    $tbody.on('pointerup pointercancel pointerleave', function(e) {
+      var $row = $(e.target).closest('tr');
+      if ($row.length) $row.removeAttr('draggable');
+    });
+  })();
+
+  // 行选中与键盘快捷键 Alt+↑/↓ 移动
+  (function enableKeyboardMove(){
+    var $tbody = $('#problems_table tbody');
+    $tbody.on('click', 'tr', function(){
+      $tbody.children('tr').removeClass('focused');
+      $(this).addClass('focused');
+    });
+    $(document).on('keydown', function(e){
+      if (!e.altKey) return;
+      var $row = $tbody.children('tr.focused');
+      if (!$row.length) return;
+      if (e.key === 'ArrowUp') {
+        var $prev = $row.prev('tr');
+        if ($prev.length) { $prev.before($row); e.preventDefault(); }
+      } else if (e.key === 'ArrowDown') {
+        var $next = $row.next('tr');
+        if ($next.length) { $next.after($row); e.preventDefault(); }
+      }
+    });
+  })();
+
+  // 行样式反馈
+  $('<style>\
+    #problems_table tbody tr.dragging{background: rgba(33,133,208,.08);}\
+    #problems_table tbody tr.over{outline: 2px dashed rgba(33,133,208,.4);}\
+    #problems_table .drag-handle{cursor: grab;}\
+    #problems_table .ops-cell .button, #problems_table .drag-origin .button{margin-right: .25rem;}\
+    #problems_table .drag-origin .button:last-child{margin-right: .5rem;}\
+    #problems_table tbody tr.focused{outline: 2px solid rgba(33,133,208,.35);}\
+    #problems_table tbody tr.dragging td{padding-top: .7rem; padding-bottom: .7rem;}\
+    #problems_table tbody tr.drop-placeholder td{padding-top: .6rem; padding-bottom: .6rem;}\
+    /* 提示线与行之间增加留白 */\
+    #problems_table tbody tr.insert-before td{border-top: 2px solid #2185d0 !important; padding-top: .5rem;}\
+    #problems_table tbody tr.insert-after td{border-bottom: 2px solid #2185d0 !important; padding-bottom: .5rem;}\
+  </style>').appendTo(document.head);
+
+  // 提交前，确保按照列表顺序提交试题 ID 和权重
+  $('form').on('submit', function() {
+    var $list = $('#problems_table tbody');
+    var rankingParams = {};
+    
+    // 清理旧的隐藏输入
+    $list.find('input[type="hidden"][name="problems"]').remove();
+    
+    // 按当前顺序重新附加隐藏输入，并收集权重
+    $list.children('tr').each(function() {
+      var id = $(this).data('problem-id');
+      var weight = $(this).find('.problem-weight').val().trim();
+      
+      $('<input type="hidden" name="problems" />').val(id).appendTo($(this).children('td').first());
+      
+      // 如果有权重值，添加到排行参数
+      if (weight && !isNaN(parseFloat(weight))) {
+        rankingParams[id] = parseFloat(weight);
+      }
+    });
+    
+    // 更新排行参数隐藏输入（附加到表格下方以便提交）
+    var $rankingInput = $('input[name="ranking_params"]');
+    if ($rankingInput.length === 0) {
+      $('<input type="hidden" name="ranking_params" />').val(JSON.stringify(rankingParams)).appendTo($('#problems_table'));
+    } else {
+      $rankingInput.val(JSON.stringify(rankingParams));
+    }
+  });
 });
 </script>
 <% include footer %>
