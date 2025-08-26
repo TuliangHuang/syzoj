@@ -5,7 +5,7 @@
           <div class="ui form">
               <div class="field">
                 <label>比赛名称</label>
-                <input type="text" name="title" value="<%= contest.title %>">
+                <input type="text" name="title" id="contest_title" required value="<%= contest.title %>">
               </div>
               <div class="field">
                 <label>比赛描述</label>
@@ -83,38 +83,27 @@
         </form>
 <script>
 $(function () {
-  $('#search_admins')
-    .dropdown({
-      debug: true,
+  const initSearchDropdown = function(selector, url) {
+    var $el = $(selector);
+    $el.dropdown({
+      debug: false,
       saveRemoteData: false,
       apiSettings: {
-        url: '/api/v2/search/users/{query}',
-        onResponse: function (response) {
-          var a = $('#search_admins').val().map(function (x) { return parseInt(x) });
-          if (response.results) {
-            response.results = response.results.filter(function(x){ return !a.includes(parseInt(x.value))});
+        url: url,
+        onResponse: function(response) {
+          var selected = ($el.val() || []).map(function(value) { return parseInt(value); });
+          if (response && response.results) {
+            response.results = response.results.filter(function(item) { return !selected.includes(parseInt(item.value)); });
           }
           return response;
         },
         cache: false
       }
     });
-  $('#search_problems')
-    .dropdown({
-      debug: true,
-      saveRemoteData: false,
-      apiSettings: {
-        url: '/api/v2/search/problems/{query}',
-        onResponse: function (response) {
-          var a = $('#search_problems').val().map(function (x) { return parseInt(x) });
-          if (response.results) {
-            response.results = response.results.filter(function(x) {return !a.includes(parseInt(x.value));});
-          }
-          return response;
-        },
-        cache: false
-      }
-    });
+  };
+
+  initSearchDropdown('#search_admins', '/api/v2/search/users/{query}');
+  initSearchDropdown('#search_problems', '/api/v2/search/problems/{query}');
 });
 </script>
 <% include footer %>
