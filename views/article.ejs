@@ -2,24 +2,27 @@
 <% include header %>
 
 <div class="padding">
-  <div class="ui breadcrumb">
-    <div class="section">讨论</div>
-    <i class="right angle icon divider"></i>
-    <% if (problem) { %>
-      <div class="section"><a href="<%= syzoj.utils.makeUrl(['discussion', 'problems']) %>">题目</a></div>
-      <i class="right angle icon divider"></i>
-      <a href="<%= syzoj.utils.makeUrl(['discussion', 'problem', problem.id]) %>" class="active section"><%= problem.title %></a>
-    <% } else { %>
-      <a href="<%= syzoj.utils.makeUrl(['discussion', 'global']) %>" class="section">全局板块</a>
-    <% } %>
-  </div>
-  <div class="ui center aligned grid">
-    <div class="row">
-      <h1 class="ui header"><%= article.title %><% if (article.allowedEdit && !article.is_public) { %><span class="ui tiny red label">未公开</span><% } %></h1>
-    </div>
-  </div>
   <div class="ui grid">
+
+  <div class="row"><div class="column">
+    <div class="ui breadcrumb">
+      <div class="section">讨论</div>
+      <i class="right angle icon divider"></i>
+      <% if (problem) { %>
+        <div class="section"><a href="<%= syzoj.utils.makeUrl(['discussion', 'problems']) %>">题目</a></div>
+        <i class="right angle icon divider"></i>
+        <a href="<%= syzoj.utils.makeUrl(['discussion', 'problem', problem.id]) %>" class="active section"><%= problem.title %></a>
+      <% } else { %>
+        <a href="<%= syzoj.utils.makeUrl(['discussion', 'global']) %>" class="section">全局板块</a>
+      <% } %>
+    </div>
+  </div></div>
+
   <div class="row center aligned"><div class="column">
+    <h1 class="ui header"><%= article.title %><% if (article.allowedEdit && !article.is_public) { %><span class="ui tiny red label">未公开</span><% } %></h1>
+  </div></div>
+
+  <div class="row center aligned" style="margin-top: -15px"><div class="column">  
 	<img style="vertical-align: middle; margin-right: 2px; " src="<%= syzoj.utils.gravatar(article.user.email, 34) %>" width="17" height="17">
 	<b style="margin-right: 30px; "><a class="black-link" href="<%= syzoj.utils.makeUrl(['user', article.user_id]) %>"><%= article.user.username %></a><% if (article.user.nameplate) { %><%- article.user.nameplate %><% } %></b>
 	<b style="margin-right: 30px; "><i class="calendar icon"></i> <%= syzoj.utils.formatDate(article.public_time) %></b>
@@ -61,12 +64,17 @@
       <% } %>
     </div>
   </div></div>
+
   <div class="row"><div class="column">
-	  <div id="content" class="font-content"><%- article.content %></div>
+	  <div class="ui basic segment" style="border-left: 4px solid rgb(185, 185, 185); ">
+		<div id="content" class="font-content"><%- article.content %></div>
+	  </div>
   </div></div>
-  
-  <div class="row"><div class="column">
+
+  <div class="row"></div>
+
   <% if (comments.length) { %>
+  <div class="row"><div class="column">
   <div class="ui comments" style="max-width: none;">
     <h3 class="ui dividing header">共 <%= commentsCount %> 条回复</h3>
     <% for (let comment of comments) { %>
@@ -105,13 +113,14 @@
         </div>
       </div>
     <% } %>
-  </div></div>
   </div>
   <div style="margin-bottom: 50px; ">
     <% include page %>
   </div>
+  </div></div>
   <% } %>
-    <% if (article.allowedComment) { %>
+  <% if (article.allowedComment) { %>
+  <div class="row"><div class="column">
     <form class="ui reply form" method="post" action="<%= syzoj.utils.makeUrl(['article', article.id, 'comment']) %>">
       <div class="field">
         <textarea name="comment" class="markdown-edit"></textarea>
@@ -122,6 +131,7 @@
       </button>
       </div>
     </form>
+  </div></div>
   <% } %>
 </div>
 <% include footer %>
