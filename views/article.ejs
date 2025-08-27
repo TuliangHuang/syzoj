@@ -1,10 +1,6 @@
 <% this.title = article.title + ' - 帖子'; %>
 <% include header %>
-<style type="text/css" xmlns:style="http://www.w3.org/1999/xhtml">
-.small{
-  font-size: 0.7em;
-}
-</style>
+
 <div class="padding">
   <div class="ui breadcrumb">
     <div class="section">讨论</div>
@@ -31,18 +27,18 @@
 	</div></div>
 
   <div class="row"><div class="column">
-    <div class="ui buttons">
-      <a class="small ui teal button" href="<%= syzoj.utils.makeUrl(['slides', article.id]) %>">演示</a>
+    <div class="ui tiny buttons">
+      <a class=" ui teal button" href="<%= syzoj.utils.makeUrl(['slides', article.id]) %>">演示</a>
     </div>
-    <div class="ui buttons right floated">
+    <div class="ui tiny buttons right floated">
       <% if (article.allowedEdit) { %>
-        <a class="small ui button" href="<%= syzoj.utils.makeUrl(['article', article.id, 'edit']) %>">编辑</a>
+        <a class="ui button" href="<%= syzoj.utils.makeUrl(['article', article.id, 'edit']) %>">编辑</a>
         <% if (article.is_public) { %>
-          <a class="small ui button" href-post="<%= syzoj.utils.makeUrl(['article', article.id, 'dis_public']) %>">取消公开</a>
+          <a class="ui button" href-post="<%= syzoj.utils.makeUrl(['article', article.id, 'dis_public']) %>">取消公开</a>
         <% } else { %>
-          <a class="small ui button" href-post="<%= syzoj.utils.makeUrl(['article', article.id, 'public']) %>">公开</a>
+          <a class="ui button" href-post="<%= syzoj.utils.makeUrl(['article', article.id, 'public']) %>">公开</a>
         <% } %>
-        <div class="small ui red button" onclick="$('#modal-delete').modal('show')">删除</div>
+        <div class="ui red button" onclick="$('#modal-delete').modal('show')">删除</div>
         <div class="ui basic modal right floated" id="modal-delete">
           <div class="ui icon header">
             <i class="trash icon"></i>
