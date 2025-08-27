@@ -48,6 +48,10 @@ export default class Article extends Model {
   @TypeORM.Column({ nullable: true, type: "boolean" })
   is_notice: boolean;
 
+  @TypeORM.Index()
+  @TypeORM.Column({ default: false, type: "boolean" })
+  is_public: boolean;
+
   user?: User;
   problem?: Problem;
 
@@ -61,6 +65,10 @@ export default class Article extends Model {
 
   async isAllowedCommentBy(user) {
     return user && (this.allow_comment || user.is_admin || this.user_id === user.id);
+  }
+
+  async isAllowedViewBy(user) {
+    return this.is_public || (user && (user.is_admin || this.user_id === user.id));
   }
 
   async resetReplyCountAndTime() {

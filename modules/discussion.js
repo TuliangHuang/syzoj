@@ -16,8 +16,20 @@ app.get('/discussion/:type?', async (req, res) => {
     } else {
       where = { problem_id: null };
     }
-    let paginate = syzoj.utils.paginate(await Article.countForPagination(where), req.query.page, syzoj.config.page.discussion);
-    let articles = await Article.queryPage(paginate, where, {
+    // Only show public articles to non-admins; include author's own articles when logged in
+    let listWhere;
+    if (res.locals.user && res.locals.user.is_admin) {
+      listWhere = where;
+    } else if (res.locals.user) {
+      listWhere = [
+        Object.assign({}, where, { is_public: true }),
+        Object.assign({}, where, { user_id: res.locals.user.id })
+      ];
+    } else {
+      listWhere = Object.assign({}, where, { is_public: true });
+    }
+    let paginate = syzoj.utils.paginate(await Article.countForPagination(listWhere), req.query.page, syzoj.config.page.discussion);
+    let articles = await Article.queryPage(paginate, listWhere, {
       sort_time: 'DESC'
     });
 
@@ -42,6 +54,48 @@ app.get('/discussion/:type?', async (req, res) => {
   }
 });
 
+app.post('/article/:id/public', async (req, res) => {
+  try {
+    if (!res.locals.user) throw new ErrorMessage('请登录后继续。', { '登录': syzoj.utils.makeUrl(['login'], { 'url': req.originalUrl }) });
+
+    let id = parseInt(req.params.id);
+    let article = await Article.findById(id);
+    if (!article) throw new ErrorMessage('无此帖子。');
+    if (!await article.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
+
+    article.is_public = true;
+    await article.save();
+
+    res.redirect(syzoj.utils.makeUrl(['article', article.id]));
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
+app.post('/article/:id/dis_public', async (req, res) => {
+  try {
+    if (!res.locals.user) throw new ErrorMessage('请登录后继续。', { '登录': syzoj.utils.makeUrl(['login'], { 'url': req.originalUrl }) });
+
+    let id = parseInt(req.params.id);
+    let article = await Article.findById(id);
+    if (!article) throw new ErrorMessage('无此帖子。');
+    if (!await article.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
+
+    article.is_public = false;
+    await article.save();
+
+    res.redirect(syzoj.utils.makeUrl(['article', article.id]));
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
 app.get('/discussion/problem/:pid', async (req, res) => {
   try {
     let pid = parseInt(req.params.pid);
@@ -52,8 +106,19 @@ app.get('/discussion/problem/:pid', async (req, res) => {
     }
 
     let where = { problem_id: pid };
-    let paginate = syzoj.utils.paginate(await Article.countForPagination(where), req.query.page, syzoj.config.page.discussion);
-    let articles = await Article.queryPage(paginate, where, {
+    let listWhere;
+    if (res.locals.user && res.locals.user.is_admin) {
+      listWhere = where;
+    } else if (res.locals.user) {
+      listWhere = [
+        Object.assign({}, where, { is_public: true }),
+        Object.assign({}, where, { user_id: res.locals.user.id })
+      ];
+    } else {
+      listWhere = Object.assign({}, where, { is_public: true });
+    }
+    let paginate = syzoj.utils.paginate(await Article.countForPagination(listWhere), req.query.page, syzoj.config.page.discussion);
+    let articles = await Article.queryPage(paginate, listWhere, {
       sort_time: 'DESC'
     });
 
@@ -79,6 +144,10 @@ app.get('/slides/:id', async (req, res) => {
     let article = await Article.findById(id);
     if (!article) throw new ErrorMessage('无此帖子。');
 
+    if (!await article.isAllowedViewBy(res.locals.user)) {
+      throw new ErrorMessage('您没有权限查看此帖子。');
+    }
+
     await article.loadRelationships();
     article.allowedEdit = await article.isAllowedEditBy(res.locals.user);
     article.allowedComment = await article.isAllowedCommentBy(res.locals.user);
@@ -98,6 +167,10 @@ app.get('/article/:id', async (req, res) => {
     let id = parseInt(req.params.id);
     let article = await Article.findById(id);
     if (!article) throw new ErrorMessage('无此帖子。');
+
+    if (!await article.isAllowedViewBy(res.locals.user)) {
+      throw new ErrorMessage('您没有权限查看此帖子。');
+    }
 
     await article.loadRelationships();
     article.allowedEdit = await article.isAllowedEditBy(res.locals.user);

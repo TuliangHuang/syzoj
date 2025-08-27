@@ -116,7 +116,7 @@
                                 <tbody>
                                     <% for (let article of show_user.articles) { %>
                                     <tr>
-																			  <td><a href="<%= syzoj.utils.makeUrl(['article', article.id]) %>"><%= article.title %></a></td>
+										  <td><a href="<%= syzoj.utils.makeUrl(['article', article.id]) %>"><%= article.title %></a><% if (!article.is_public) { %><span class="ui header"><span class="ui mini grey label">未公开</span></span><% } %></td>
                                         <td><%= syzoj.utils.formatDate(article.public_time) %></td>
                                     </tr>
                                     <% } %>
