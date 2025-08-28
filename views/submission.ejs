@@ -443,7 +443,29 @@ const vueApp = new Vue({
       this.currentFormatted = !this.currentFormatted;
       this.code = this.currentFormatted ? formattedCode : unformattedCode;
       this.codeKey += 1; // 更新 key，强制组件重新渲染
+      // 同步 URL 中的 formatted 参数
+      try {
+        var params = new URLSearchParams(location.search);
+        params.set('formatted', this.currentFormatted ? '1' : '0');
+        var newUrl = location.pathname + '?' + params.toString() + location.hash;
+        history.replaceState(null, '', newUrl);
+      } catch (e) { /* noop */ }
     }
+  },
+  created() {
+    // 读取 URL 查询参数中的 formatted，覆盖默认显示设置
+    try {
+      var params = new URLSearchParams(location.search);
+      if (params.has('formatted')) {
+        var v = params.get('formatted');
+        var desired = (v === '1' || v === 'true');
+        if (formattedCode !== null && desired !== this.currentFormatted) {
+          this.currentFormatted = desired;
+          this.code = desired ? formattedCode : unformattedCode;
+          this.codeKey += 1;
+        }
+      }
+    } catch (e) { /* noop */ }
   },
   mounted() {
     $(document).ready(function(){ $('.ui.accordion').accordion({ selector: { trigger: '.title:not(.unexpandable)' } })});
