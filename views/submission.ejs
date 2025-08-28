@@ -54,26 +54,43 @@ pre > code.code-with-lines .line-content {
 /* Grid layout for line numbers + code */
 .codebox-grid {
     display: grid;
-    grid-template-columns: 3.25em 1fr;
+    grid-template-columns: 4.25em 1fr;
     align-items: stretch;
 }
 .codebox-grid .line-numbers {
     text-align: right;
-    padding-right: 0.75em;
-    margin-right: 0.75em;
+    padding-right: 1.25em;
+    margin-right: 0;
     color: rgba(0, 0, 0, 0.4);
     user-select: none;
     -webkit-user-select: none;
     overflow: hidden;
+    position: relative;
 }
 .codebox-grid .line-numbers .line-number {
     display: block;
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
 }
+.codebox-grid .line-numbers .line-number:hover { background: rgba(0, 0, 0, 0.06); }
+.codebox-grid .line-numbers .line-number.selected { background: transparent; }
+.codebox-grid .line-numbers .ln-highlights { position: absolute; top: 0; left: 0; right: 0; pointer-events: none; z-index: 0; }
+.codebox-grid .line-numbers .ln-highlights .hl-line { position: absolute; left: 0; right: 0; background: #fff8c5; }
+.codebox-grid .line-numbers .ln-highlights .hl-stripe { position: absolute; left: 0; width: 4px; background: #d29922; }
 .codebox-grid pre {
     margin-top: 0;
     margin-bottom: 0;
     overflow: auto;
+    position: relative;
+    padding: 0;
 }
+.codebox-grid pre .code-highlights { position: absolute; top: 0; left: 0; right: 0; pointer-events: none; z-index: 0; }
+.codebox-grid pre .code-highlights .hl-line { position: absolute; left: 0; right: 0; background: #fff8c5; }
+.codebox-grid pre > code.code-with-lines { position: relative; z-index: 1; display: block; padding: 0; }
+
+/* Scope: tighten segment horizontally for this page */
+#submission_content .ui.segment { padding-left: 0 !important; padding-right: 0 !important; }
 </style>
 <span id="submission_content">
 <div class="padding" id="vueAppFuckSafari">
@@ -185,9 +202,9 @@ pre > code.code-with-lines .line-content {
         <div class="ui existing segment">
           <slot></slot>
           <div class="codebox-grid">
-            <div class="line-numbers"></div>
-            <pre v-if="!noEscape" style="margin-top: 0; margin-bottom: 0; "><code class="code-with-lines">{{ content }}</code></pre>
-            <pre v-if="noEscape" style="margin-top: 0; margin-bottom: 0; "><code class="code-with-lines" v-html="content"></code></pre>
+            <div class="line-numbers"><div class="ln-highlights"></div></div>
+            <pre v-if="!noEscape" style="margin-top: 0; margin-bottom: 0; "><div class="code-highlights"></div><code class="code-with-lines">{{ content }}</code></pre>
+            <pre v-if="noEscape" style="margin-top: 0; margin-bottom: 0; "><div class="code-highlights"></div><code class="code-with-lines" v-html="content"></code></pre>
           </div>
         </div>
     </div>
@@ -254,6 +271,8 @@ function applyLineNumbers() {
   containers.forEach(function (grid) {
     var codeEl = grid.querySelector('code.code-with-lines');
     var lnEl = grid.querySelector('.line-numbers');
+    var hlEl = grid.querySelector('.code-highlights');
+    var lnHlEl = grid.querySelector('.ln-highlights');
     if (!codeEl || !lnEl) return;
     if (lnEl.getAttribute('data-ln-applied') === '1' && lnEl.getAttribute('data-ln-for') === (codeEl.textContent || codeEl.innerHTML)) return;
 
@@ -266,8 +285,10 @@ function applyLineNumbers() {
       return;
     }
     var nums = [];
-    for (var i = 1; i <= lines.length; i++) nums.push('<span class="line-number">' + i + '</span>');
-    lnEl.innerHTML = nums.join('');
+    for (var i = 1; i <= lines.length; i++) nums.push('<span class=\"line-number\" title=\"L' + i + '\">' + i + '</span>');
+    lnEl.innerHTML = '<div class="ln-highlights"></div>' + nums.join('');
+    // re-grab highlight container in case rebuilt
+    lnHlEl = grid.querySelector('.ln-highlights');
     lnEl.setAttribute('data-ln-applied', '1');
     lnEl.setAttribute('data-ln-for', codeEl.innerHTML);
 
@@ -276,8 +297,55 @@ function applyLineNumbers() {
     if (pre) {
       pre.addEventListener('scroll', function () {
         lnEl.scrollTop = pre.scrollTop;
+        if (hlEl) hlEl.style.transform = 'translateY(' + (-pre.scrollTop) + 'px)';
+        if (lnHlEl) lnHlEl.style.transform = 'translateY(' + (-pre.scrollTop) + 'px)';
       });
     }
+
+    // selection and hash
+    var startIndex = null;
+    function updateSelection(from, to) {
+      if (from == null || to == null) return;
+      var a = Math.min(from, to), b = Math.max(from, to);
+      var lineEls = lnEl.querySelectorAll(':scope > .line-number');
+      for (var i = 0; i < lineEls.length; i++) {
+        var n = i + 1;
+        if (n >= a && n <= b) lineEls[i].classList.add('selected');
+        else lineEls[i].classList.remove('selected');
+      }
+      var unit = lineEls[0] ? lineEls[0].getBoundingClientRect().height : 18;
+      var top = (a - 1) * unit;
+      var height = (b - a + 1) * unit;
+      if (hlEl) hlEl.innerHTML = '<div class="hl-line" style="top:' + top + 'px;height:' + height + 'px;"></div>';
+      if (lnHlEl) lnHlEl.innerHTML = '<div class="hl-line" style="top:' + top + 'px;height:' + height + 'px;"></div>' + '<div class="hl-stripe" style="top:' + top + 'px;height:' + height + 'px;"></div>';
+      var newHash = a === b ? ('#L' + a) : ('#L' + a + '-L' + b);
+      try { history.replaceState(null, '', newHash); } catch (e) { location.hash = newHash; }
+    }
+    function clearSelection() {
+      lnEl.querySelectorAll(':scope > .line-number').forEach(function (el) { el.classList.remove('selected'); });
+      if (hlEl) hlEl.innerHTML = '';
+      if (lnHlEl) lnHlEl.innerHTML = '';
+    }
+    lnEl.querySelectorAll(':scope > .line-number').forEach(function (el, idx) {
+      el.addEventListener('click', function (ev) {
+        var line = idx + 1;
+        if (ev.shiftKey && startIndex != null) updateSelection(startIndex, line);
+        else { clearSelection(); startIndex = line; updateSelection(line, line); }
+      });
+    });
+
+    function applyHashSelection() {
+      var m = (location.hash || '').match(/^#L(\d+)(?:-L(\d+))?$/);
+      if (!m) return;
+      var a = parseInt(m[1], 10);
+      var b = m[2] ? parseInt(m[2], 10) : a;
+      updateSelection(a, b);
+      startIndex = a;
+      var firstEl = lnEl.querySelectorAll(':scope > .line-number')[a - 1];
+      if (firstEl) { var pre = grid.querySelector('pre'); if (pre) pre.scrollTop = firstEl.offsetTop - 60; }
+    }
+    applyHashSelection();
+    window.addEventListener('hashchange', applyHashSelection);
   });
 }
 
