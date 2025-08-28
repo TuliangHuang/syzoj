@@ -16,6 +16,7 @@ const displayConfig = {
   showTestdata: true,
   showDetailResult: true,
   inContest: false,
+  showOptions: false,
   showRejudge: false
 };
 
@@ -201,11 +202,11 @@ app.get('/submission/:id', async (req, res) => {
     }
 
     displayConfig.showRejudge = await judge.problem.isAllowedEditBy(res.locals.user);
+    displayConfig.showOptions = true;
     res.render('submission', {
       info: getSubmissionInfo(judge, displayConfig),
       roughResult: getRoughResult(judge, displayConfig, false),
       code: (judge.problem.type !== 'submit-answer') ? judge.code.toString("utf8") : '',
-      rawCode: rawCodeStr,
       formattedCode: judge.formattedCode ? judge.formattedCode.toString("utf8") : null,
       preferFormattedCode: res.locals.user ? res.locals.user.prefer_formatted_code : true,
       detailResult: processOverallResult(judge.result, displayConfig),

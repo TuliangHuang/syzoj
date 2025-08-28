@@ -62,22 +62,20 @@ Vue.component('submission-item', {
 
 <script id="submissionItemTemplate" type="text/x-template">
 <tr>
-  <% if (active === 'submissions') { %>
   <td><a :href="submissionLink"><b>#{{ data.info.submissionId }}</b></a></td>
-  <% } else { %>
-  <td><b>#{{ data.info.submissionId }}</b></td>
-  <% } %>
   <td ref="problemLabel">
-    <a ref="problemLabelTextFit" style="width: 300px; height: 22px; display: block; margin: 0 auto; line-height: 22px;" :href="problemLink">
-      <b> #{{ config.inContest ? alpha(data.info.problemId) : data.info.problemId }}. </b>
-      {{ cleanTitle(data.info.problemName) }}
-    </a>
+    <% if (active === 'submissions') { %>
+      <a ref="problemLabelTextFit" style="width: 300px; height: 22px; display: block; margin: 0 auto; line-height: 22px;" :href="problemLink">
+        <b> #{{ config.inContest ? alpha(data.info.problemId) : data.info.problemId }}. </b>
+        {{ cleanTitle(data.info.problemName) }}
+      </a>
+    <% } else { %>
+      <a ref="problemLabelTextFit" :href="problemLink">
+        <b> #{{ config.inContest ? alpha(data.info.problemId) : data.info.problemId }} </b>
+      </a>
+    <% } %>
   </td>
-  <% if (active === 'submissions') { %>
   <td><a :href="submissionLink"><b><status-label :status="statusString" :progress="progress"></status-label></b></a></td>
-  <% } else { %>
-  <td><b><status-label :status="statusString" :progress="progress"></status-label></b></td>
-  <% } %>
 
   <template v-if="data.result">
   <% if (active === 'submissions') { %>
@@ -109,6 +107,11 @@ Vue.component('submission-item', {
   </td>
   <td><a :href="userLink">{{ data.info.user }}</a></td>
   <td>{{ data.info.submitTime }}</td>
+  <td v-if="config.showOptions">
+    <% if (active === 'submission') { %>
+      <a class="ui blue mini button" :href="'/compare?head=' + data.info.submissionId" title="Compare two submissions">Compare...</a>  
+    <% } %>
+  </td>
   <td v-if="showRejudge">
     <a id="rejudge-button" :onclick="'check_rejudge(' + (statusString === 'Waiting' || statusString.startsWith('Running')).toString() + ')'" style="color: #000; " href="#"><i class="repeat icon"></i></a>
     <% if (active === 'submission') { %>
