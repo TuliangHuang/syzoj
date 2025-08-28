@@ -54,24 +54,26 @@ pre > code.code-with-lines .line-content {
 /* Grid layout for line numbers + code */
 .codebox-grid {
     display: grid;
-    grid-template-columns: 4.25em 1fr;
+    grid-template-columns: 4.5em 1fr;
     align-items: stretch;
 }
 .codebox-grid .line-numbers {
     text-align: right;
-    padding-right: 1.25em;
     margin-right: 0;
     color: rgba(0, 0, 0, 0.4);
     user-select: none;
     -webkit-user-select: none;
     overflow: hidden;
     position: relative;
+    font-family: "Fira Mono", "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "source-code-pro", monospace;
 }
 .codebox-grid .line-numbers .line-number {
     display: block;
     position: relative;
     z-index: 1;
     cursor: pointer;
+    width: 3.25em;
+    margin-right: 1.25em;
 }
 .codebox-grid .line-numbers .line-number:hover { background: rgba(0, 0, 0, 0.06); }
 .codebox-grid .line-numbers .line-number.selected { background: transparent; }

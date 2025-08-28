@@ -4,24 +4,49 @@
 <style>
 .compare-container { padding: 14px; }
 .diff-controls { margin-bottom: 8px; }
-table.diff-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
+/* Align code block visuals with submission page's codebox-grid */
+table.diff-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-family: "Fira Mono", "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "source-code-pro", monospace;
+  font-size: 1em;
+}
 table.diff-table td { border-top: 0; vertical-align: top; padding: 0; }
-table.diff-table td.lineno { width: 4.25em; text-align: right; padding: 0.25em 0.5em; color: rgba(0,0,0,0.4); user-select: none; }
-table.diff-table td.code { white-space: pre; padding: 0.25em 0.5em; overflow: visible; }
+table.diff-table td.lineno {
+  width: 4.25em;
+  text-align: right;
+  padding-right: 1.25em;
+  color: rgba(0,0,0,0.4);
+  user-select: none;
+  -webkit-user-select: none;
+}
+table.diff-table td.code {
+  white-space: pre;
+  padding: 0;
+  overflow: visible;
+  tab-size: 4;
+  -moz-tab-size: 4;
+}
+/* Line backgrounds (keep subtle diff coloring) */
 table.diff-table tr.context td.code { background: #ffffff; }
 table.diff-table tr.add td.code { background: #e6ffed; }
 table.diff-table tr.del td.code { background: #ffebe9; }
-table.diff-table tr.context td.lineno { background: #f6f8fa; }
+/* Gutter backgrounds more neutral like submission page */
+table.diff-table tr.context td.lineno { background: #ffffff; }
 table.diff-table tr.add td.lineno { background: #dafbe1; }
 table.diff-table tr.del td.lineno { background: #ffddd2; }
+/* Hover interaction similar to codebox line numbers */
+.unified td.lineno .ln { display: inline-block; width: 3.25em; text-align: right; padding: 0; cursor: pointer; position: relative; z-index: 1; }
+.unified td.lineno .ln:hover { background: rgba(0, 0, 0, 0.06); }
+
 .diff-container { overflow: visible; }
 .diff-container .ui.existing.segment { overflow: auto; }
-.unified td.lineno { width: 6.75em; }
-.unified td.lineno .ln { display: inline-block; width: 3.25em; text-align: right; padding: 0 0.25em; }
+.unified td.lineno { width: 6.75em; position: sticky; left: 0; z-index: 2; background-clip: padding-box; box-shadow: none; }
 .unified .code { white-space: pre; }
 </style>
 <div class="compare-container" id="compareApp">
-  <div class="ui segment">
     <div class="ui tiny form diff-controls">
       <div class="fields">
         <div class="four wide field">
@@ -75,11 +100,10 @@ table.diff-table tr.del td.lineno { background: #ffddd2; }
       <div v-if="diffError" class="ui negative message" v-text="diffError"></div>
     </div>
     <div v-show="diffHtml" class="diff-container unified">
-      <div class="ui existing segment" style="padding: 0;">
+      <div class="ui existing segment" style="padding-left: 0; padding-right: 0;">
         <div v-html="diffHtml"></div>
       </div>
     </div>
-  </div>
 </div>
 <script src="<%- lib('vue/2.5.21/vue.min.js') %>"></script>
 <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
@@ -146,8 +170,6 @@ new Vue({
         }
       }
       html.push('</tbody></table>');
-      // add unified bottom scrollbar inside the segment
-      html.push('<div class="side-scroll" id="unifiedScroll"><div class="scroller" style="width:200%"></div></div>');
       return html.join('');
     },
     async fetchAndDiff() {
@@ -174,11 +196,33 @@ new Vue({
         var headPayload = this.payloadFromHighlighted(headHtml);
 
         this.diffHtml = this.buildUnifiedDiff(basePayload, headPayload);
+        // Wait DOM update, then attach bottom scrollbar sync
+        this.$nextTick(() => { this.attachUnifiedScrollSync(); });
       } catch (e) {
         this.diffError = '获取或比较失败：' + (e && e.message ? e.message : String(e));
       } finally {
         this.diffLoading = false;
       }
+    },
+    attachUnifiedScrollSync() {
+      try {
+        var container = document.querySelector('.diff-container.unified .ui.existing.segment');
+        var tbl = document.querySelector('.diff-container.unified table.diff-table');
+        var bar = document.getElementById('unifiedScroll');
+        if (!container || !tbl || !bar) return;
+        var scroller = bar.querySelector('.scroller');
+        if (scroller) {
+          var width = tbl.scrollWidth || (tbl.offsetWidth * 2);
+          scroller.style.width = width + 'px';
+        }
+        var syncing = false;
+        bar.onscroll = function () {
+          if (syncing) return; syncing = true; container.scrollLeft = bar.scrollLeft; syncing = false;
+        };
+        container.onscroll = function () {
+          if (syncing) return; syncing = true; bar.scrollLeft = container.scrollLeft; syncing = false;
+        };
+      } catch (e) { /* noop */ }
     },
     setDiffMode(mode) { /* unified only - removed split */ },
     setCompareKind(kind) { if (kind==='raw'||kind==='formatted') { this.compareKind = kind; this.updateUrl(); if (this.diffHtml) this.fetchAndDiff(); } },
@@ -215,19 +259,8 @@ new Vue({
       if (!isNaN(h)) this.headId = h;
     } catch (e) { /* noop */ }
     if (this.baseId && this.headId) this.fetchAndDiff();
-    // Attach sync scroll after render updates
-    this.$nextTick(() => {
-      try {
-        var tbl = document.querySelector('.diff-container.unified table.diff-table');
-        var bar = document.getElementById('unifiedScroll');
-        if (!tbl || !bar) return;
-        bar.addEventListener('scroll', function(){
-          var x = bar.scrollLeft;
-          // scroll the segment horizontally by adjusting table wrapper
-          tbl.parentElement.scrollLeft = x;
-        });
-      } catch (e) { /* noop */ }
-    });
+    // Attach sync scroll after initial render (if any)
+    this.$nextTick(() => { this.attachUnifiedScrollSync(); });
   }
 });
 </script>
