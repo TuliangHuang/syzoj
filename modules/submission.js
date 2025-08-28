@@ -180,6 +180,9 @@ app.get('/submission/:id', async (req, res) => {
 
     await judge.loadRelationships();
 
+    // Preserve raw code before highlighting for diff feature
+    const rawCodeStr = (judge.problem.type !== 'submit-answer') ? judge.code.toString('utf8') : '';
+
     if (judge.problem.type !== 'submit-answer') {
       const lang = (judge.problem.getVJudgeLanguages() || syzoj.languages)[judge.language];
       let key = syzoj.utils.getFormattedCodeKey(judge.code, lang.format);
@@ -202,6 +205,7 @@ app.get('/submission/:id', async (req, res) => {
       info: getSubmissionInfo(judge, displayConfig),
       roughResult: getRoughResult(judge, displayConfig, false),
       code: (judge.problem.type !== 'submit-answer') ? judge.code.toString("utf8") : '',
+      rawCode: rawCodeStr,
       formattedCode: judge.formattedCode ? judge.formattedCode.toString("utf8") : null,
       preferFormattedCode: res.locals.user ? res.locals.user.prefer_formatted_code : true,
       detailResult: processOverallResult(judge.result, displayConfig),
@@ -217,6 +221,93 @@ app.get('/submission/:id', async (req, res) => {
     res.render('error', {
       err: e
     });
+  }
+});
+
+// Raw code API for diff feature
+app.get('/submission/:id/raw', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const judge = await JudgeState.findById(id);
+    if (!judge) throw new ErrorMessage('提交记录 ID 不正确。');
+
+    const curUser = res.locals.user;
+    if (!await judge.isAllowedVisitBy(curUser)) throw new ErrorMessage('您没有权限进行此操作。');
+
+    await judge.loadRelationships();
+
+    if (judge.problem.type === 'submit-answer') {
+      return res.json({ ok: true, id: id, language: null, code: '' });
+    }
+
+    const lang = (judge.problem.getVJudgeLanguages() || syzoj.languages)[judge.language];
+    const raw = judge.code instanceof Buffer ? judge.code.toString('utf8') : String(judge.code || '');
+    return res.json({ ok: true, id: id, language: (lang && lang.show) || null, code: raw });
+  } catch (e) {
+    syzoj.log(e);
+    return res.status(400).json({ ok: false, error: e.message || String(e) });
+  }
+});
+
+// Formatted (highlighted) code API for diff feature
+app.get('/submission/:id/formatted', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const judge = await JudgeState.findById(id);
+    if (!judge) throw new ErrorMessage('提交记录 ID 不正确。');
+
+    const curUser = res.locals.user;
+    if (!await judge.isAllowedVisitBy(curUser)) throw new ErrorMessage('您没有权限进行此操作。');
+
+    await judge.loadRelationships();
+
+    if (judge.problem.type === 'submit-answer') {
+      return res.json({ ok: true, id, language: null, formattedHtml: '', highlightedHtml: '' });
+    }
+
+    const lang = (judge.problem.getVJudgeLanguages() || syzoj.languages)[judge.language];
+
+    // Try to load pre-formatted code (pretty printed) then highlight it
+    let formattedHtml = null;
+    let key = syzoj.utils.getFormattedCodeKey(judge.code, lang.format);
+    if (key) {
+      let formattedCode = await FormattedCode.findOne({ where: { key } });
+      if (formattedCode) {
+        formattedHtml = await syzoj.utils.highlight(formattedCode.code, lang.highlight);
+        formattedHtml = formattedHtml ? formattedHtml.toString('utf8') : null;
+      }
+    }
+
+    // Always provide highlighted raw as fallback
+    let highlightedHtml = await syzoj.utils.highlight(judge.code, lang.highlight);
+    highlightedHtml = highlightedHtml ? highlightedHtml.toString('utf8') : '';
+
+    return res.json({
+      ok: true,
+      id,
+      language: (lang && lang.show) || null,
+      formattedHtml: formattedHtml || null,
+      highlightedHtml
+    });
+  } catch (e) {
+    syzoj.log(e);
+    return res.status(400).json({ ok: false, error: e.message || String(e) });
+  }
+});
+
+// Compare page
+app.get('/compare', async (req, res) => {
+  try {
+    const baseId = req.query.base ? parseInt(req.query.base) : null;
+    const headId = req.query.head ? parseInt(req.query.head) : null;
+    res.render('compare', {
+      baseId: isNaN(baseId) ? null : baseId,
+      headId: isNaN(headId) ? null : headId,
+      preferFormattedCode: res.locals.user ? res.locals.user.prefer_formatted_code : true
+    });
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', { err: e });
   }
 });
 

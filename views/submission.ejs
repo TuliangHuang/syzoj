@@ -114,6 +114,10 @@ pre > code.code-with-lines .line-content {
     </tbody>
   </table>
 
+  <div class="ui basic segment" style="padding-left: 0; padding-right: 0; ">
+    <a class="ui mini button" :href="'/compare?head=' + roughData.info.submissionId" title="Compare two submissions">Compare...</a>
+  </div>
+
   <code-box no-escape :key="codeKey" v-bind:content="code">
     <template v-if="formattedCode !== null">
       <a @click="toggleFormattedCode" class="codebox mini ui button">

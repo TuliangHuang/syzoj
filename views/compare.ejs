@@ -1,0 +1,234 @@
+<% this.title = 'Compare Submissions' %>
+<% include util %>
+<% include header %>
+<style>
+.compare-container { padding: 14px; }
+.diff-controls { margin-bottom: 8px; }
+table.diff-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
+table.diff-table td { border-top: 0; vertical-align: top; padding: 0; }
+table.diff-table td.lineno { width: 4.25em; text-align: right; padding: 0.25em 0.5em; color: rgba(0,0,0,0.4); user-select: none; }
+table.diff-table td.code { white-space: pre; padding: 0.25em 0.5em; overflow: visible; }
+table.diff-table tr.context td.code { background: #ffffff; }
+table.diff-table tr.add td.code { background: #e6ffed; }
+table.diff-table tr.del td.code { background: #ffebe9; }
+table.diff-table tr.context td.lineno { background: #f6f8fa; }
+table.diff-table tr.add td.lineno { background: #dafbe1; }
+table.diff-table tr.del td.lineno { background: #ffddd2; }
+.diff-container { overflow: visible; }
+.diff-container .ui.existing.segment { overflow: auto; }
+.unified td.lineno { width: 6.75em; }
+.unified td.lineno .ln { display: inline-block; width: 3.25em; text-align: right; padding: 0 0.25em; }
+.unified .code { white-space: pre; }
+</style>
+<div class="compare-container" id="compareApp">
+  <div class="ui segment">
+    <div class="ui tiny form diff-controls">
+      <div class="fields">
+        <div class="four wide field">
+          <label>
+            Head Submission ID
+            <a :href="headId ? ('/submission/' + headId) : null"
+               class="ui icon button"
+               title="Open head submission"
+               :style="{ background: 'transparent', border: 0, boxShadow: 'none', padding: '0 0 0 6px', pointerEvents: headId ? 'auto' : 'none', opacity: headId ? 1 : 0.4 }">
+              <i class="external alternate icon"></i>
+            </a>
+          </label>
+          <input type="number" v-model="headId" placeholder="Head ID" @keydown.enter.prevent="fetchAndDiff">
+        </div>
+        <div class="one wide field" style="display: flex; align-items: flex-end; ">
+          <button class="ui icon button" @click="swapIds" title="Swap head/base"
+                  style="background: transparent; border: 0; box-shadow: none; ">
+            <i class="exchange icon"></i>
+          </button>
+        </div>
+        <div class="four wide field">
+          <label>
+            Base Submission ID
+            <a :href="baseId ? ('/submission/' + baseId) : null"
+               class="ui icon button"
+               title="Open base submission"
+               :style="{ background: 'transparent', border: 0, boxShadow: 'none', padding: '0 0 0 6px', pointerEvents: baseId ? 'auto' : 'none', opacity: baseId ? 1 : 0.4 }">
+              <i class="external alternate icon"></i>
+            </a>
+          </label>
+          <input type="number" v-model="baseId" placeholder="Base ID" @keydown.enter.prevent="fetchAndDiff">
+        </div>
+        <div class="three wide field">
+          <label>Diff Mode</label>
+          <div class="ui tiny buttons">
+            <button class="ui button active">Unified</button>
+          </div>
+        </div>
+        <div class="three wide field">
+          <label>Compare Target</label>
+          <div class="ui tiny buttons">
+            <button class="ui button" :class="{active: compareKind==='raw'}" @click="setCompareKind('raw')">Raw</button>
+            <button class="ui button" :class="{active: compareKind==='formatted'}" @click="setCompareKind('formatted')">Formatted</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="ui primary tiny button" :class="{loading: diffLoading}" @click="fetchAndDiff">Compare</button>
+        </div>
+      </div>
+      <div v-if="diffError" class="ui negative message" v-text="diffError"></div>
+    </div>
+    <div v-show="diffHtml" class="diff-container unified">
+      <div class="ui existing segment" style="padding: 0;">
+        <div v-html="diffHtml"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="<%- lib('vue/2.5.21/vue.min.js') %>"></script>
+<script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
+<script>
+new Vue({
+  el: '#compareApp',
+  data: {
+    baseId: <%- serializejs(baseId) %>,
+    headId: <%- serializejs(headId) %>,
+    diffMode: 'unified',
+    compareKind: 'raw',
+    diffHtml: '',
+    diffLoading: false,
+    diffError: ''
+  },
+  methods: {
+    escapeHtml(s) {
+      return (s == null ? '' : String(s))
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    },
+    payloadFromRaw(raw) {
+      var textLines = String(raw || '').split(/\r\n|\r|\n/);
+      var htmlLines = textLines.map(t => t === '' ? '' : this.escapeHtml(t));
+      return { textLines, htmlLines };
+    },
+    payloadFromHighlighted(html) {
+      var normalized = String(html || '').replace(/\r\n?/g, '\n');
+      var htmlLines = normalized.split('\n');
+      var textLines = htmlLines.map(line => line.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' '));
+      return { textLines, htmlLines };
+    },
+    buildSideBySideDiff(base, current) {
+      return '';
+    },
+    buildUnifiedDiff(base, current) {
+      var lib = window.Diff || window.JsDiff || window.jsdiff;
+      if (!lib || !lib.diffLines) return '<div class="ui warning message">Diff library not loaded.</div>';
+      var parts = lib.diffLines(base.textLines.join('\n'), current.textLines.join('\n'));
+      var leftIdx = 0, rightIdx = 0;
+      var html = ['<table class="diff-table"><tbody>'];
+      for (var i = 0; i < parts.length; i++) {
+        var part = parts[i];
+        var lines = part.value.split(/\r\n|\r|\n/);
+        if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+        var type = (!part.added && !part.removed) ? 'context' : (part.added ? 'add' : 'del');
+        for (var j = 0; j < lines.length; j++) {
+          var lineHtml = '';
+          var lno = '', rno = '';
+          if (type === 'context') { lno = String(rightIdx + 1); rno = String(leftIdx + 1); lineHtml = current.htmlLines[rightIdx] || ''; leftIdx++; rightIdx++; }
+          else if (type === 'del') { lno = ''; rno = String(leftIdx + 1); lineHtml = base.htmlLines[leftIdx] || ''; leftIdx++; }
+          else if (type === 'add') { lno = String(rightIdx + 1); rno = ''; lineHtml = current.htmlLines[rightIdx] || ''; rightIdx++; }
+          var lnHtml = '';
+          if (lno && rno) {
+            lnHtml = (lno === rno) ? ('<span class="ln">' + lno + '</span>') : ('<span class="ln">' + lno + '</span><span class="ln">' + rno + '</span>');
+          } else if (lno) {
+            lnHtml = '<span class="ln">' + lno + '</span>';
+          } else if (rno) {
+            lnHtml = '<span class="ln">' + rno + '</span>';
+          }
+          var lnCell = '<td class="lineno">' + lnHtml + '</td>';
+          html.push('<tr class="' + type + '">' + lnCell + '<td class="code">' + lineHtml + '</td></tr>');
+        }
+      }
+      html.push('</tbody></table>');
+      // add unified bottom scrollbar inside the segment
+      html.push('<div class="side-scroll" id="unifiedScroll"><div class="scroller" style="width:200%"></div></div>');
+      return html.join('');
+    },
+    async fetchAndDiff() {
+      this.diffError = '';
+      this.diffHtml = '';
+      var base = parseInt(this.baseId), head = parseInt(this.headId);
+      if (!base || !head) { this.diffError = '请输入有效的 Base 与 Head 提交 ID。'; return; }
+      // reflect into URL
+      this.updateUrl();
+      this.diffLoading = true;
+      try {
+        var [bResp, hResp] = await Promise.all([
+          fetch('/submission/' + base + '/formatted', { credentials: 'same-origin' }),
+          fetch('/submission/' + head + '/formatted', { credentials: 'same-origin' })
+        ]);
+        var [bData, hData] = await Promise.all([bResp.json(), hResp.json()]);
+        if (!bResp.ok || !bData.ok) throw new Error(bData && bData.error || ('HTTP ' + bResp.status));
+        if (!hResp.ok || !hData.ok) throw new Error(hData && hData.error || ('HTTP ' + hResp.status));
+
+        var baseHtml = (this.compareKind === 'formatted' ? (bData.formattedHtml || bData.highlightedHtml) : bData.highlightedHtml) || '';
+        var headHtml = (this.compareKind === 'formatted' ? (hData.formattedHtml || hData.highlightedHtml) : hData.highlightedHtml) || '';
+
+        var basePayload = this.payloadFromHighlighted(baseHtml);
+        var headPayload = this.payloadFromHighlighted(headHtml);
+
+        this.diffHtml = this.buildUnifiedDiff(basePayload, headPayload);
+      } catch (e) {
+        this.diffError = '获取或比较失败：' + (e && e.message ? e.message : String(e));
+      } finally {
+        this.diffLoading = false;
+      }
+    },
+    setDiffMode(mode) { /* unified only - removed split */ },
+    setCompareKind(kind) { if (kind==='raw'||kind==='formatted') { this.compareKind = kind; this.updateUrl(); if (this.diffHtml) this.fetchAndDiff(); } },
+    swapIds() {
+      var tmp = this.headId;
+      this.headId = this.baseId;
+      this.baseId = tmp;
+      this.updateUrl();
+      if (this.baseId && this.headId) this.fetchAndDiff();
+    },
+    updateUrl() {
+      try {
+        var params = new URLSearchParams(location.search);
+        if (this.headId) params.set('head', this.headId);
+        if (this.baseId) params.set('base', this.baseId);
+        params.set('mode', this.diffMode);
+        params.set('target', this.compareKind);
+        var newUrl = location.pathname + '?' + params.toString() + location.hash;
+        history.replaceState(null, '', newUrl);
+      } catch (e) { /* noop */ }
+    }
+  },
+  mounted() {
+    // read from URL
+    try {
+      var params = new URLSearchParams(location.search);
+      var m = params.get('mode');
+      if (m === 'split' || m === 'unified') this.diffMode = m; else this.diffMode = 'unified';
+      var t = params.get('target');
+      if (t === 'raw' || t === 'formatted') this.compareKind = t; else this.compareKind = 'raw';
+      var h = parseInt(params.get('head'));
+      var b = parseInt(params.get('base'));
+      if (!isNaN(b)) this.baseId = b;
+      if (!isNaN(h)) this.headId = h;
+    } catch (e) { /* noop */ }
+    if (this.baseId && this.headId) this.fetchAndDiff();
+    // Attach sync scroll after render updates
+    this.$nextTick(() => {
+      try {
+        var tbl = document.querySelector('.diff-container.unified table.diff-table');
+        var bar = document.getElementById('unifiedScroll');
+        if (!tbl || !bar) return;
+        bar.addEventListener('scroll', function(){
+          var x = bar.scrollLeft;
+          // scroll the segment horizontally by adjusting table wrapper
+          tbl.parentElement.scrollLeft = x;
+        });
+      } catch (e) { /* noop */ }
+    });
+  }
+});
+</script>
+<% include footer %>
