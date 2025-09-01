@@ -323,3 +323,9 @@ code {
   z-index: 10;
   padding: 7px 7px;
 }
+
+/* Slightly increase vertical spacing for list items */
+li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}

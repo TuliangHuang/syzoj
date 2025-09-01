@@ -158,6 +158,11 @@ section.has-dark-background, section.has-dark-background h1, section.has-dark-ba
   margin: 0 0 0 1.5em;
 }
 
+.reveal li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
 .reveal ol {
   list-style-type: decimal;
 }
@@ -307,7 +312,10 @@ section.has-dark-background, section.has-dark-background h1, section.has-dark-ba
  *********************************************/
 .reveal a {
   color: var(--r-link-color);
-  text-decoration: none;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 0.02em;
+  text-decoration-skip-ink: auto;
   transition: color 0.15s ease;
 }
 
