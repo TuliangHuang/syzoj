@@ -15,6 +15,9 @@
     "width": null,
     "height": 36
   },
+  "slides": {
+    "width": 1000
+  },
   "register_mail": true,
   "email": {
     "method": "aliyundm",
