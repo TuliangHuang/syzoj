@@ -92,6 +92,14 @@ $(function () {
         }, 800);
       });
     });
+
+    $(document).on('keydown', function (e) {
+      var isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      if ((isMac ? e.metaKey : e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        $('#save_button').trigger('click');
+      }
+    });
 })
 </script>
 <% include footer %>
