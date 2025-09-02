@@ -54,6 +54,7 @@
     "jsdom": "^14.0.0",
     "jsondiffpatch": "0.2.5",
     "jsonwebtoken": "^8.5.1",
+    "katex": "^0.16.22",
     "lodash": "^4.17.21",
     "lru-cache": "^5.1.1",
     "mariadb": "^2.0.3",

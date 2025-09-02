@@ -117,6 +117,8 @@ global.syzoj = {
 
     // Set assets dir
     app.use(Express.static(__dirname + '/static', { maxAge: syzoj.production ? '1y' : 0 }));
+    // Serve KaTeX assets from node_modules when using katex.local: '/katex'
+    app.use('/katex', Express.static(path.join(__dirname, 'node_modules/katex')));
 
     // Set template engine ejs
     app.set('view engine', 'ejs');
