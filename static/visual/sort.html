@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>排序算法可视化演示器（10 种）</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --panel-2: #f8f9fa;
+      --text: #202124;
+      --muted: #5f6368;
+      --brand: #1a73e8;    /* Google Blue */
+      --accent: #34a853;   /* Google Green */
+      --warn: #fbbc04;     /* Google Yellow */
+      --danger: #ea4335;   /* Google Red */
+      --purple: #a142f4;   /* Google Purple */
+      --card: #ffffff;
+      --border: #dadce0;
+      --shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px rgba(60,64,67,.15);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; background: #ffffff;
+      color: #202124; font: 16px/1.5 ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    }
+    .container { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap: 16px; margin-bottom: 16px; }
+    h1 { font-size: 24px; margin: 0; letter-spacing: .5px; }
+    .sub { color: var(--muted); font-size: 14px; }
+    .grid { display: grid; grid-template-columns: 360px 1fr; gap: 16px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .card > .hd { padding: 14px 16px; border-bottom: 1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .card > .bd { padding: 16px; }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+    label { color: var(--muted); font-size: 13px; }
+    select, input[type="number"], input[type="text"], input[type="range"] { background: #ffffff; color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; outline: none; }
+    input[type="number"]:focus, select:focus, input[type="text"]:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(26,115,232,.15); }
+    .btn { border:1px solid var(--border); background: #ffffff; color: var(--text); padding: 10px 14px; border-radius: 12px; cursor:pointer; transition: .2s ease; }
+    .btn:hover { transform: translateY(-1px); border-color: #2b3a52; }
+    .btn.brand { background: linear-gradient(135deg, rgba(26,115,232,.12), rgba(26,115,232,.06)); border-color: rgba(26,115,232,.35); }
+    .btn.accent { background: linear-gradient(135deg, rgba(52,168,83,.12), rgba(52,168,83,.06)); border-color: rgba(52,168,83,.35); }
+    .btn.warn { background: linear-gradient(135deg, rgba(251,188,4,.16), rgba(251,188,4,.06)); border-color: rgba(251,188,4,.35); }
+    .btn.ghost { background: transparent; }
+
+    .badge { font-size: 12px; color: var(--muted); border: 1px solid var(--border); padding: 4px 8px; border-radius: 999px; background: #f1f3f4; }
+
+    .timeline { display:flex; align-items:center; gap:10px; }
+
+    .vis-wrap { height: 420px; display:flex; align-items:flex-end; justify-content:center; background: #f8f9fa; border: 1px dashed var(--border); border-radius: 12px; padding: 12px; overflow: hidden; }
+    .bars { position: relative; height: 100%; width: 100%; display:flex; align-items:flex-end; gap: 2px; }
+    .bar { flex: 1 0 auto; background: linear-gradient(180deg, rgba(26,115,232,.22), rgba(26,115,232,.08)); border: 1px solid rgba(26,115,232,.35); border-radius: 6px 6px 0 0; min-width: 6px; }
+    .bar.small { min-width: 3px; }
+    .bar.compare { background: linear-gradient(180deg, rgba(251,188,4,.35), rgba(251,188,4,.12)); border-color: rgba(251,188,4,.55); }
+    .bar.swap { background: linear-gradient(180deg, rgba(234,67,53,.4), rgba(234,67,53,.12)); border-color: rgba(234,67,53,.65); }
+    .bar.write { background: linear-gradient(180deg, rgba(52,168,83,.35), rgba(52,168,83,.12)); border-color: rgba(52,168,83,.55); }
+    .bar.pivot { background: linear-gradient(180deg, rgba(161,66,244,.38), rgba(161,66,244,.12)); border-color: rgba(161,66,244,.55); }
+    .bar.sorted { opacity: .7; }
+
+    .op { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; background: #f8f9fa; border: 1px dashed var(--border); border-radius: 10px; padding: 8px 10px; margin-bottom: 10px; }
+
+    .kbd { border: 1px solid var(--border); padding: 2px 6px; border-radius: 6px; background: #f8f9fa; font-family: ui-monospace, monospace; font-size: 12px; }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>排序算法可视化演示器</h1>
+        <div class="sub">支持 10 种排序：冒泡、选择、插入、希尔、归并、快速、堆、计数、桶、基数。计数/桶/基数建议使用非负整数。</div>
+      </div>
+      <div class="row">
+        <button id="btnExample" class="btn accent">一键示例</button>
+        <a class="btn ghost" href="#" id="btnExport">导出步骤 JSON</a>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div class="hd"><strong>设置 & 输入</strong><span class="badge" id="status">就绪</span></div>
+        <div class="bd">
+          <div class="row" style="margin-bottom:10px">
+            <label>算法：</label>
+            <select id="algo">
+              <option value="bubble">冒泡排序</option>
+              <option value="selection">选择排序</option>
+              <option value="insertion">插入排序</option>
+              <option value="shell">希尔排序</option>
+              <option value="merge">归并排序</option>
+              <option value="quick" selected>快速排序</option>
+              <option value="heap">堆排序</option>
+              <option value="counting">计数排序</option>
+              <option value="bucket">桶排序</option>
+              <option value="radix">基数排序</option>
+            </select>
+            <label>数量：</label>
+            <input id="size" type="number" min="5" max="150" value="32"/>
+            <label>最大值：</label>
+            <input id="maxVal" type="number" min="9" max="9999" value="99"/>
+          </div>
+          <div class="row" style="margin-bottom:10px">
+            <label>速度：</label>
+            <input id="speed" type="range" min="1" max="100" value="40"/>
+            <span class="muted">数值越大越快</span>
+          </div>
+          <div class="row" style="margin-bottom:10px; width:100%">
+            <label style="min-width:60px">数组：</label>
+            <input id="arrInput" style="flex:1" type="text" placeholder="例如：3, 1, 4, 1, 5, 9" />
+          </div>
+          <div class="row">
+            <button id="btnRandom" class="btn">随机数组</button>
+            <button id="btnLoad" class="btn">载入数组</button>
+            <button id="btnBuild" class="btn brand">生成步骤 ▶</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><strong>过程可视化</strong><span class="badge" id="opsCount">0 步</span></div>
+        <div class="bd">
+          <div id="currentOp" class="op muted">尚未开始。</div>
+          <div class="vis-wrap">
+            <div id="bars" class="bars"></div>
+          </div>
+          <div style="margin-top:14px" class="timeline">
+            <button id="btnPrev" class="btn">⟵ 上一步</button>
+            <input id="range" type="range" min="0" max="0" step="1" value="0"/>
+            <button id="btnNext" class="btn">下一步 ⟶</button>
+            <button id="btnPlay" class="btn accent">自动播放</button>
+          </div>
+          <div class="muted" style="margin-top:10px">提示：用键盘 <span class="kbd">←</span>/<span class="kbd">→</span> 快速切换步骤。</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+    const state = {
+      arr: [],
+      steps: [], // {arr, action:{type, i, j, k, value, pivot}, text}
+      idx: 0,
+      timer: null,
+      maxVal: 99,
+    };
+
+    function clamp(x, a, b){ return Math.min(b, Math.max(a, x)); }
+    function deepCopy(a){ return JSON.parse(JSON.stringify(a)); }
+
+    function randomArray(n, maxVal){
+      return Array.from({length:n}, () => Math.floor(Math.random()*(maxVal+1)));
+    }
+
+    function renderBars(snapshot){
+      const bars = $('#bars');
+      bars.innerHTML = '';
+      const arr = snapshot.arr;
+      const n = arr.length;
+      const maxV = Math.max(1, ...arr);
+      const compact = n > 80;
+      for(let i=0;i<n;i++){
+        const v = arr[i];
+        const bar = document.createElement('div');
+        bar.className = 'bar' + (compact ? ' small' : '');
+        bar.style.height = (v / maxV * 100) + '%';
+        if (snapshot.action){
+          const a = snapshot.action;
+          if (a.type === 'compare' && (i === a.i || i === a.j)) bar.classList.add('compare');
+          if ((a.type === 'swap' || a.type === 'swap_if') && (i === a.i || i === a.j)) bar.classList.add('swap');
+          if (a.type === 'write' && i === a.i) bar.classList.add('write');
+          if (a.type === 'pivot' && i === a.i) bar.classList.add('pivot');
+        }
+        bars.appendChild(bar);
+      }
+    }
+
+    function setStatus(text){ $('#status').textContent = text; }
+
+    function setCurrentOp(text){ $('#currentOp').textContent = text; }
+
+    function updateOpsCount(){ $('#opsCount').textContent = `${state.steps.length} 步`; }
+
+    function updateView(){
+      const i = clamp(state.idx, 0, state.steps.length);
+      $('#range').value = i;
+      if (i === 0){
+        setCurrentOp('初始数组');
+        renderBars({arr: state.arr, action: null});
+      } else {
+        const step = state.steps[i-1];
+        setCurrentOp(step.text);
+        renderBars(step);
+      }
+    }
+
+    function play(){
+      if (state.timer){ clearInterval(state.timer); state.timer=null; $('#btnPlay').textContent='自动播放'; return; }
+      const speed = +$('#speed').value; // 1..100
+      const interval = clamp(400 - speed*3, 20, 400); // faster when larger
+      $('#btnPlay').textContent='暂停';
+      state.timer = setInterval(()=>{
+        if (state.idx >= state.steps.length){ clearInterval(state.timer); state.timer=null; $('#btnPlay').textContent='自动播放'; return; }
+        state.idx++; updateView();
+      }, interval);
+    }
+
+    // Step recording helper
+    function recorder(initialArr){
+      const arr = initialArr.slice();
+      const steps = [];
+      function push(action, text){ steps.push({arr: arr.slice(), action, text}); }
+      function swap(i, j){ const t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+      function write(i, value){ arr[i]=value; }
+      return { arr, steps, push, swap, write };
+    }
+
+    // Generators for 10 sorts (yield events only; recorder applies changes)
+    // 1) Bubble Sort
+    function* genBubble(arr){
+      const n = arr.length;
+      for(let i=0;i<n-1;i++){
+        for(let j=0;j<n-1-i;j++){
+          yield {type:'compare', i:j, j:j+1, text:`比较 A[${j}] 与 A[${j+1}]`};
+          if (arr[j] > arr[j+1]){
+            yield {type:'swap', i:j, j:j+1, text:`交换 A[${j}] 与 A[${j+1}]`};
+          }
+        }
+      }
+    }
+
+    // 2) Selection Sort
+    function* genSelection(arr){
+      const n = arr.length;
+      for(let i=0;i<n-1;i++){
+        let minIdx = i;
+        for(let j=i+1;j<n;j++){
+          yield {type:'compare', i:minIdx, j, text:`比较最小值 A[${minIdx}] 与 A[${j}]`};
+          if (arr[j] < arr[minIdx]) minIdx = j;
+        }
+        if (minIdx !== i){
+          yield {type:'swap', i, j:minIdx, text:`选择最小位置 ${minIdx}，交换 A[${i}] ↔ A[${minIdx}]`};
+        }
+      }
+    }
+
+    // 3) Insertion Sort
+    function* genInsertion(arr){
+      const n = arr.length;
+      for(let i=1;i<n;i++){
+        const key = arr[i];
+        let j = i - 1;
+        while (j >= 0){
+          yield {type:'compare', i:j, j:j+1, text:`比较 A[${j}] 与 待插入 ${key}`};
+          if (arr[j] > key){
+            yield {type:'write', i:j+1, value:arr[j], text:`右移 A[${j}] 到 A[${j+1}]`};
+            j--;
+          } else break;
+        }
+        yield {type:'write', i:j+1, value:key, text:`插入 ${key} 至 A[${j+1}]`};
+      }
+    }
+
+    // 4) Shell Sort (gap halving)
+    function* genShell(arr){
+      const n = arr.length;
+      let gap = Math.floor(n/2);
+      while (gap > 0){
+        for(let i=gap;i<n;i++){
+          const temp = arr[i];
+          let j = i;
+          while (j - gap >= 0){
+            yield {type:'compare', i:j-gap, j:j, text:`gap=${gap} 比较 A[${j-gap}] 与 ${temp}`};
+            if (arr[j-gap] > temp){
+              yield {type:'write', i:j, value:arr[j-gap], text:`右移 A[${j-gap}] 到 A[${j}]`};
+              j -= gap;
+            } else break;
+          }
+          yield {type:'write', i:j, value:temp, text:`gap=${gap} 插入 ${temp} 至 A[${j}]`};
+        }
+        gap = Math.floor(gap/2);
+      }
+    }
+
+    // 5) Merge Sort
+    function* genMerge(arr){
+      const n = arr.length;
+      const aux = arr.slice();
+      function* merge(lo, mid, hi){
+        for(let k=lo;k<=hi;k++) aux[k] = arr[k];
+        let i = lo, j = mid+1, k = lo;
+        while (k <= hi){
+          if (i > mid){ const v = aux[j++]; yield {type:'write', i:k, value:v, text:`拷贝右半 ${v} 到 A[${k}]`}; k++; continue; }
+          if (j > hi){ const v = aux[i++]; yield {type:'write', i:k, value:v, text:`拷贝左半 ${v} 到 A[${k}]`}; k++; continue; }
+          yield {type:'compare', i:i, j:j, text:`归并比较 aux[${i}] 与 aux[${j}]`};
+          if (aux[i] <= aux[j]){ const v = aux[i++]; yield {type:'write', i:k, value:v, text:`写入 ${v} 至 A[${k}]`}; }
+          else { const v = aux[j++]; yield {type:'write', i:k, value:v, text:`写入 ${v} 至 A[${k}]`}; }
+          k++;
+        }
+      }
+      function* sort(lo, hi){
+        if (lo >= hi) return;
+        const mid = Math.floor((lo+hi)/2);
+        yield* sort(lo, mid);
+        yield* sort(mid+1, hi);
+        yield* merge(lo, mid, hi);
+      }
+      yield* sort(0, n-1);
+    }
+
+    // 6) Quick Sort (Lomuto partition)
+    function* genQuick(arr){
+      function* quick(lo, hi){
+        if (lo >= hi) return;
+        const pivot = arr[hi];
+        yield {type:'pivot', i:hi, text:`选择基准 A[${hi}]=${pivot}`};
+        let i = lo;
+        for(let j=lo;j<hi;j++){
+          yield {type:'compare', i:j, j:hi, text:`比较 A[${j}] 与 pivot ${pivot}`};
+          if (arr[j] <= pivot){
+            if (i !== j){ yield {type:'swap', i, j, text:`交换 A[${i}] 与 A[${j}]`}; }
+            i++;
+          }
+        }
+        if (i !== hi){ yield {type:'swap', i, j:hi, text:`放置 pivot 至位置 ${i}`}; }
+        yield* quick(lo, i-1);
+        yield* quick(i+1, hi);
+      }
+      yield* quick(0, arr.length-1);
+    }
+
+    // 7) Heap Sort (max-heap)
+    function* genHeap(arr){
+      const n = arr.length;
+      function* siftDown(i, heapSize){
+        while (true){
+          let largest = i;
+          const l = 2*i+1, r = 2*i+2;
+          if (l < heapSize){ yield {type:'compare', i:l, j:largest, text:`比较子节点 A[${l}] 与 A[${largest}]`}; if (arr[l] > arr[largest]) largest = l; }
+          if (r < heapSize){ yield {type:'compare', i:r, j:largest, text:`比较子节点 A[${r}] 与 A[${largest}]`}; if (arr[r] > arr[largest]) largest = r; }
+          if (largest === i) break;
+          yield {type:'swap', i, j:largest, text:`下沉交换 A[${i}] 与 A[${largest}]`};
+          i = largest;
+        }
+      }
+      // build heap
+      for(let i=Math.floor(n/2)-1;i>=0;i--){ yield* siftDown(i, n); }
+      // extract
+      for(let end=n-1; end>0; end--){
+        yield {type:'swap', i:0, j:end, text:`堆顶与末尾交换，固定 A[${end}]`};
+        yield* siftDown(0, end);
+      }
+    }
+
+    // 8) Counting Sort (non-negative)
+    function* genCounting(arr){
+      const maxVal = Math.max(0, ...arr);
+      const count = new Array(maxVal+1).fill(0);
+      for(let i=0;i<arr.length;i++){
+        count[arr[i]]++;
+        yield {type:'compare', i:i, j:i, text:`统计值 ${arr[i]} 频次=${count[arr[i]]}`};
+      }
+      let idx = 0;
+      for(let v=0; v<=maxVal; v++){
+        while (count[v]-- > 0){
+          yield {type:'write', i:idx, value:v, text:`输出 ${v} 至 A[${idx}]`};
+          idx++;
+        }
+      }
+    }
+
+    // 9) Bucket Sort (non-negative, simple buckets + insertion sort inside)
+    function* genBucket(arr){
+      const n = arr.length;
+      const maxVal = Math.max(1, ...arr);
+      const bucketCount = Math.max(1, Math.floor(n/5));
+      const buckets = Array.from({length: bucketCount}, () => []);
+      // distribute
+      for(let i=0;i<n;i++){
+        const idx = Math.min(bucketCount-1, Math.floor(arr[i] / (maxVal+1) * bucketCount));
+        buckets[idx].push(arr[i]);
+        yield {type:'compare', i:i, j:i, text:`分配 ${arr[i]} 到桶 ${idx}`};
+      }
+      // sort each bucket (insertion) and concat
+      let k = 0;
+      for(let b=0;b<bucketCount;b++){
+        const bucket = buckets[b];
+        // insertion sort in bucket
+        for(let i=1;i<bucket.length;i++){
+          const key = bucket[i];
+          let j = i-1;
+          while (j>=0 && bucket[j] > key){ j--; }
+          bucket.splice(j+1, 0, key);
+          bucket.splice(i+1, 1);
+        }
+        for(let i=0;i<bucket.length;i++){
+          yield {type:'write', i:k, value:bucket[i], text:`回收 桶${b} 值 ${bucket[i]} 至 A[${k}]`};
+          k++;
+        }
+      }
+    }
+
+    // 10) Radix Sort LSD base 10 (non-negative)
+    function* genRadix(arr){
+      const maxVal = Math.max(0, ...arr);
+      let exp = 1;
+      while (Math.floor(maxVal/exp) > 0){
+        const buckets = Array.from({length:10}, () => []);
+        for(let i=0;i<arr.length;i++){
+          const digit = Math.floor(arr[i]/exp) % 10;
+          buckets[digit].push(arr[i]);
+          yield {type:'compare', i:i, j:i, text:`按位 exp=${exp} 分配 ${arr[i]} 到桶 ${digit}`};
+        }
+        let k = 0;
+        for(let d=0; d<10; d++){
+          for(let i=0;i<buckets[d].length;i++){
+            yield {type:'write', i:k, value:buckets[d][i], text:`回收 digit=${d} 值 ${buckets[d][i]} 至 A[${k}]`};
+            k++;
+          }
+        }
+        exp *= 10;
+      }
+    }
+
+    const generators = {
+      bubble: genBubble,
+      selection: genSelection,
+      insertion: genInsertion,
+      shell: genShell,
+      merge: genMerge,
+      quick: genQuick,
+      heap: genHeap,
+      counting: genCounting,
+      bucket: genBucket,
+      radix: genRadix,
+    };
+
+    function isSorted(a){ for(let i=1;i<a.length;i++) if (a[i-1] > a[i]) return false; return true; }
+
+    function buildSteps(){
+      const arr = state.arr.slice();
+      const algo = $('#algo').value;
+      const gen = generators[algo];
+      if (!gen){ alert('未知算法'); return; }
+      state.steps = [];
+      const r = recorder(arr);
+      // For generators that mutate internally, we capture before/after correctly by replaying yielded semantics
+      const iter = gen(r.arr);
+      for (const ev of iter){
+        if (ev.type === 'swap' || ev.type === 'swap_if'){
+          r.swap(ev.i, ev.j);
+        } else if (ev.type === 'write'){
+          r.write(ev.i, ev.value !== undefined ? ev.value : r.arr[ev.i]);
+        } else if (ev.type === 'pivot' || ev.type === 'compare'){
+          // no direct data change
+        }
+        r.push(ev, ev.text || '');
+      }
+      state.steps = r.steps;
+      state.idx = 0;
+      updateOpsCount();
+      $('#range').max = state.steps.length; $('#range').value = 0;
+      const finalArr = state.steps.length ? state.steps[state.steps.length-1].arr : state.arr.slice();
+      const ok = isSorted(finalArr);
+      setStatus(`算法：${$('#algo').selectedOptions[0].text}，步骤数：${state.steps.length}，结果：${ok ? '有序' : '未排序正确'}`);
+      updateView();
+    }
+
+    function tryParseArray(text){
+      const parts = text.split(/[\s,;]+/).filter(Boolean);
+      if (parts.length === 0) return null;
+      const arr = parts.map(x => Number(x));
+      if (arr.some(v => !Number.isFinite(v))) return null;
+      return arr;
+    }
+
+    function loadFromInput(){
+      const text = $('#arrInput').value.trim();
+      const arr = tryParseArray(text);
+      if (!arr){ alert('请输入用逗号/空格分隔的数字。'); return; }
+      state.arr = arr.slice();
+      setStatus(`载入 ${arr.length} 个数。`);
+      state.steps = []; updateOpsCount();
+      renderBars({arr: state.arr, action:null});
+      setCurrentOp('已载入数组，点击“生成步骤”开始。');
+    }
+
+    function randomize(){
+      const n = clamp(+$('#size').value || 16, 5, 150);
+      const maxVal = clamp(+$('#maxVal').value || 99, 9, 9999);
+      state.arr = randomArray(n, maxVal);
+      state.steps = []; updateOpsCount();
+      $('#arrInput').value = state.arr.join(', ');
+      renderBars({arr: state.arr, action:null});
+      setCurrentOp('已生成随机数组，点击“生成步骤”开始。');
+    }
+
+    // UI events
+    $('#btnRandom').addEventListener('click', randomize);
+    $('#btnLoad').addEventListener('click', loadFromInput);
+    $('#btnBuild').addEventListener('click', buildSteps);
+
+    $('#btnPrev').addEventListener('click', ()=>{ state.idx = clamp(state.idx-1, 0, state.steps.length); updateView(); });
+    $('#btnNext').addEventListener('click', ()=>{ state.idx = clamp(state.idx+1, 0, state.steps.length); updateView(); });
+    $('#range').addEventListener('input', (e)=>{ state.idx = +e.target.value; updateView(); });
+    $('#btnPlay').addEventListener('click', play);
+
+    $('#btnExample').addEventListener('click', ()=>{
+      $('#algo').value = 'quick';
+      $('#size').value = 20; $('#maxVal').value = 50;
+      state.arr = [23, 5, 12, 7, 34, 9, 18, 1, 27, 16, 8, 3, 11, 29, 25, 4, 13, 21, 6, 19];
+      $('#arrInput').value = state.arr.join(', ');
+      setCurrentOp('已载入示例数组，点击“生成步骤”。');
+      state.steps = []; updateOpsCount(); renderBars({arr: state.arr, action:null});
+    });
+
+    $('#btnExport').addEventListener('click', (e)=>{
+      e.preventDefault();
+      const data = { steps: state.steps };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='sorting-steps.json'; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    window.addEventListener('keydown', (e)=>{
+      if (e.key === 'ArrowLeft'){ e.preventDefault(); state.idx = clamp(state.idx-1, 0, state.steps.length); updateView(); }
+      if (e.key === 'ArrowRight'){ e.preventDefault(); state.idx = clamp(state.idx+1, 0, state.steps.length); updateView(); }
+    });
+
+    // init
+    (function init(){
+      randomize();
+      updateView();
+    })();
+  </script>
+</body>
+</html>
