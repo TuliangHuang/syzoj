@@ -42,7 +42,7 @@ module.exports = {
       s = s.split('<pre>').join('<div class="ui existing segment"><pre style="margin-top: 0; margin-bottom: 0; ">').split('</pre>').join('</pre></div>')
            .split('<table>').join('<table class="ui structured celled table">')
            .split('<hr>').join('<div class="ui hidden section divider"></div>')
-           .split(/(?<!-)--(?!-)/).join('<div class="ui hidden divider"></div>')
+           .split(/(?<!-)--(?!-)/).join('')
            .split('<blockquote>').join('<div class="ui stacked segment">').split('</blockquote>').join('</div>');
 
       let jsdom = new JSDOM(), document = jsdom.window.document;
