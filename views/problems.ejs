@@ -84,9 +84,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
 
   <% if (typeof allTags !== 'undefined') { %>
   <div id="all_tags_panel" class="ui segment" style="display: none; max-height: 420px; overflow: auto; padding-top: 16px; ">
-    <%
-      const colorOrder = ['black', 'blue', 'violet', 'pink', 'olive', 'yellow', 'orange', 'teal', 'red', 'green', 'purple'];
-    %>
+    <% const colorOrder = (typeof tagColorOrder !== 'undefined' && Array.isArray(tagColorOrder)) ? tagColorOrder : ['black', 'blue', 'violet', 'pink', 'olive', 'yellow', 'orange', 'teal', 'red', 'green', 'purple']; %>
     <% let shownGroupIndex = 0; %>
     <% for (let ci = 0; ci < colorOrder.length; ci++) { %>
       <%

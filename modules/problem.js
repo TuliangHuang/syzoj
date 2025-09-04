@@ -10,6 +10,7 @@ const fs = require('fs-extra');
 const jwt = require('jsonwebtoken');
 
 let Judger = syzoj.lib('judger');
+const { tagColorOrder } = require('../constants');
 let CodeFormatter = syzoj.lib('code_formatter');
 
 app.get('/problems', async (req, res) => {
@@ -52,7 +53,8 @@ app.get('/problems', async (req, res) => {
       paginate: paginate,
       curSort: sort,
       curOrder: order === 'asc',
-      allTags: allTags
+      allTags: allTags,
+      tagColorOrder
     });
   } catch (e) {
     syzoj.log(e);
@@ -117,7 +119,8 @@ app.get('/problems/search', async (req, res) => {
       paginate: paginate,
       curSort: sort,
       curOrder: order === 'asc',
-      allTags: allTags
+      allTags: allTags,
+      tagColorOrder
     });
   } catch (e) {
     syzoj.log(e);

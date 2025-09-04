@@ -1,5 +1,6 @@
 let Problem = syzoj.model('problem');
 let ProblemTag = syzoj.model('problem_tag');
+const { tagColorOrder } = require('../constants');
 
 app.get('/problems/tag/:tagIDs', async (req, res) => {
   try {
@@ -63,7 +64,8 @@ app.get('/problems/tag/:tagIDs', async (req, res) => {
       paginate: paginate,
       curSort: sort,
       curOrder: order === 'asc',
-      allTags: allTags
+      allTags: allTags,
+      tagColorOrder
     });
   } catch (e) {
     syzoj.log(e);

@@ -16,6 +16,7 @@ import * as path from "path";
 import * as util from "util";
 import LRU = require("lru-cache");
 import DeepCopy = require("deepcopy");
+const { tagColorOrder } = require('../constants');
 
 const problemTagCache = new LRU<number, number[]>({
   max: syzoj.config.db.cache_size
@@ -517,9 +518,7 @@ export default class Problem extends Model {
       return ProblemTag.findById(tagID);
     });
 
-    const sortOrder = [
-      "black", "blue", "violet", "pink", "olive", "yellow", "orange", "teal"
-    ];
+    const sortOrder = tagColorOrder;
     const orderMap = {};
     sortOrder.forEach((color, idx) => {
       if (!(color in orderMap)) {
