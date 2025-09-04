@@ -55,13 +55,15 @@ app.get('/problems/tag/:tagIDs', async (req, res) => {
       return problem;
     });
 
+    const allTags = await ProblemTag.find({ order: { name: 'ASC' } });
     res.render('problems', {
       allowedManageTag: res.locals.user && await res.locals.user.hasPrivilege('manage_problem_tag'),
       problems: problems,
       tags: tags,
       paginate: paginate,
       curSort: sort,
-      curOrder: order === 'asc'
+      curOrder: order === 'asc',
+      allTags: allTags
     });
   } catch (e) {
     syzoj.log(e);

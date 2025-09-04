@@ -22,8 +22,8 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
               </a>
           <% } %>
         <% } else { %>
-          <form action="<%= syzoj.utils.makeUrl(['problems', 'search']) %>" method="get">
-            <div class="ui search" style="width: 280px; height: 28px; margin-top: -5.3px; ">
+          <form action="<%= syzoj.utils.makeUrl(['problems', 'search']) %>" method="get" style="display: inline-block; ">
+            <div class="ui search" style="width: 280px; height: 28px; ">
               <div class="ui left icon input" style="width: 100%; ">
                 <input class="prompt" style="width: 100%; " type="text" value="<%= req.query.keyword %>" placeholder="ID / 题目名 …" name="keyword">
                 <i class="search icon"></i>
@@ -31,6 +31,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
               <div class="results" style="width: 100%; "></div>
             </div>
           </form>
+          <button type="button" id="toggle_all_tags" class="ui icon button icon-ghost-button" style="margin-left: 8px; vertical-align: top; " title="查看所有标签"><i class="tags icon"></i></button>
         <% } %>
       </div>
       <div class="nine wide right aligned column">
@@ -80,6 +81,27 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
       </div>
     </div>
   </div>
+
+  <% if (typeof allTags !== 'undefined') { %>
+  <div id="all_tags_panel" class="ui segment" style="display: none; max-height: 420px; overflow: auto; padding-top: 16px; ">
+    <%
+      const colorOrder = ['black', 'blue', 'violet', 'pink', 'olive', 'yellow', 'orange', 'teal', 'red', 'green', 'purple'];
+    %>
+    <% for (let ci = 0; ci < colorOrder.length; ci++) { %>
+      <%
+        const color = colorOrder[ci];
+        const group = (allTags || []).filter(function(x){ return x && x.color === color; });
+      %>
+      <% if (group.length) { %>
+        <div style="margin: 8px 0; ">
+          <% group.forEach(function(tag) { %>
+            <a href="<%= syzoj.utils.makeUrl(['problems', 'tag', tag.id]) %>" class="ui tiny <%= tag.color %> label" style="margin: 2px; "><%= tag.name %></a>
+          <% }); %>
+        </div>
+      <% } %>
+    <% } %>
+  </div>
+  <% } %>
 
   <% if (problems.length) { %>
   <div style="margin-bottom: 30px; ">
@@ -172,8 +194,20 @@ $(function () {
   $('#add_problem_dropdown').dropdown();
 });
 </script>
+<style>
+.icon-ghost-button { background: transparent !important; box-shadow: none !important; }
+.icon-ghost-button:hover { background: rgba(0,0,0,0.04) !important; }
+.icon-ghost-button.active { background: rgba(0,0,0,0.08) !important; }
+</style>
 <script>
 $(function () {
+  $('#toggle_all_tags').on('click', function(){
+    var panel = $('#all_tags_panel');
+    var shown = panel.is(':visible');
+    panel.toggle(!shown);
+    $(this).attr('title', shown ? '查看所有标签' : '收起所有标签');
+    $(this).toggleClass('active', !shown);
+  });
   $('.ui.search').search({
     debug: true,
     saveRemoteData: false,

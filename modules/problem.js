@@ -45,12 +45,14 @@ app.get('/problems', async (req, res) => {
       problem.tags = await problem.getTags();
     });
 
+    const allTags = await ProblemTag.find({ order: { name: 'ASC' } });
     res.render('problems', {
       allowedManageTag: res.locals.user && await res.locals.user.hasPrivilege('manage_problem_tag'),
       problems: problems,
       paginate: paginate,
       curSort: sort,
-      curOrder: order === 'asc'
+      curOrder: order === 'asc',
+      allTags: allTags
     });
   } catch (e) {
     syzoj.log(e);
@@ -108,12 +110,14 @@ app.get('/problems/search', async (req, res) => {
       problem.tags = await problem.getTags();
     });
 
+    const allTags = await ProblemTag.find({ order: { name: 'ASC' } });
     res.render('problems', {
       allowedManageTag: res.locals.user && await res.locals.user.hasPrivilege('manage_problem_tag'),
       problems: problems,
       paginate: paginate,
       curSort: sort,
-      curOrder: order === 'asc'
+      curOrder: order === 'asc',
+      allTags: allTags
     });
   } catch (e) {
     syzoj.log(e);
