@@ -6,6 +6,8 @@
         "outDir": "./models-built",
         "rootDir": "./models",
         "emitDecoratorMetadata": true,
-        "experimentalDecorators": true
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true
     }
 }

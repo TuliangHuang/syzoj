@@ -14,10 +14,10 @@ import SubmissionStatistics, { StatisticsType } from "./submission_statistics";
 import * as fs from "fs-extra";
 import * as path from "path";
 import * as util from "util";
-import * as LRUCache from "lru-cache";
-import * as DeepCopy from "deepcopy";
+import LRU = require("lru-cache");
+import DeepCopy = require("deepcopy");
 
-const problemTagCache = new LRUCache<number, number[]>({
+const problemTagCache = new LRU<number, number[]>({
   max: syzoj.config.db.cache_size
 });
 
@@ -397,11 +397,11 @@ export default class Problem extends Model {
           type: type as StatisticsType
         };
 
-        let record = await SubmissionStatistics.findOne(baseColumns);
+        let record = await SubmissionStatistics.findOne({ where: baseColumns });
 
         if (toDelete) {
           if (record) {
-            await record.destroy();
+            await record.remove();
           }
 
           return;
@@ -411,8 +411,8 @@ export default class Problem extends Model {
           record = SubmissionStatistics.create(baseColumns);
         }
 
-        record.key = resultRow[column];
-        record.submission_id = resultRow["id"];
+        (record as any).key = resultRow[column];
+        (record as any).submission_id = resultRow["id"];
 
         await record.save();
       });

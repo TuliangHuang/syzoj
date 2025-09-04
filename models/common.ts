@@ -1,6 +1,6 @@
 import * as TypeORM from "typeorm";
-import * as LRUCache from "lru-cache";
-import * as DeepCopy from "deepcopy";
+import LRU = require("lru-cache");
+import DeepCopy from "deepcopy";
 
 declare var syzoj: any;
 
@@ -20,11 +20,11 @@ enum PaginationIDOrder {
   DESC = -1
 }
 
-const caches: Map<string, LRUCache<number, Model>> = new Map();
+const caches: Map<string, LRU<number, Model>> = new Map();
 
 function ensureCache(modelName) {
   if (!caches.has(modelName)) {
-    caches.set(modelName, new LRUCache({
+    caches.set(modelName, new LRU({
       max: syzoj.config.db.cache_size
     }));
   }
