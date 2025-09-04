@@ -87,17 +87,19 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
     <%
       const colorOrder = ['black', 'blue', 'violet', 'pink', 'olive', 'yellow', 'orange', 'teal', 'red', 'green', 'purple'];
     %>
+    <% let shownGroupIndex = 0; %>
     <% for (let ci = 0; ci < colorOrder.length; ci++) { %>
       <%
         const color = colorOrder[ci];
         const group = (allTags || []).filter(function(x){ return x && x.color === color; });
       %>
       <% if (group.length) { %>
-        <div style="margin: 8px 0; ">
+        <div style="margin-top: <%= shownGroupIndex > 0 ? '8px' : '0' %>; ">
           <% group.forEach(function(tag) { %>
             <a href="<%= syzoj.utils.makeUrl(['problems', 'tag', tag.id]) %>" class="ui tiny <%= tag.color %> label" style="margin: 2px; "><%= tag.name %></a>
           <% }); %>
         </div>
+        <% shownGroupIndex++; %>
       <% } %>
     <% } %>
   </div>
