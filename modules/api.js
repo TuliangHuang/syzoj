@@ -1,6 +1,7 @@
 let User = syzoj.model('user');
 let Problem = syzoj.model('problem');
 let File = syzoj.model('file');
+const UserPrivilege = syzoj.model('user_privilege');
 const Email = require('../libs/email');
 const jwt = require('jsonwebtoken');
 
@@ -69,22 +70,28 @@ app.post('/api/sign_up', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     let user = await User.fromName(req.body.username);
     if (user) throw 2008;
-    user = await User.findOne({ where: { email: String(req.body.email) } });
-    if (user) throw 2009;
+    // Make email optional; if provided (non-empty after trim), ensure it's unique
+    let email = (req.body.email || '').trim();
+    if (email) {
+      user = await User.findOne({ where: { email: String(email) } });
+      if (user) throw 2009;
+    } else {
+      email = null;
+    }
 
 
     // Because the salt is "syzoj2_xxx" and the "syzoj2_xxx" 's md5 is"59cb..."
     // the empty password 's md5 will equal "59cb.."
     let syzoj2_xxx_md5 = '59cb65ba6f9ad18de0dcd12d5ae11bd2';
     if (req.body.password === syzoj2_xxx_md5) throw 2007;
-    if (!(req.body.email = req.body.email.trim())) throw 2006;
     if (!syzoj.utils.isValidUsername(req.body.username)) throw 2002;
 
     if (syzoj.config.register_mail) {
       let sendObj = {
         username: req.body.username,
         password: req.body.password,
-        email: req.body.email,
+        email: email,
+        prevUrl: req.body.prevUrl
       };
 
       const token = jwt.sign(sendObj, syzoj.config.email_jwt_secret, {
@@ -94,7 +101,27 @@ app.post('/api/sign_up', async (req, res) => {
 
       const vurl = syzoj.utils.getCurrentLocation(req, true) + syzoj.utils.makeUrl(['api', 'sign_up_confirm'], { token: token });
       try {
-        await Email.send(syzoj.config.email.admin,
+        // Collect recipients: configured admin email and all users with manage_user privilege or admins
+        let recipientSet = new Set();
+        if (syzoj.config.email.admin) recipientSet.add(syzoj.config.email.admin);
+
+        const adminUsers = await User.find({ where: { is_admin: true } });
+        for (const u of adminUsers || []) if (u.email) recipientSet.add(u.email);
+
+        const managePrivs = await UserPrivilege.find({ where: { privilege: 'manage_user' } });
+        if (managePrivs && managePrivs.length) {
+          // Fetch users for these privileges
+          for (const p of managePrivs) {
+            const u = await User.findById(p.user_id);
+            if (u && u.email) recipientSet.add(u.email);
+          }
+        }
+
+        const recipients = Array.from(recipientSet).join(',');
+        if (!recipients) throw new Error('无可用的审核邮箱地址。');
+
+        await Email.send(
+          recipients,
           `${req.body.username} 的 ${syzoj.config.title} 注册验证邮件`,
           `<p>请点击该链接完成用户在 ${syzoj.config.title} 的注册：</p><p><a href="${vurl}">${vurl}</a></p>`
         );
@@ -110,7 +137,7 @@ app.post('/api/sign_up', async (req, res) => {
       user = await User.create({
         username: req.body.username,
         password: req.body.password,
-        email: req.body.email,
+        email: email,
         is_show: syzoj.config.default.user.show,
         rating: syzoj.config.default.user.rating,
         register_time: parseInt((new Date()).getTime() / 1000)
@@ -184,20 +211,22 @@ app.get('/api/sign_up_confirm', async (req, res) => {
 
     let user = await User.fromName(obj.username);
     if (user) throw new ErrorMessage('用户名已被占用。');
-    user = await User.findOne({ where: { email: obj.email } });
-    if (user) throw new ErrorMessage('邮件地址已被占用。');
+    if (obj.email) {
+      user = await User.findOne({ where: { email: obj.email } });
+      if (user) throw new ErrorMessage('邮件地址已被占用。');
+    }
 
     // Because the salt is "syzoj2_xxx" and the "syzoj2_xxx" 's md5 is"59cb..."
     // the empty password 's md5 will equal "59cb.."
     let syzoj2_xxx_md5 = '59cb65ba6f9ad18de0dcd12d5ae11bd2';
     if (obj.password === syzoj2_xxx_md5) throw new ErrorMessage('密码不能为空。');
-    if (!(obj.email = obj.email.trim())) throw new ErrorMessage('邮件地址不能为空。');
+    if (typeof obj.email === 'string') obj.email = obj.email.trim();
     if (!syzoj.utils.isValidUsername(obj.username)) throw new ErrorMessage('用户名不合法。');
 
     user = await User.create({
       username: obj.username,
       password: obj.password,
-      email: obj.email,
+      email: obj.email || null,
       is_show: syzoj.config.default.user.show,
       rating: syzoj.config.default.user.rating,
       register_time: parseInt((new Date()).getTime() / 1000)
@@ -229,20 +258,22 @@ app.get('/api/sign_up/:token', async (req, res) => {
 
     let user = await User.fromName(obj.username);
     if (user) throw new ErrorMessage('用户名已被占用。');
-    user = await User.findOne({ where: { email: obj.email } });
-    if (user) throw new ErrorMessage('邮件地址已被占用。');
+    if (obj.email) {
+      user = await User.findOne({ where: { email: obj.email } });
+      if (user) throw new ErrorMessage('邮件地址已被占用。');
+    }
 
     // Because the salt is "syzoj2_xxx" and the "syzoj2_xxx" 's md5 is"59cb..."
     // the empty password 's md5 will equal "59cb.."
     let syzoj2_xxx_md5 = '59cb65ba6f9ad18de0dcd12d5ae11bd2';
     if (obj.password === syzoj2_xxx_md5) throw new ErrorMessage('密码不能为空。');
-    if (!(obj.email = obj.email.trim())) throw new ErrorMessage('邮件地址不能为空。');
+    if (typeof obj.email === 'string') obj.email = obj.email.trim();
     if (!syzoj.utils.isValidUsername(obj.username)) throw new ErrorMessage('用户名不合法。');
 
     user = await User.create({
       username: obj.username,
       password: obj.password,
-      email: obj.email,
+      email: obj.email || null,
       public_email: true
     });
     await user.save();

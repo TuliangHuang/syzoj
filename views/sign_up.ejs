@@ -11,8 +11,8 @@
                     <input type="text" placeholder="" id="username">
                 </div>
                 <div class="field">
-                    <label for="email">邮箱</label>
-                    <input type="email" placeholder="" id="email">
+                    <label for="email">邮箱（可选）</label>
+                    <input type="email" placeholder="留空则不绑定邮箱，找回密码请联系管理员" id="email">
                 </div>
                 <div class="two fields">
                     <div class="field">
@@ -40,7 +40,7 @@ function success() {
 }
 
 function mail_required() {
-    alert("注册确认邮件已经发送到管理员的邮箱，请联系管理员完成审核，");
+    alert("注册确认邮件已发送至管理员和拥有用户管理权限的审核者。");
     window.location.href = location.protocol + '//' + location.host + <%- serializejs(req.query.url || '/') %>;
 }
 
@@ -76,7 +76,6 @@ function submit() {
                     show_error("密码不得为空");
                     break;
                 case 2004:
-                case 2006:
                     show_error("请输入正确的邮箱");
                     break;
                 case 2008:
