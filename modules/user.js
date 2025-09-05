@@ -7,6 +7,9 @@ const ContestPlayer = syzoj.model('contest_player');
 // Ranklist
 app.get('/ranklist', async (req, res) => {
   try {
+    if (res.locals.user) {
+      res.locals.user.allowedManage = await res.locals.user.hasPrivilege('manage_user');
+    }
     const sort = req.query.sort || syzoj.config.sorting.ranklist.field;
     const order = req.query.order || syzoj.config.sorting.ranklist.order;
     if (!['ac_num', 'rating', 'id', 'username'].includes(sort) || !['asc', 'desc'].includes(order)) {
@@ -85,6 +88,9 @@ app.get('/user/:id', async (req, res) => {
     let statistics = await user.getStatistics();
     await user.renderInformation();
     user.emailVisible = user.public_email || user.allowedEdit;
+    if (res.locals.user) {
+      res.locals.user.allowedManage = await res.locals.user.hasPrivilege('manage_user');
+    }
 
     const ratingHistoryValues = await RatingHistory.find({
       where: { user_id: user.id },
@@ -174,6 +180,7 @@ app.post('/user/:id/edit', async (req, res) => {
       if (!syzoj.utils.isValidUsername(req.body.username)) throw new ErrorMessage('无效的用户名。');
       user.username = req.body.username;
       user.email = req.body.email;
+      user.nickname = req.body.nickname;
     }
 
     if (res.locals.user && res.locals.user.is_admin) {
