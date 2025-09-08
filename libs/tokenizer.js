@@ -1,18 +1,82 @@
 "use strict";
 
-// Language-agnostic token counter. Approximates tokens so identifiers like
+// Language-aware token counter. Approximates tokens so identifiers like
 // "foobar" count as 1 token. Strings and operator sequences are treated as
-// single tokens. Common comments are stripped first.
+// single tokens. Comments are stripped first according to language rules.
 
-function stripComments(source) {
+function stripCommentsGeneric(source) {
   if (!source) return "";
   // Remove block comments like /* ... */
   let s = source.replace(/\/\*[\s\S]*?\*\//g, "");
   // Remove // line comments (avoid http:// by requiring start or non-: before)
   s = s.replace(/(^|[^:])\/\/.*$/gm, function (_m, p1) { return p1 || ""; });
-  // Remove # line comments (common in shell/Python)
+  // Remove # line comments (common in shell/Python/Ruby)
   s = s.replace(/(^|\s)#.*$/gm, function (_m, p1) { return p1 || ""; });
   return s;
+}
+
+// Best-effort comment stripping per language key in language-config.json
+function stripCommentsByLanguage(source, language) {
+  if (typeof source !== "string" || source.length === 0) return "";
+  const lang = (language || "").toLowerCase();
+
+  // Normalize to families
+  const family = (function () {
+    if (/(^|-)c(pp|\+\+)/.test(lang) || lang === "c" || /clang/.test(lang) || lang === "java" || lang === "csharp" || lang === "vala" || lang === "nodejs" || lang === "js" || lang === "javascript") return "c";
+    if (lang.startsWith("python")) return "python";
+    if (lang.startsWith("lua") || lang === "lua" || lang === "luajit") return "lua";
+    if (lang === "haskell") return "haskell";
+    if (lang === "ocaml") return "ocaml";
+    if (lang === "pascal") return "pascal";
+    if (lang === "ruby") return "ruby";
+    if (lang === "vbnet" || lang === "vb" || lang === "visual basic") return "vbnet";
+    return "generic";
+  })();
+
+  let s = source;
+  switch (family) {
+    case "c":
+      // /* ... */ and // ...
+      s = s.replace(/\/\*[\s\S]*?\*\//g, "");
+      s = s.replace(/(^|[^:])\/\/.*$/gm, function (_m, p1) { return p1 || ""; });
+      return s;
+    case "python":
+      // # ... to end of line (keep shebang intact by only stripping after start or whitespace)
+      s = s.replace(/(^|\s)#.*$/gm, function (_m, p1) { return p1 || ""; });
+      return s;
+    case "lua":
+      // --[[ ... ]] and -- ...
+      s = s.replace(/--\[\[[\s\S]*?\]\]/g, "");
+      s = s.replace(/--.*$/gm, "");
+      return s;
+    case "haskell":
+      // {- ... -} and -- ...
+      s = s.replace(/\{-[\s\S]*?-\}/g, "");
+      s = s.replace(/--.*$/gm, "");
+      return s;
+    case "ocaml":
+      // (* ... *) (non-nested approximation)
+      s = s.replace(/\(\*[\s\S]*?\*\)/g, "");
+      return s;
+    case "pascal":
+      // { ... }, (* ... *), and // ... (FPC)
+      s = s.replace(/\{[\s\S]*?\}/g, "");
+      s = s.replace(/\(\*[\s\S]*?\*\)/g, "");
+      s = s.replace(/\/\/.*$/gm, "");
+      return s;
+    case "ruby":
+      // =begin ... =end and # ...
+      s = s.replace(/^=begin[\s\S]*?^=end\s*$/gmi, "");
+      s = s.replace(/(^|\s)#.*$/gm, function (_m, p1) { return p1 || ""; });
+      return s;
+    case "vbnet":
+      // ' ... and Rem ...
+      s = s.replace(/(^|\s)'.*$/gm, function (_m, p1) { return p1 || ""; });
+      s = s.replace(/(^|\s)rem\s.*$/gmi, function (_m, p1) { return p1 || ""; });
+      return s;
+    default:
+      return stripCommentsGeneric(source);
+  }
 }
 
 function isWhitespace(ch) {
@@ -36,9 +100,9 @@ const multiCharOps = [
   "<=", ">=", "==", "!=", "&&", "||", "++", "--", "<<", ">>", "**", "->", "::"
 ].sort(function (a, b) { return b.length - a.length; });
 
-function countCodeTokens(source) {
+function countCodeTokens(source, language) {
   if (typeof source !== "string" || source.length === 0) return 0;
-  const code = stripComments(source);
+  const code = stripCommentsByLanguage(source, language);
   let i = 0;
   let count = 0;
   const n = code.length;

@@ -612,7 +612,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
         task_id: randomstring.generate(10),
         code: code,
         code_length: Buffer.from(code).length,
-        token_count: countCodeTokens(code),
+        token_count: countCodeTokens(code, req.body.language),
         language: req.body.language,
         user_id: curUser.id,
         problem_id: id,

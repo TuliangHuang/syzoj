@@ -320,11 +320,21 @@ app.post('/admin/other', async (req, res) => {
       }
     } else if (req.body.type === 'reset_token_count') {
       const submissions = await JudgeState.find();
+      const affectedProblems = new Map();
       for (const s of submissions) {
-        // For normal code submissions, recompute token count
         if (s.language && s.language.length) {
-          s.token_count = countCodeTokens(s.code || '');
+          s.token_count = countCodeTokens(s.code || '', s.language);
           await s.save();
+          if (!affectedProblems.has(s.problem_id)) affectedProblems.set(s.problem_id, new Set());
+          if (s.status === 'Accepted') affectedProblems.get(s.problem_id).add(s.user_id);
+        }
+      }
+      // Recompute statistics for affected problems/users since shortest/longest changed
+      for (const [problemId, userSet] of affectedProblems.entries()) {
+        const problem = await Problem.findById(problemId);
+        if (!problem) continue;
+        for (const userId of userSet) {
+          try { await problem.updateStatistics(userId); } catch (e) { syzoj.log(e); }
         }
       }
     } else if (req.body.type === 'import_luogu') {
