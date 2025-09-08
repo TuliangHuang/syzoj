@@ -12,6 +12,7 @@ const jwt = require('jsonwebtoken');
 let Judger = syzoj.lib('judger');
 const { tagColorOrder } = require('../constants');
 let CodeFormatter = syzoj.lib('code_formatter');
+const { countCodeTokens } = syzoj.lib('tokenizer');
 
 app.get('/problems', async (req, res) => {
   try {
@@ -589,6 +590,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
         task_id: randomstring.generate(10),
         code: file.md5,
         code_length: size,
+        token_count: null,
         language: null,
         user_id: curUser.id,
         problem_id: id,
@@ -610,6 +612,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
         task_id: randomstring.generate(10),
         code: code,
         code_length: Buffer.from(code).length,
+        token_count: countCodeTokens(code),
         language: req.body.language,
         user_id: curUser.id,
         problem_id: id,

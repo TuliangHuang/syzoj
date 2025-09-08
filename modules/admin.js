@@ -9,6 +9,7 @@ const RatingCalculation = syzoj.model('rating_calculation');
 const RatingHistory = syzoj.model('rating_history');
 let ContestPlayer = syzoj.model('contest_player');
 const calcRating = require('../libs/rating');
+const { countCodeTokens } = syzoj.lib('tokenizer');
 
 app.get('/admin/info', async (req, res) => {
   try {
@@ -308,11 +309,21 @@ app.post('/admin/other', async (req, res) => {
       for (const a of articles) {
         await a.resetReplyCountAndTime();
       }
-    } else if (req.body.type === 'reset_codelen') {
+    } else if (req.body.type === 'reset_code_length') {
+      // Legacy: recompute by bytes
       const submissions = await JudgeState.find();
       for (const s of submissions) {
-        if (s.type !== 'submit-answer') {
-          s.code_length = Buffer.from(s.code).length;
+        if (s.language && s.language.length) {
+          s.code_length = Buffer.from(s.code || '').length;
+          await s.save();
+        }
+      }
+    } else if (req.body.type === 'reset_token_count') {
+      const submissions = await JudgeState.find();
+      for (const s of submissions) {
+        // For normal code submissions, recompute token count
+        if (s.language && s.language.length) {
+          s.token_count = countCodeTokens(s.code || '');
           await s.save();
         }
       }

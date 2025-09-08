@@ -32,8 +32,8 @@ enum ProblemType {
 const statisticsTypes = {
   fastest: ['total_time', 'ASC'],
   slowest: ['total_time', 'DESC'],
-  shortest: ['code_length', 'ASC'],
-  longest: ['code_length', 'DESC'],
+  shortest: ['token_count', 'ASC'],
+  longest: ['token_count', 'DESC'],
   min: ['max_memory', 'ASC'],
   max: ['max_memory', 'DESC'],
   earliest: ['submit_time', 'ASC']
@@ -376,7 +376,11 @@ export default class Problem extends Model {
       if (this.type === ProblemType.SubmitAnswer && statisticsCodeOnly.includes(type)) return;
 
       await syzoj.utils.lock(['Problem::UpdateStatistics', this.id, type], async () => {
-        const [column, order] = statisticsTypes[type];
+        let [column, order] = statisticsTypes[type];
+        // For submit-answer problems, use file size (code_length) for shortest/longest
+        if (this.type === ProblemType.SubmitAnswer && (type === 'shortest' || type === 'longest')) {
+          column = 'code_length';
+        }
         const result = await JudgeState.createQueryBuilder()
                                        .select([column, "id"])
                                        .where("user_id = :user_id", { user_id })

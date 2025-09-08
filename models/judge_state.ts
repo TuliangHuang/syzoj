@@ -63,6 +63,9 @@ export default class JudgeState extends Model {
   @TypeORM.Column({ nullable: true, type: "integer", default: 0 })
   code_length: number;
 
+  @TypeORM.Column({ nullable: true, type: "integer", default: 0 })
+  token_count: number;
+
   @TypeORM.Column({ nullable: true, type: "boolean", default: 0 })
   pending: boolean;
 
