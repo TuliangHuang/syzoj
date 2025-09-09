@@ -13,6 +13,9 @@ export default class Question extends Model {
   uid: string;
 
   @TypeORM.Column({ nullable: true, type: "varchar", length: 80 })
+  parent_uid: string;
+
+  @TypeORM.Column({ nullable: true, type: "varchar", length: 80 })
   title: string;
 
   @TypeORM.Column({ nullable: true, type: "text" })
@@ -20,4 +23,10 @@ export default class Question extends Model {
 
   @TypeORM.Column({ nullable: true, type: "text" })
   description: string;
+
+  @TypeORM.Column({ nullable: true, type: "text" })
+  answer: string;
+
+  @TypeORM.Column({ nullable: true, type: "text" })
+  tutorial: string;
 }

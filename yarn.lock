@@ -1705,13 +1705,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"denque@npm:^1.4.1":
-  version: 1.5.1
-  resolution: "denque@npm:1.5.1"
-  checksum: 4375ad19d5cea99f90effa82a8cecdaa10f4eb261fbcd7e47cd753ff2737f037aac8f7f4e031cc77f3966314c491c86a0d3b20c128aeee57f791b4662c45108e
-  languageName: node
-  linkType: hard
-
 "denque@npm:^2.0.1":
   version: 2.1.0
   resolution: "denque@npm:2.1.0"
@@ -3038,15 +3031,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"iconv-lite@npm:^0.5.0":
-  version: 0.5.2
-  resolution: "iconv-lite@npm:0.5.2"
-  dependencies:
-    safer-buffer: ">= 2.1.2 < 3"
-  checksum: aa184914b74db7a23feb98cad3e4ed22058f2aa27c5613a127327423b3230a0b934665c2aecf5dc657a58a59891c92fd1e721ed160d1b2f3c682bc26e3fe3f14
-  languageName: node
-  linkType: hard
-
 "ieee754@npm:^1.1.13, ieee754@npm:^1.1.8, ieee754@npm:^1.2.1":
   version: 1.2.1
   resolution: "ieee754@npm:1.2.1"
@@ -3744,6 +3728,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lru-cache@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "lru-cache@npm:6.0.0"
+  dependencies:
+    yallist: ^4.0.0
+  checksum: f97f499f898f23e4585742138a22f22526254fdba6d75d41a1c2526b3b6cc5747ef59c5612ba7375f42aca4f8461950e925ba08c991ead0651b4918b7c978297
+  languageName: node
+  linkType: hard
+
 "lru-cache@npm:^7.14.1":
   version: 7.18.3
   resolution: "lru-cache@npm:7.18.3"
@@ -4165,19 +4158,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mysql2@npm:^1.6.5":
-  version: 1.7.0
-  resolution: "mysql2@npm:1.7.0"
+"mysql2@npm:2.3.3":
+  version: 2.3.3
+  resolution: "mysql2@npm:2.3.3"
   dependencies:
-    denque: ^1.4.1
+    denque: ^2.0.1
     generate-function: ^2.3.1
-    iconv-lite: ^0.5.0
+    iconv-lite: ^0.6.3
     long: ^4.0.0
-    lru-cache: ^5.1.1
+    lru-cache: ^6.0.0
     named-placeholders: ^1.1.2
     seq-queue: ^0.0.5
-    sqlstring: ^2.3.1
-  checksum: d92836b333bc619c9d1ff036de01beb991705d678bbb4b66bb790578f5a958b1dcaa79aac87b173b772bcb5cb005995c0e9179a30f683ec26e05a5bd191d0519
+    sqlstring: ^2.3.2
+  checksum: 45e479d0cbdb24ceb9d1846a1708ae2c33aa64f603f7899279b33560b1eec441f1b7a596075896f1305f701cfbc083bceb88bc72ba5d2f3656a3d6102611286a
   languageName: node
   linkType: hard
 
@@ -5596,7 +5589,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sqlstring@npm:^2.3.1":
+"sqlstring@npm:^2.3.2":
   version: 2.3.3
   resolution: "sqlstring@npm:2.3.3"
   checksum: 1e7e2d51c38a0cf7372e875408ca100b6e0c9a941ab7773975ea41fb36e5528e404dc787689be855780cf6d0a829ff71027964ae3a05a7446e91dce26672fda7
@@ -5886,7 +5879,7 @@ __metadata:
     moment-timezone: ^0.6.0
     msgpack-lite: ^0.1.26
     multer: ^1.2.0
-    mysql2: ^1.6.5
+    mysql2: 2.3.3
     node-7z: ^0.4.0
     nodemailer: ^4.7.0
     object-assign-deep: ^0.4.0

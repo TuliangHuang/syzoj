@@ -1,0 +1,133 @@
+<% this.title = (question && question.title ? question.title : '习题') + ' - 习题'; %>
+<% include header %>
+
+<div class="ui center aligned grid">
+  <div class="row">
+    <h1 class="ui header">
+      <%= question.title || ('#' + question.id) %>
+    </h1>
+  </div>
+  <% if (question.source) { %>
+  <div class="row" style="margin-top: -15px">
+    <div class="ui label">来源<div class="detail"><%= question.source %></div></div>
+  </div>
+  <% } %>
+  <% if (question.tags && question.tags.length) { %>
+  <div class="row“ style="margin-top: -15px">
+    <% for (let tag of question.tags) { %>
+      <a href="<%= syzoj.utils.makeUrl(['questions', 'tag', tag.id]) %>" class="ui <%= tag.color %> label"><%= tag.name %></a>
+    <% } %>
+  </div>
+  <% } %>
+</div>
+
+<div class="ui grid">
+  <% if (allowedEdit) { %>
+  <div class="row">
+    <div class="column">
+      <div class="ui tiny buttons right floated">
+        <a class="ui button" href="<%= syzoj.utils.makeUrl(['question', question.id, 'edit']) %>">编辑</a>
+      </div>
+    </div>
+  </div>
+  <% } %>
+  <div class="row">
+    <div class="column">
+      <h2 class="ui header">题目</h2>
+      <div class="font-content"><%- descriptionHtml %></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="column">
+      <% if (singleChoice && singleChoice.length) { %>
+      <h2 class="ui header">单选题</h2>
+      <form class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['question', question.id, 'submit']) %>">
+        <input type="hidden" name="qtype" value="single">
+        <div class="field">
+          <div class="grouped fields">
+            <% singleChoice.forEach(function(opt, idx){ %>
+              <div class="field">
+                <div class="ui radio checkbox">
+                  <input type="radio" name="single" value="<%= idx %>">
+                  <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= String.fromCharCode(65 + idx) %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+        <% if (!allowedEdit) { %>
+        <div class="ui center aligned vertical segment" style="padding-bottom: 0; ">
+          <button type="submit" class="ui labeled icon button"><i class="ui edit icon"></i>提交</button>
+        </div>
+        <% } %>
+      </form>
+      <% } else if (multiChoice && multiChoice.length) { %>
+      <h2 class="ui header">多选题</h2>
+      <form class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['question', question.id, 'submit']) %>">
+        <input type="hidden" name="qtype" value="multi">
+        <div class="field">
+          <div class="grouped fields">
+            <% multiChoice.forEach(function(opt, idx){ %>
+              <div class="field">
+                <div class="ui checkbox">
+                  <input type="checkbox" name="multi" value="<%= idx %>">
+                  <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= String.fromCharCode(65 + idx) %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+        <% if (!allowedEdit) { %>
+        <div class="ui center aligned vertical segment" style="padding-bottom: 0; ">
+          <button type="submit" class="ui labeled icon button"><i class="ui edit icon"></i>提交</button>
+        </div>
+        <% } %>
+      </form>
+      <% } else if (!allowedEdit) { %>
+      <h2 class="ui header">填空题</h2>
+      <form class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['question', question.id, 'submit']) %>">
+        <input type="hidden" name="qtype" value="fill">
+        <div class="field">
+          <textarea name="blank" rows="30" placeholder="请输入答案"></textarea>
+        </div>
+        <div class="ui center aligned vertical segment" style="padding-bottom: 0; ">
+          <button type="submit" class="ui labeled icon button"><i class="ui edit icon"></i>提交</button>
+        </div>
+      </form>
+      <% } %>
+
+      <% if (submitted) { %>
+      <div class="ui positive message" style="margin-top: 10px; ">提交成功</div>
+      <% } %>
+    </div>
+  </div>
+
+  <% if (allowedEdit && answerHtml) { %>
+  <div class="row">
+    <div class="column">
+      <h2 class="ui header">标准答案</h2>
+      <div class="font-content"><%- answerHtml %></div>
+    </div>
+  </div>
+  <% } %>
+  <% if (allowedEdit && tutorialHtml) { %>
+  <div class="row">
+    <div class="column">
+      <h2 class="ui header">题解</h2>
+      <div class="font-content"><%- tutorialHtml %></div>
+    </div>
+  </div>
+  <% } %>
+</div>
+
+<script>
+$(function(){
+  $('.ui.radio.checkbox').checkbox();
+  $('.ui.checkbox').checkbox();
+});
+</script>
+
+<% include footer %>
+
+

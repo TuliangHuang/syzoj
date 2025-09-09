@@ -1,0 +1,198 @@
+<% this.title = '习题' %>
+<% include header %>
+<%
+let tagIDs = [];
+if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
+%>
+<div class="padding">
+  <div class="ui grid" style="margin-bottom: 10px; ">
+    <div class="row" style="white-space: nowrap; ">
+      <div class="seven wide column">
+        <% if (typeof tags !== 'undefined') { %>
+          <%
+          tags.sort((a, b) => {
+            return a.color > b.color ? 1 : -1;
+          });
+          %>
+          <% for (let tag of tags) { %>
+              <% let tagListRemovedThisTag = tagIDs.filter(x => x != tag.id).sort().join(','); %>
+              <% let url = tagListRemovedThisTag ? syzoj.utils.makeUrl(['questions', 'tag', tagListRemovedThisTag]) : syzoj.utils.makeUrl(['questions']); %>
+              <a href="<%= url %>" class="ui tiny <%= tag.color %> label">
+                <%= tag.name %>
+              </a>
+          <% } %>
+        <% } else { %>
+          <form action="<%= syzoj.utils.makeUrl(['questions', 'search']) %>" method="get" style="display: inline-block; ">
+            <div class="ui search" style="width: 280px; height: 28px; ">
+              <div class="ui left icon input" style="width: 100%; ">
+                <input class="prompt" style="width: 100%; " type="text" value="<%= req.query.keyword %>" placeholder="ID / UID / 题目名 …" name="keyword">
+                <i class="search icon"></i>
+              </div>
+              <div class="results" style="width: 100%; "></div>
+            </div>
+          </form>
+          <button type="button" id="toggle_all_tags" class="ui icon button icon-ghost-button" style="margin-left: 8px; vertical-align: top; " title="查看所有标签"><i class="tags icon"></i></button>
+        <% } %>
+      </div>
+      <div class="nine wide right aligned column">
+        <div class="ui toggle checkbox" id="show_tag">
+          <style id="show_tag_style"></style>
+          <script data-cfasync="false">
+          if (localStorage.getItem('show_tag_q') === '1') {
+            document.write('<input type="checkbox" checked>');
+            document.getElementById('show_tag_style').innerHTML = '.show_tag_controled { white-space: nowrap; overflow: hidden; }';
+          } else {
+            document.write('<input type="checkbox">');
+            document.getElementById('show_tag_style').innerHTML = '.show_tag_controled { width: 0; white-space: nowrap; overflow: hidden; }';
+          }
+          </script>
+
+          <script>
+          $(function () {
+            $('#show_tag').checkbox('setting', 'onChange', function () {
+              let checked = $('#show_tag').checkbox('is checked');
+              localStorage.setItem('show_tag_q', checked ? '1' : '0');
+              if (checked) {
+                document.getElementById('show_tag_style').innerHTML = '.show_tag_controled { white-space: nowrap; overflow: hidden; }';
+              } else {
+                document.getElementById('show_tag_style').innerHTML = '.show_tag_controled { width: 0; white-space: nowrap; overflow: hidden; }';
+              }
+            });
+          });
+          </script>
+          <label>显示分类标签</label>
+        </div>
+        <div style="margin-left: 10px; display: inline-block; ">
+          <% if (allowedManageTag) { %>
+            <% if (typeof tags !== 'undefined' && tags.length === 1) { %>
+              <a style="margin-left: 10px; " href="<%= syzoj.utils.makeUrl(['questions', 'tag', tags[0].id, 'edit']) %>" class="ui labeled icon mini blue button"><i class="write icon"></i> 编辑标签</a>
+            <% } %>
+            <a style="margin-left: 10px; " href="<%= syzoj.utils.makeUrl(['questions', 'tag', 0, 'edit']) %>" class="ui labeled icon mini green button"><i class="plus icon"></i> 添加标签</a>
+          <% } %>
+          <div style="margin-left: 10px; " class="ui mini buttons">
+            <div class="ui labeled icon mini dropdown button" id="add_question_dropdown"><i class="plus icon"></i> 添加习题
+            <div class="menu">
+              <a class="item" href="<%= syzoj.utils.makeUrl(['question', 0, 'edit']) %>"><i class="file icon"></i> 新建习题</a>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if (typeof allTags !== 'undefined') { %>
+  <div id="all_tags_panel" class="ui segment" style="display: none; max-height: 420px; overflow: auto; padding-top: 16px; ">
+    <% const colorOrder = (typeof tagColorOrder !== 'undefined' && Array.isArray(tagColorOrder)) ? tagColorOrder : ['black', 'blue', 'violet', 'pink', 'olive', 'yellow', 'orange', 'teal', 'red', 'green', 'purple']; %>
+    <% let shownGroupIndex = 0; %>
+    <% for (let ci = 0; ci < colorOrder.length; ci++) { %>
+      <%
+        const color = colorOrder[ci];
+        const group = (allTags || []).filter(function(x){ return x && x.color === color; });
+      %>
+      <% if (group.length) { %>
+        <div style="margin-top: <%= shownGroupIndex > 0 ? '8px' : '0' %>; ">
+          <% group.forEach(function(tag) { %>
+            <a href="<%= syzoj.utils.makeUrl(['questions', 'tag', tag.id]) %>" class="ui tiny <%= tag.color %> label" style="margin: 2px; "><%= tag.name %></a>
+          <% }); %>
+        </div>
+        <% shownGroupIndex++; %>
+      <% } %>
+    <% } %>
+  </div>
+  <% } %>
+
+  <% if (questions.length) { %>
+  <div style="margin-bottom: 30px; ">
+    <% include page %>
+  </div>
+  <table class="ui very basic center aligned table">
+    <thead>
+      <tr>
+        <th class="one wide"><%- createSortableTitle('id', '编号', true) %></th>
+        <th class="two wide"><%- createSortableTitle('uid', 'UID', true) %></th>
+        <th class="left aligned"><%- createSortableTitle('title', '题目名称', true) %></th>
+      </tr>
+    </thead>
+    <tbody>
+    <% for (let question of questions) { %>
+      <tr style="height: 44px; ">
+        <td><b><%= question.id %></b></td>
+        <td><%= question.uid || '-' %></td>
+        <td class="left aligned">
+          <div style="display: flex; justify-content: space-between; align-items: center; ">
+            <a style="vertical-align: middle; " href="<%= syzoj.utils.makeUrl(['question', question.id]) %>"><%= question.title %></a>
+            <div class="show_tag_controled" style="float: right; ">
+              <%
+              if (question.tags) {
+                for (let tag of question.tags.slice().reverse()) {
+                  let tagListToggledThisTag;
+                  if (!tagIDs.includes(tag.id)) tagListToggledThisTag = tagIDs.concat([tag.id]);
+                  else tagListToggledThisTag = tagIDs.filter(x => x != tag.id);
+                  tagListToggledThisTag = tagListToggledThisTag.sort().join(',');
+
+                  let url = tagListToggledThisTag ? syzoj.utils.makeUrl(['questions', 'tag', tagListToggledThisTag]) : syzoj.utils.makeUrl(['questions']);
+                %>
+                <span class="ui header">
+                  <a href="<%= url %>" class="ui tiny <%= tag.color %> label">
+                    <%= tag.name %>
+                  </a>
+                </span>
+                <%
+                }
+              }
+              %>
+            </div>
+          </div>
+          <% if (question.source) { %>
+            <div style="opacity: 0.75; font-size: 0.9em; margin-top: 2px; ">
+              来源：<a href="<%= question.source %>"><%= syzoj.utils.parseUrl(question.source) %></a>
+            </div>
+          <% } %>
+        </td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table><br>
+  <% include page  %>
+  <% } else { %>
+  <div class="ui placeholder segment">
+    <div class="ui icon header">
+      <% if (typeof req.query.keyword !== 'undefined') { %>
+      <i class="search icon" style="margin-bottom: 20px; "></i>
+      找不到符合条件的习题
+      <% } else { %>
+      <i class="list icon" style="margin-bottom: 20px; "></i>
+      暂无习题
+      <% } %>
+    </div>
+  </div>
+  <% } %>
+<script>
+document.addEventListener('keydown', function (event) {
+  if (event.keyCode === 39) document.getElementById('page_next').click();
+  else if (event.keyCode === 37) document.getElementById('page_prev').click();
+});
+
+$(function () {
+  $('#add_question_dropdown').dropdown();
+});
+</script>
+<style>
+.icon-ghost-button { background: transparent !important; box-shadow: none !important; }
+.icon-ghost-button:hover { background: rgba(0,0,0,0.04) !important; }
+.icon-ghost-button.active { background: rgba(0,0,0,0.08) !important; }
+</style>
+<script>
+$(function () {
+  $('#toggle_all_tags').on('click', function(){
+    var panel = $('#all_tags_panel');
+    var shown = panel.is(':visible');
+    panel.toggle(!shown);
+    $(this).attr('title', shown ? '查看所有标签' : '收起所有标签');
+    $(this).toggleClass('active', !shown);
+  });
+});
+</script>
+</div>
+<% include footer %>

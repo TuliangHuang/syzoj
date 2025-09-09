@@ -1,0 +1,163 @@
+<% this.title = '编辑习题'; %>
+<% include header %>
+<style type="text/css">
+  .problem_header{
+    text-align: center;
+  }
+  .font-content { font-family: inherit; }
+  .markdown-edit { font-family: inherit; }
+  .padding { padding: 14px; }
+  .ui.form textarea { resize: vertical; }
+  .ui.form .field > label { font-weight: 600; }
+</style>
+<div class="padding">
+  <form method="post" action="<%= syzoj.utils.makeUrl(['question', req.params.id, 'edit']) %>">
+    <div class="ui top attached tabular menu">
+      <a class="item active" data-tab="edit">编辑</a>
+      <a class="item" data-tab="preview" id="preview_tab">预览</a>
+    </div>
+    <div class="ui bottom attached tab segment active" data-tab="edit">
+      <div class="ui form"><div class="field">
+        <div class="fields">
+          <div class="eight wide field">
+            <label for="uid">UID</label>
+            <input class="font-content" type="text" id="uid" name="uid" value="<%= question.uid %>">
+          </div>
+          <div class="eight wide field">
+            <label for="parent_uid">Parent UID</label>
+            <input class="font-content" type="text" id="parent_uid" name="parent_uid" value="<%= question.parent_uid %>">
+          </div>
+        </div>
+        <label for="title">题目名称</label>
+        <input class="font-content" type="text" id="title" name="title" value="<%= question.title %>">
+        <label style="margin-top: 15px; ">标签</label>
+        <select class="ui fluid search dropdown" multiple="" id="search_tags" name="tags">
+          <% for (let tag of (question.tags || [])) { %>
+            <option value="<%= tag.id %>" selected><%= tag.name %></option>
+          <% } %>
+        </select>
+        <div class="fields">
+          <div class="sixteen wide field">
+            <label style="margin-top: 15px; " for="source">来源</label>
+            <input class="font-content" type="text" id="source" name="source" value="<%= question.source %>">
+          </div>
+        </div>
+        <label style="margin-top: 15px; " for="description">题目描述</label>
+        <textarea class="markdown-edit" rows="15" id="description" name="description"><%= question.description %></textarea>
+        <label style="margin-top: 15px; " for="answer">标准答案</label>
+        <textarea class="markdown-edit" rows="10" id="answer" name="answer"><%= question.answer %></textarea>
+        <label style="margin-top: 15px; " for="tutorial">题解</label>
+        <textarea class="markdown-edit" rows="10" id="tutorial" name="tutorial"><%= question.tutorial %></textarea>
+      </div></div>
+    </div>
+    <div class="ui bottom attached tab segment" data-tab="preview" id="preview">
+      <h1 class="ui header problem_header" id="pv-title"></h1>
+      <h2 class="ui header">题目描述</h2>
+      <div class="font-content" id="pv-description"></div>
+
+      <h2 class="ui header" id="pv-single-title" style="display: none; ">单选题</h2>
+      <div class="ui form" id="pv-single" style="display: none; ">
+        <div class="field">
+          <div class="grouped fields" id="pv-single-list"></div>
+        </div>
+      </div>
+
+      <h2 class="ui header" id="pv-multi-title" style="display: none; ">多选题</h2>
+      <div class="ui form" id="pv-multi" style="display: none; ">
+        <div class="field">
+          <div class="grouped fields" id="pv-multi-list"></div>
+        </div>
+      </div>
+
+      <h2 class="ui header" id="pv-fill-title" style="display: none; ">填空题</h2>
+      <div class="ui form" id="pv-fill" style="display: none; ">
+        <div class="field">
+          <label>答案</label>
+          <input type="text" placeholder="请输入答案">
+        </div>
+      </div>
+
+      <h2 class="ui header">标准答案</h2>
+      <div class="font-content" id="pv-answer"></div>
+      <h2 class="ui header">题解</h2>
+      <div class="font-content" id="pv-tutorial"></div>
+    </div>
+    <div style="text-align: center; ">
+      <button type="submit" id="submit_button" class="ui labeled submit icon button">
+        <i class="icon edit"></i> 提交
+      </button>
+    </div>
+  </form>
+</div>
+<script type="text/javascript">
+$(function () {
+  function render(output, input) {
+    $.post('/api/markdown', { s: input.val() }, function (s) {
+      output.html(s);
+    });
+  }
+  function renderPreviewDescriptionAndOptions() {
+    var text = $('#description').val() || '';
+    $.post('/api/v2/question/render', { s: text }, function(resp){
+      if (!resp || resp.success !== true) return;
+      $('#pv-description').html(resp.description || '');
+      function renderList(list, $title, $form, $container, isSingle) {
+        if (list && list.length) {
+          $title.show();
+          $form.show();
+          $container.empty();
+          list.forEach(function(opt, i){
+            var label = String.fromCharCode(65 + i) + '.';
+            var node = $('<div class="field">\n  <div class="ui '+(isSingle ? 'radio' : 'checkbox')+' checkbox">\n    <input type="'+(isSingle ? 'radio' : 'checkbox')+'" '+(isSingle ? 'name="single"' : 'name="multi"')+' value="'+i+'">\n    <label style=\"display: inline-flex; align-items: baseline; gap: 6px; \" ><span>'+label+'</span><span style=\"display: inline-block; white-space: normal; \" >'+opt+'</span></label>\n  </div>\n</div>');
+            $container.append(node);
+          });
+          $('.ui.radio.checkbox, .ui.checkbox').checkbox();
+        } else {
+          $title.hide();
+          $form.hide();
+          $container.empty();
+        }
+      }
+      renderList(resp.single, $('#pv-single-title'), $('#pv-single'), $('#pv-single-list'), true);
+      renderList(resp.multi, $('#pv-multi-title'), $('#pv-multi'), $('#pv-multi-list'), false);
+      if ((!resp.single || !resp.single.length) && (!resp.multi || !resp.multi.length)) {
+        $('#pv-fill-title').show();
+        $('#pv-fill').show();
+      } else {
+        $('#pv-fill-title').hide();
+        $('#pv-fill').hide();
+      }
+    });
+  }
+
+  $("#preview_tab").click(function () {
+    $("#pv-title").text($("#title").val());
+    $("#pv-description, #pv-answer, #pv-tutorial").text('Loading...');
+    renderPreviewDescriptionAndOptions();
+    render($("#pv-answer"), $("#answer"));
+    render($("#pv-tutorial"), $("#tutorial"));
+  });
+  $('.tabular.menu .item').tab();
+});
+</script>
+<script>
+$(function () {
+  $('#search_tags')
+    .dropdown({
+      debug: true,
+      saveRemoteData: false,
+      apiSettings: {
+        url: '/api/v2/search/question-tags/{query}',
+        onResponse: function (response) {
+          var a = ($('#search_tags').val() || []).map(function (x) { return parseInt(x) });
+          if (response.results) {
+            response.results = response.results.filter(function(x) { return !a.includes(parseInt(x.value));});
+          }
+          return response;
+        },
+        cache: false
+      }
+    });
+});
+</script>
+<% include footer %>

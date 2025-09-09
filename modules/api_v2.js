@@ -107,6 +107,41 @@ app.get('/api/v2/search/tags/:keyword*?', async (req, res) => {
   }
 });
 
+// search question tags
+app.get('/api/v2/search/question-tags/:keyword*?', async (req, res) => {
+  try {
+    let QuestionTag = syzoj.model('question_tag');
+
+    let keyword = req.params.keyword || '';
+    let tags = await QuestionTag.find({
+      where: {
+        name: TypeORM.Like(`%${keyword}%`)
+      },
+      order: {
+        name: 'ASC'
+      }
+    });
+
+    tags.sort((a, b) => {
+      const pa = a.name.startsWith(keyword),
+        pb = b.name.startsWith(keyword);
+      if (pa && !pb) return -1;
+      if (!pa && pb) return 1;
+      const ia = a.name.indexOf(keyword),
+        ib = b.name.indexOf(keyword);
+      if (ia !== ib) return ia - ib;
+      return a.name.localeCompare(b.name, 'zh');
+    });
+
+    let result = tags.slice(0, syzoj.config.page.edit_problem_tag_list)
+                     .map(x => ({ name: x.name, value: String(x.id) }));
+    res.send({ success: true, results: result });
+  } catch (e) {
+    syzoj.log(e);
+    res.send({ success: false, results: [] });
+  }
+});
+
 app.apiRouter.post('/api/v2/markdown', async (req, res) => {
   try {
     let s = await syzoj.utils.markdown(req.body.s.toString(), null, req.body.noReplaceUI === 'true');
@@ -114,6 +149,18 @@ app.apiRouter.post('/api/v2/markdown', async (req, res) => {
   } catch (e) {
     syzoj.log(e);
     res.send(e);
+  }
+});
+
+// Render question-like markdown into description and options (single/multi)
+app.apiRouter.post('/api/v2/question/render', async (req, res) => {
+  try {
+    const markdown = String(req.body.s || '');
+    const rendered = await syzoj.utils.renderQuestion(markdown, req.body.noReplaceUI === 'true');
+    res.send({ success: true, description: rendered.description, single: rendered.single, multi: rendered.multi });
+  } catch (e) {
+    syzoj.log(e);
+    res.send({ success: false, error: e.toString() });
   }
 });
 

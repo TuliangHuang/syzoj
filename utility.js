@@ -184,6 +184,50 @@ module.exports = {
   parseLuoguUrl(url) {
     return url.split('/').pop();
   },
+  async renderQuestion(markdown, noReplaceUI) {
+    const text = String(markdown || '');
+    const lines = text.split(/\r?\n/);
+    const single = [], multi = [], kept = [];
+    const isSingle = s => /^([a-z])\.\s+/.test(s);
+    const isMulti  = s => /^\[\s*\]\s+/.test(s);
+    for (let i = 0; i < lines.length;) {
+      if (isSingle(lines[i])) {
+        let t = lines[i].replace(/^([a-z])\.\s+/, '');
+        const buf = [t]; i++;
+        while (i < lines.length && !isSingle(lines[i]) && !isMulti(lines[i])) { buf.push(lines[i]); i++; }
+        // trim trailing blank lines but keep inner newlines
+        while (buf.length && buf[buf.length - 1].trim() === '') buf.pop();
+        single.push(buf.join('\n'));
+        continue;
+      }
+      if (isMulti(lines[i])) {
+        let t = lines[i].replace(/^\[\s*\]\s+/, '');
+        const buf = [t]; i++;
+        while (i < lines.length && !isSingle(lines[i]) && !isMulti(lines[i])) { buf.push(lines[i]); i++; }
+        while (buf.length && buf[buf.length - 1].trim() === '') buf.pop();
+        multi.push(buf.join('\n'));
+        continue;
+      }
+      kept.push(lines[i]); i++;
+    }
+
+    function normalizeInlineHtml(html) {
+      if (!html) return '';
+      let s = String(html).trim();
+      s = s.replace(/<\/p>\s*<p>/gi, '<br>');
+      s = s.replace(/^<p>/i, '').replace(/<\/p>$/i, '');
+      s = s.replace(/^(<br\s*\/?>\s*)+/i, '');
+      s = s.replace(/(\s*<br\s*\/?>)+\s*$/i, '');
+      s = s.replace(/(<br\s*\/?>\s*){2,}/gi, '<br>');
+      return s;
+    }
+
+    const description = await this.markdown(kept.join('\n'), null, noReplaceUI === true);
+    const singleHtml = await Promise.all(single.map(async t => normalizeInlineHtml(await this.markdown(t, null, noReplaceUI === true))));
+    const multiHtml  = await Promise.all(multi.map(async t => normalizeInlineHtml(await this.markdown(t, null, noReplaceUI === true))));
+
+    return { description, single: singleHtml, multi: multiHtml };
+  },
   parseMarkdown(code) {
     const lines = code.split('\n');
     const result = { title: null, description: '', input_format: '', output_format: '', example: '', limit_and_hint: '' };
