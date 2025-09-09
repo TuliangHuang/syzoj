@@ -64,7 +64,8 @@
         <tr>
             <td class="left aligned">
               <a href="<%= syzoj.utils.makeUrl(['article', article.id]) %>"><%= article.title %></a>
-              <% if (!article.is_public) { %><span class="ui header"><span class="ui mini grey label">未公开</span></span><% } %>
+              <% if (article.is_notice && !in_problems && !problem) { %><span class="ui header"><span class="ui tiny teal basic label">置顶</span></span><% } %>
+              <% if (!article.is_public) { %><span class="ui header"><span class="ui tiny grey basic label">未公开</span></span><% } %>
             </td>
             <% if (in_problems) { %>
               <td><a href="<%= syzoj.utils.makeUrl(['discussion', 'problem', article.problem_id]) %>"><%= article.problem.title %></a></td>

@@ -29,9 +29,8 @@ app.get('/discussion/:type?', async (req, res) => {
       listWhere = Object.assign({}, where, { is_public: true });
     }
     let paginate = syzoj.utils.paginate(await Article.countForPagination(listWhere), req.query.page, syzoj.config.page.discussion);
-    let articles = await Article.queryPage(paginate, listWhere, {
-      sort_time: 'DESC'
-    });
+    let order = in_problems ? { sort_time: 'DESC' } : { is_notice: 'DESC', sort_time: 'DESC' };
+    let articles = await Article.queryPage(paginate, listWhere, order);
 
     for (let article of articles) {
       await article.loadRelationships();
