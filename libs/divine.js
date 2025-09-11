@@ -1,7 +1,7 @@
 let Random = require('random-js');
 
 let crc32 = require('buffer-crc32');
-let hash = x => crc32.unsigned(Buffer(x));
+let hash = x => crc32.unsigned(Buffer.from(x));
 
 let config = require('../divine.json');
 
