@@ -157,7 +157,7 @@ app.apiRouter.post('/api/v2/question/render', async (req, res) => {
   try {
     const markdown = String(req.body.s || '');
     const rendered = await syzoj.utils.renderQuestion(markdown, req.body.noReplaceUI === 'true');
-    res.send({ success: true, description: rendered.description, items: rendered.items || [], numberingMode: rendered.numberingMode });
+    res.send({ success: true, description: rendered.description, items: rendered.items || [], numberingMode: rendered.numberingMode, showAllPoints: rendered.showAllPoints });
   } catch (e) {
     syzoj.log(e);
     res.send({ success: false, error: e.toString() });

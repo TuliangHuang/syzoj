@@ -48,6 +48,7 @@ app.get('/question/:id', async (req, res) => {
       descriptionHtml: rendered.description,
       items: rendered.items || [],
       numberingMode: rendered.numberingMode,
+      showAllPoints: rendered.showAllPoints,
       submitted: req.query.submitted === '1',
       tagColorOrder,
       allowedEdit,

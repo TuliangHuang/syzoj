@@ -50,7 +50,12 @@
               <% if(!onlyOne || it.prompt) { %>
               <div class="font-content" style="margin-bottom: 1em; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; ">
                 <% if (!onlyOne) { %><span><%= it.num %>.</span><% } %>
-                <% if (it.prompt) { %><div style="display: inline-block; "><%- it.prompt %></div><% } %>
+                <% if (it.prompt) { %>
+                  <div style="flex: 1 1 auto; min-width: 0; "><%- it.prompt %></div>
+                <% } %>
+                <% if (showAllPoints) { %>
+                  <span class="q-pts">（<%= it.points %>分）</span>
+                <% } %>
               </div>
               <% } %>
               <% if (it.type === 'mc') { %>

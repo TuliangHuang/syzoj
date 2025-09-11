@@ -100,7 +100,8 @@ $(function () {
           if (!onlyOne || it.prompt) {
             var $row = $('<div class="font-content" style="margin-bottom: 1em; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; "></div>');
             if (!onlyOne) { $row.append('<span>'+ it.num +'.</span>'); }
-            if (it.prompt) { $row.append('<div style="display: inline-block; ">'+ it.prompt +'</div>'); }
+            if (it.prompt) { $row.append('<div style="flex: 1 1 auto; min-width: 0; ">'+ it.prompt +'</div>'); }
+            if (resp.showAllPoints) { $row.append('<span class="q-pts">（'+ (it.points || 1) +'分）</span>'); }
             seg.append($row);
           }
           if (it.type === 'mc' || it.type === 'ms') {
@@ -112,7 +113,7 @@ $(function () {
             });
             seg.append(grouped);
           } else if (it.type === 'tf') {
-            var tf = $('<div class="grouped fields">\n  <div class="field"><div class="ui radio checkbox"><input type="radio" name="q['+ it.num +']" value="T"><label>T</label></div></div>\n  <div class="field"><div class="ui radio checkbox"><input type="radio" name="q['+ it.num +']" value="F"><label>F</label></div></div>\n</div>');
+            var tf = $('<div class="grouped fields">\n  <div class="field"><div class="ui radio checkbox"><input type="radio" name="q['+ it.num +']" value="T"><label>True</label></div></div>\n  <div class="field"><div class="ui radio checkbox"><input type="radio" name="q['+ it.num +']" value="F"><label>False</label></div></div>\n</div>');
             seg.append(tf);
           } else if (it.type === 'cl') {
             seg.append('<input type="text" name="q['+ it.num +']">');

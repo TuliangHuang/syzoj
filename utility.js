@@ -188,7 +188,7 @@ module.exports = {
     const text = String(markdown || '');
 
     const lower = text.toLowerCase();
-    const tagOpenRe = /\[(mc|ms|cl|tf|fr)(?:\s+(\d+))?\]/ig;
+    const tagOpenRe = /\[(mc|ms|cl|tf|fr)((?:\s+[^\]]+)?)\]/ig;
     let itemsRaw = [];
     let descParts = [];
     let lastIdx = 0;
@@ -215,12 +215,25 @@ module.exports = {
 
     for (let m; (m = tagOpenRe.exec(text));) {
       const tag = m[1].toLowerCase();
+      const attr = (m[2] || '').trim();
+      let points = 1;
+      let pointsExplicit = false;
       let num;
-      if (m[2] != null) {
-        num = parseInt(m[2]);
-        usedNums.add(num);
-        sawExplicit = true;
-      } else {
+      if (attr) {
+        // parse points like `xpts`, where x can be integer or decimal
+        const ptsMatch = attr.match(/(^|\s)(\d+(?:\.\d+)?)\s*pts(\s|$)/i);
+        if (ptsMatch) { points = parseFloat(ptsMatch[2]); pointsExplicit = true; }
+
+        // parse id as a standalone number token
+        const tokens = attr.split(/\s+/);
+        const idToken = tokens.find(t => /^\d+$/.test(t));
+        if (idToken) {
+          num = parseInt(idToken);
+          usedNums.add(num);
+          sawExplicit = true;
+        }
+      }
+      if (num == null) {
         do { autoNum++; } while (usedNums.has(autoNum));
         num = autoNum;
         usedNums.add(num);
@@ -229,30 +242,24 @@ module.exports = {
       const start = m.index;
       if (start > lastIdx) descParts.push(text.slice(lastIdx, start));
       const afterOpen = start + m[0].length;
-      // Inline prompt on the same line after the tag
-      let promptRaw = '';
-      const lineEnd = text.indexOf('\n', afterOpen);
-      const sliceEnd = (lineEnd === -1 ? text.length : lineEnd);
-      const sameLine = text.slice(afterOpen, sliceEnd);
-      promptRaw = sameLine.trim();
-      if (tag === 'mc' || tag === 'ms') {
-        const bodyStart = (lineEnd === -1 ? afterOpen : lineEnd + 1);
-        const end = findClosing(tag, bodyStart);
-        if (end) {
-          const body = text.slice(bodyStart, end.pos);
-          itemsRaw.push({ type: tag, num, body, promptRaw });
-          lastIdx = end.pos + end.len;
-          tagOpenRe.lastIndex = lastIdx;
-        } else {
-          descParts.push(text.slice(start, afterOpen));
-          lastIdx = afterOpen;
-        }
-      } else {
-        itemsRaw.push({ type: tag, num, promptRaw });
-        // Skip rest of the line (prompt) from description
-        lastIdx = (lineEnd === -1 ? text.length : lineEnd + 1);
-        tagOpenRe.lastIndex = lastIdx;
+
+      // Find a closing mark for all types
+      const end = findClosing(tag, afterOpen);
+      if (!end) {
+        // No valid closing found; treat as plain text to keep robustness
+        descParts.push(text.slice(start, afterOpen));
+        lastIdx = afterOpen;
+        continue;
       }
+
+      const body = text.slice(afterOpen, end.pos);
+      if (tag === 'mc' || tag === 'ms') {
+        itemsRaw.push({ type: tag, num, body, points, pointsExplicit });
+      } else {
+        itemsRaw.push({ type: tag, num, body, points, pointsExplicit });
+      }
+      lastIdx = end.pos + end.len;
+      tagOpenRe.lastIndex = lastIdx;
     }
     if (lastIdx < text.length) descParts.push(text.slice(lastIdx));
 
@@ -291,21 +298,39 @@ module.exports = {
       return opts;
     }
 
+    function splitPromptAndOptions(body) {
+      const lines = String(body || '').split(/\r?\n/);
+      const re = /^([A-Z])\.\s+/;
+      let firstIdx = -1;
+      for (let i = 0; i < lines.length; i++) {
+        if (re.test(lines[i])) { firstIdx = i; break; }
+      }
+      if (firstIdx === -1) {
+        return { promptSrc: body, optionsSrc: [] };
+      }
+      const promptSrc = lines.slice(0, firstIdx).join('\n');
+      const rest = lines.slice(firstIdx).join('\n');
+      const optionsSrc = splitOptionsByLetter(rest);
+      return { promptSrc, optionsSrc };
+    }
+
     const description = await this.markdown(descParts.join(''), null, noReplaceUI === true);
     const numberingMode = (sawExplicit && sawImplicit) ? 'mixed' : (sawExplicit ? 'numbered' : 'unnumbered');
     itemsRaw.sort((a, b) => a.num - b.num);
+    const anyExplicitPoints = itemsRaw.some(x => x.pointsExplicit);
+    const showAllPoints = anyExplicitPoints;
     const items = await Promise.all(itemsRaw.map(async it => {
       if (it.type === 'mc' || it.type === 'ms') {
-        const optionsSrc = splitOptionsByLetter(it.body || '');
+        const { promptSrc, optionsSrc } = splitPromptAndOptions(it.body || '');
         const options = await Promise.all(optionsSrc.map(async t => normalizeInlineHtml(await this.markdown(t, null, noReplaceUI === true))));
-        const prompt = normalizeInlineHtml(await this.markdown(it.promptRaw || '', null, noReplaceUI === true));
-        return { type: it.type, num: it.num, options, prompt };
+        const prompt = normalizeInlineHtml(await this.markdown(promptSrc || '', null, noReplaceUI === true));
+        return { type: it.type, num: it.num, options, prompt, points: it.points || 1 };
       }
-      const prompt = normalizeInlineHtml(await this.markdown(it.promptRaw || '', null, noReplaceUI === true));
-      return { type: it.type, num: it.num, prompt };
+      const prompt = normalizeInlineHtml(await this.markdown((it.body || ''), null, noReplaceUI === true));
+      return { type: it.type, num: it.num, prompt, points: it.points || 1 };
     }));
 
-    return { description, items, numberingMode };
+    return { description, items, numberingMode, showAllPoints };
   },
   parseMarkdown(code) {
     const lines = code.split('\n');

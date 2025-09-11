@@ -329,3 +329,11 @@ li {
   margin-top: 0.25em;
   margin-bottom: 0.25em;
 }
+
+/* points label in question prompts */
+.q-pts {
+  color: #888;
+  margin-left: 0.5em;
+  display: inline;
+  white-space: nowrap;
+}
