@@ -31,6 +31,20 @@ async function markdown(markdownCode) {
   function filter(html) {
     html = xss.process(html);
     if (html) {
+      // Add a class to inline code (code elements not inside pre)
+      try {
+        const cheerio = require('cheerio');
+        const $ = cheerio.load(html, { decodeEntities: false });
+        $('code').each(function () {
+          if ($(this).parents('pre').length === 0) {
+            $(this).addClass('md-inline-code');
+          }
+        });
+        html = $.html();
+      } catch (e) {
+        // If cheerio is unavailable for any reason, fall back silently
+      }
+
       html = `<div style="position: relative; overflow: hidden; transform: translate3d(0, 0, 0); ">${html}</div>`;
     }
     return html;

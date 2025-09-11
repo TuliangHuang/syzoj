@@ -262,6 +262,20 @@ code {
     font-family: "Fira Mono","Monaco","Menlo","Ubuntu Mono","Consolas","source-code-pro",monospace;
 }
 
+/* Inline code style for markdown-rendered content */
+code.md-inline-code {
+  display: inline-block;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: #f3f4f6; /* light gray */
+  color: #d14; /* reddish similar to image */
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.04);
+  font-weight: normal;
+  line-height: 1;
+  vertical-align: baseline;
+}
+
 /* Animated spinner */
 @keyframes spinner-icon-rotate {
   0% {
