@@ -41,7 +41,6 @@
   <div class="row">
     <div class="column">
       <% if (items && items.length) { %>
-      <h2 class="ui header">作答</h2>
       <form class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['question', question.id, 'submit']) %>">
         <div class="field">
           <% var onlyOne = (items.length === 1); %>
