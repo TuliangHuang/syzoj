@@ -52,29 +52,11 @@
     </div>
     <div class="ui bottom attached tab segment" data-tab="preview" id="preview">
       <h1 class="ui header problem_header" id="pv-title"></h1>
-      <h2 class="ui header">题目描述</h2>
+      <h2 class="ui header">题目</h2>
       <div class="font-content" id="pv-description"></div>
-
-      <h2 class="ui header" id="pv-single-title" style="display: none; ">单选题</h2>
-      <div class="ui form" id="pv-single" style="display: none; ">
-        <div class="field">
-          <div class="grouped fields" id="pv-single-list"></div>
-        </div>
-      </div>
-
-      <h2 class="ui header" id="pv-multi-title" style="display: none; ">多选题</h2>
-      <div class="ui form" id="pv-multi" style="display: none; ">
-        <div class="field">
-          <div class="grouped fields" id="pv-multi-list"></div>
-        </div>
-      </div>
-
-      <h2 class="ui header" id="pv-fill-title" style="display: none; ">填空题</h2>
-      <div class="ui form" id="pv-fill" style="display: none; ">
-        <div class="field">
-          <label>答案</label>
-          <input type="text" placeholder="请输入答案">
-        </div>
+      <h2 class="ui header" id="pv-items-title" style="display: none; ">作答</h2>
+      <div class="ui form" id="pv-items" style="display: none; ">
+        <div class="field" id="pv-items-list"></div>
       </div>
 
       <h2 class="ui header">标准答案</h2>
@@ -101,31 +83,49 @@ $(function () {
     $.post('/api/v2/question/render', { s: text }, function(resp){
       if (!resp || resp.success !== true) return;
       $('#pv-description').html(resp.description || '');
-      function renderList(list, $title, $form, $container, isSingle) {
-        if (list && list.length) {
-          $title.show();
-          $form.show();
-          $container.empty();
-          list.forEach(function(opt, i){
-            var label = String.fromCharCode(65 + i) + '.';
-            var node = $('<div class="field">\n  <div class="ui '+(isSingle ? 'radio' : 'checkbox')+' checkbox">\n    <input type="'+(isSingle ? 'radio' : 'checkbox')+'" '+(isSingle ? 'name="single"' : 'name="multi"')+' value="'+i+'">\n    <label style=\"display: inline-flex; align-items: baseline; gap: 6px; \" ><span>'+label+'</span><span style=\"display: inline-block; white-space: normal; \" >'+opt+'</span></label>\n  </div>\n</div>');
-            $container.append(node);
-          });
-          $('.ui.radio.checkbox, .ui.checkbox').checkbox();
-        } else {
-          $title.hide();
-          $form.hide();
-          $container.empty();
+      var $title = $('#pv-items-title');
+      var $form = $('#pv-items');
+      var $list = $('#pv-items-list');
+      if (resp.items && resp.items.length) {
+        $title.show();
+        $form.show();
+        $list.empty();
+        if (resp.numberingMode === 'mixed') {
+          $list.append('<div class="ui negative message">编号使用不一致：请全部添加编号或全部省略编号。</div>');
+          return;
         }
-      }
-      renderList(resp.single, $('#pv-single-title'), $('#pv-single'), $('#pv-single-list'), true);
-      renderList(resp.multi, $('#pv-multi-title'), $('#pv-multi'), $('#pv-multi-list'), false);
-      if ((!resp.single || !resp.single.length) && (!resp.multi || !resp.multi.length)) {
-        $('#pv-fill-title').show();
-        $('#pv-fill').show();
+        var onlyOne = (resp.items.length === 1);
+        resp.items.forEach(function(it){
+          var seg = $('<div class="ui segment basic" style="border: none; box-shadow: none; padding: 0; "></div>');
+          if (!onlyOne || it.prompt) {
+            var $row = $('<div class="font-content" style="margin-bottom: 1em; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; "></div>');
+            if (!onlyOne) { $row.append('<span>'+ it.num +'.</span>'); }
+            if (it.prompt) { $row.append('<div style="display: inline-block; ">'+ it.prompt +'</div>'); }
+            seg.append($row);
+          }
+          if (it.type === 'mc' || it.type === 'ms') {
+            var grouped = $('<div class="grouped fields"></div>');
+            (it.options || []).forEach(function(opt, i){
+              var isSingle = (it.type === 'mc');
+              var node = $('<div class="field">\n  <div class="ui '+(isSingle ? 'radio' : 'checkbox')+' checkbox">\n    <input type="'+(isSingle ? 'radio' : 'checkbox')+'" name="q['+ it.num +']" value="'+i+'">\n    <label style=\"display: inline-flex; align-items: baseline; gap: 6px; \" ><span>'+String.fromCharCode(65 + i)+'.</span><span style=\"display: inline-block; white-space: normal; \" >'+opt+'</span></label>\n  </div>\n</div>');
+              grouped.append(node);
+            });
+            seg.append(grouped);
+          } else if (it.type === 'tf') {
+            var tf = $('<div class="grouped fields">\n  <div class="field"><div class="ui radio checkbox"><input type="radio" name="q['+ it.num +']" value="T"><label>T</label></div></div>\n  <div class="field"><div class="ui radio checkbox"><input type="radio" name="q['+ it.num +']" value="F"><label>F</label></div></div>\n</div>');
+            seg.append(tf);
+          } else if (it.type === 'cl') {
+            seg.append('<input type="text" name="q['+ it.num +']">');
+          } else if (it.type === 'fr') {
+            seg.append('<textarea name="q['+ it.num +']" rows="5"></textarea>');
+          }
+          $list.append(seg);
+        });
+        $('.ui.radio.checkbox, .ui.checkbox').checkbox();
       } else {
-        $('#pv-fill-title').hide();
-        $('#pv-fill').hide();
+        $title.hide();
+        $form.hide();
+        $list.empty();
       }
     });
   }

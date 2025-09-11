@@ -40,56 +40,63 @@
 
   <div class="row">
     <div class="column">
-      <% if (singleChoice && singleChoice.length) { %>
-      <h2 class="ui header">单选题</h2>
+      <% if (items && items.length) { %>
+      <h2 class="ui header">作答</h2>
       <form class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['question', question.id, 'submit']) %>">
-        <input type="hidden" name="qtype" value="single">
         <div class="field">
-          <div class="grouped fields">
-            <% singleChoice.forEach(function(opt, idx){ %>
-              <div class="field">
-                <div class="ui radio checkbox">
-                  <input type="radio" name="single" value="<%= idx %>">
-                  <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= String.fromCharCode(65 + idx) %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
-                </div>
+          <% var onlyOne = (items.length === 1); %>
+          <% items.forEach(function(it, idx){ %>
+            <div class="ui segment basic" style="border: none; box-shadow: none; padding: 0; ">
+              <% if(!onlyOne || it.prompt) { %>
+              <div class="font-content" style="margin-bottom: 1em; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; ">
+                <% if (!onlyOne) { %><span><%= it.num %>.</span><% } %>
+                <% if (it.prompt) { %><div style="display: inline-block; "><%- it.prompt %></div><% } %>
               </div>
-            <% }); %>
-          </div>
-        </div>
-        <% if (!allowedEdit) { %>
-        <div class="ui center aligned vertical segment" style="padding-bottom: 0; ">
-          <button type="submit" class="ui labeled icon button"><i class="ui edit icon"></i>提交</button>
-        </div>
-        <% } %>
-      </form>
-      <% } else if (multiChoice && multiChoice.length) { %>
-      <h2 class="ui header">多选题</h2>
-      <form class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['question', question.id, 'submit']) %>">
-        <input type="hidden" name="qtype" value="multi">
-        <div class="field">
-          <div class="grouped fields">
-            <% multiChoice.forEach(function(opt, idx){ %>
-              <div class="field">
-                <div class="ui checkbox">
-                  <input type="checkbox" name="multi" value="<%= idx %>">
-                  <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= String.fromCharCode(65 + idx) %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
+              <% } %>
+              <% if (it.type === 'mc') { %>
+                <div class="grouped fields">
+                  <% (it.options || []).forEach(function(opt, i){ %>
+                    <div class="field">
+                      <div class="ui radio checkbox">
+                        <input type="radio" name="q[<%= it.num %>]" value="<%= i %>">
+                        <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= String.fromCharCode(65 + i) %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
+                      </div>
+                    </div>
+                  <% }); %>
                 </div>
-              </div>
-            <% }); %>
-          </div>
-        </div>
-        <% if (!allowedEdit) { %>
-        <div class="ui center aligned vertical segment" style="padding-bottom: 0; ">
-          <button type="submit" class="ui labeled icon button"><i class="ui edit icon"></i>提交</button>
-        </div>
-        <% } %>
-      </form>
-      <% } else if (!allowedEdit) { %>
-      <h2 class="ui header">填空题</h2>
-      <form class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['question', question.id, 'submit']) %>">
-        <input type="hidden" name="qtype" value="fill">
-        <div class="field">
-          <textarea name="blank" rows="30" placeholder="请输入答案"></textarea>
+              <% } else if (it.type === 'ms') { %>
+                <div class="grouped fields">
+                  <% (it.options || []).forEach(function(opt, i){ %>
+                    <div class="field">
+                      <div class="ui checkbox">
+                        <input type="checkbox" name="q[<%= it.num %>]" value="<%= i %>">
+                        <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= String.fromCharCode(65 + i) %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else if (it.type === 'tf') { %>
+                <div class="grouped fields">
+                  <div class="field">
+                    <div class="ui radio checkbox">
+                      <input type="radio" name="q[<%= it.num %>]" value="T">
+                      <label>True</label>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <div class="ui radio checkbox">
+                      <input type="radio" name="q[<%= it.num %>]" value="F">
+                      <label>False</label>
+                    </div>
+                  </div>
+                </div>
+              <% } else if (it.type === 'cl') { %>
+                <input type="text" name="q[<%= it.num %>]">
+              <% } else if (it.type === 'fr') { %>
+                <textarea name="q[<%= it.num %>]" rows="5"></textarea>
+              <% } %>
+            </div>
+          <% }); %>
         </div>
         <div class="ui center aligned vertical segment" style="padding-bottom: 0; ">
           <button type="submit" class="ui labeled icon button"><i class="ui edit icon"></i>提交</button>

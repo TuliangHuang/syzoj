@@ -186,30 +186,75 @@ module.exports = {
   },
   async renderQuestion(markdown, noReplaceUI) {
     const text = String(markdown || '');
-    const lines = text.split(/\r?\n/);
-    const single = [], multi = [], kept = [];
-    const isSingle = s => /^([a-z])\.\s+/.test(s);
-    const isMulti  = s => /^\[\s*\]\s+/.test(s);
-    for (let i = 0; i < lines.length;) {
-      if (isSingle(lines[i])) {
-        let t = lines[i].replace(/^([a-z])\.\s+/, '');
-        const buf = [t]; i++;
-        while (i < lines.length && !isSingle(lines[i]) && !isMulti(lines[i])) { buf.push(lines[i]); i++; }
-        // trim trailing blank lines but keep inner newlines
-        while (buf.length && buf[buf.length - 1].trim() === '') buf.pop();
-        single.push(buf.join('\n'));
-        continue;
+
+    const lower = text.toLowerCase();
+    const tagOpenRe = /\[(mc|ms|cl|tf|fr)(?:\s+(\d+))?\]/ig;
+    let itemsRaw = [];
+    let descParts = [];
+    let lastIdx = 0;
+    const usedNums = new Set();
+    let autoNum = 0;
+    let sawExplicit = false, sawImplicit = false;
+
+    function findClosing(tag, fromIdx) {
+      // Find next closing like [/tag] or [/tag 123]
+      let idx = fromIdx;
+      const needle = `[/${tag}`;
+      for (;;) {
+        const pos = lower.indexOf(needle, idx);
+        if (pos === -1) return null;
+        const close = text.indexOf(']', pos + needle.length);
+        if (close === -1) return null;
+        const middle = text.slice(pos + needle.length, close);
+        if (/^\s*\d*\s*$/.test(middle)) {
+          return { pos: pos, len: close - pos + 1 };
+        }
+        idx = pos + 1;
       }
-      if (isMulti(lines[i])) {
-        let t = lines[i].replace(/^\[\s*\]\s+/, '');
-        const buf = [t]; i++;
-        while (i < lines.length && !isSingle(lines[i]) && !isMulti(lines[i])) { buf.push(lines[i]); i++; }
-        while (buf.length && buf[buf.length - 1].trim() === '') buf.pop();
-        multi.push(buf.join('\n'));
-        continue;
-      }
-      kept.push(lines[i]); i++;
     }
+
+    for (let m; (m = tagOpenRe.exec(text));) {
+      const tag = m[1].toLowerCase();
+      let num;
+      if (m[2] != null) {
+        num = parseInt(m[2]);
+        usedNums.add(num);
+        sawExplicit = true;
+      } else {
+        do { autoNum++; } while (usedNums.has(autoNum));
+        num = autoNum;
+        usedNums.add(num);
+        sawImplicit = true;
+      }
+      const start = m.index;
+      if (start > lastIdx) descParts.push(text.slice(lastIdx, start));
+      const afterOpen = start + m[0].length;
+      // Inline prompt on the same line after the tag
+      let promptRaw = '';
+      const lineEnd = text.indexOf('\n', afterOpen);
+      const sliceEnd = (lineEnd === -1 ? text.length : lineEnd);
+      const sameLine = text.slice(afterOpen, sliceEnd);
+      promptRaw = sameLine.trim();
+      if (tag === 'mc' || tag === 'ms') {
+        const bodyStart = (lineEnd === -1 ? afterOpen : lineEnd + 1);
+        const end = findClosing(tag, bodyStart);
+        if (end) {
+          const body = text.slice(bodyStart, end.pos);
+          itemsRaw.push({ type: tag, num, body, promptRaw });
+          lastIdx = end.pos + end.len;
+          tagOpenRe.lastIndex = lastIdx;
+        } else {
+          descParts.push(text.slice(start, afterOpen));
+          lastIdx = afterOpen;
+        }
+      } else {
+        itemsRaw.push({ type: tag, num, promptRaw });
+        // Skip rest of the line (prompt) from description
+        lastIdx = (lineEnd === -1 ? text.length : lineEnd + 1);
+        tagOpenRe.lastIndex = lastIdx;
+      }
+    }
+    if (lastIdx < text.length) descParts.push(text.slice(lastIdx));
 
     function normalizeInlineHtml(html) {
       if (!html) return '';
@@ -222,11 +267,45 @@ module.exports = {
       return s;
     }
 
-    const description = await this.markdown(kept.join('\n'), null, noReplaceUI === true);
-    const singleHtml = await Promise.all(single.map(async t => normalizeInlineHtml(await this.markdown(t, null, noReplaceUI === true))));
-    const multiHtml  = await Promise.all(multi.map(async t => normalizeInlineHtml(await this.markdown(t, null, noReplaceUI === true))));
+    function splitOptionsByLetter(body) {
+      const lines = String(body || '').split(/\r?\n/);
+      const opts = [];
+      const re = /^([A-Z])\.\s+/;
+      let buf = null;
+      for (let line of lines) {
+        const mm = line.match(re);
+        if (mm) {
+          if (buf) {
+            while (buf.length && buf[buf.length - 1].trim() === '') buf.pop();
+            opts.push(buf.join('\n'));
+          }
+          buf = [line.replace(re, '')];
+        } else if (buf) {
+          buf.push(line);
+        }
+      }
+      if (buf) {
+        while (buf.length && buf[buf.length - 1].trim() === '') buf.pop();
+        opts.push(buf.join('\n'));
+      }
+      return opts;
+    }
 
-    return { description, single: singleHtml, multi: multiHtml };
+    const description = await this.markdown(descParts.join(''), null, noReplaceUI === true);
+    const numberingMode = (sawExplicit && sawImplicit) ? 'mixed' : (sawExplicit ? 'numbered' : 'unnumbered');
+    itemsRaw.sort((a, b) => a.num - b.num);
+    const items = await Promise.all(itemsRaw.map(async it => {
+      if (it.type === 'mc' || it.type === 'ms') {
+        const optionsSrc = splitOptionsByLetter(it.body || '');
+        const options = await Promise.all(optionsSrc.map(async t => normalizeInlineHtml(await this.markdown(t, null, noReplaceUI === true))));
+        const prompt = normalizeInlineHtml(await this.markdown(it.promptRaw || '', null, noReplaceUI === true));
+        return { type: it.type, num: it.num, options, prompt };
+      }
+      const prompt = normalizeInlineHtml(await this.markdown(it.promptRaw || '', null, noReplaceUI === true));
+      return { type: it.type, num: it.num, prompt };
+    }));
+
+    return { description, items, numberingMode };
   },
   parseMarkdown(code) {
     const lines = code.split('\n');

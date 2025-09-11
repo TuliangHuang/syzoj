@@ -152,12 +152,12 @@ app.apiRouter.post('/api/v2/markdown', async (req, res) => {
   }
 });
 
-// Render question-like markdown into description and options (single/multi)
+// Render question-like markdown into description and structured items
 app.apiRouter.post('/api/v2/question/render', async (req, res) => {
   try {
     const markdown = String(req.body.s || '');
     const rendered = await syzoj.utils.renderQuestion(markdown, req.body.noReplaceUI === 'true');
-    res.send({ success: true, description: rendered.description, single: rendered.single, multi: rendered.multi });
+    res.send({ success: true, description: rendered.description, items: rendered.items || [], numberingMode: rendered.numberingMode });
   } catch (e) {
     syzoj.log(e);
     res.send({ success: false, error: e.toString() });
