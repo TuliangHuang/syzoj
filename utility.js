@@ -277,7 +277,7 @@ module.exports = {
     function splitOptionsByLetter(body) {
       const lines = String(body || '').split(/\r?\n/);
       const opts = [];
-      const re = /^([A-Z])\.\s+/;
+      const re = /^(?:-\s*)?([A-Z])\.\s+/;
       let buf = null;
       for (let line of lines) {
         const mm = line.match(re);
@@ -300,7 +300,7 @@ module.exports = {
 
     function splitPromptAndOptions(body) {
       const lines = String(body || '').split(/\r?\n/);
-      const re = /^([A-Z])\.\s+/;
+      const re = /^(?:-\s*)?([A-Z])\.\s+/;
       let firstIdx = -1;
       for (let i = 0; i < lines.length; i++) {
         if (re.test(lines[i])) { firstIdx = i; break; }
