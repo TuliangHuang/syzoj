@@ -21,8 +21,8 @@ app.get('/question/:id', async (req, res) => {
     if (!question) throw new ErrorMessage('无此题目。');
 
     let parent = null;
-    if (question.parent_uid) {
-      parent = await Question.findOne({ where: { uid: question.parent_uid } });
+    if (question.parent_id) {
+      parent = await Question.findById(question.parent_id);
     }
 
     question.tags = await getQuestionTags(question.id);
@@ -96,7 +96,7 @@ app.get('/questions', async (req, res) => {
   try {
     const sort = req.query.sort || 'id';
     const order = req.query.order || 'asc';
-    if (!['id', 'title', 'uid'].includes(sort) || !['asc', 'desc'].includes(order)) {
+    if (!['id', 'title'].includes(sort) || !['asc', 'desc'].includes(order)) {
       throw new ErrorMessage('错误的排序参数。');
     }
 
@@ -134,14 +134,13 @@ app.get('/questions/search', async (req, res) => {
     const keyword = String(req.query.keyword || '').trim();
     const sort = req.query.sort || 'id';
     const order = req.query.order || 'desc';
-    if (!['id', 'title', 'uid'].includes(sort) || !['asc', 'desc'].includes(order)) {
+    if (!['id', 'title'].includes(sort) || !['asc', 'desc'].includes(order)) {
       throw new ErrorMessage('错误的排序参数。');
     }
 
     let query = Question.createQueryBuilder();
     query.where('title LIKE :title', { title: `%${keyword}%` })
-         .orWhere('id = :id', { id: id })
-         .orWhere('uid = :uid', { uid: keyword });
+         .orWhere('id = :id', { id: id });
 
     query.orderBy('id = ' + id.toString(), 'DESC');
     query.addOrderBy(sort, order.toUpperCase());
@@ -208,13 +207,12 @@ app.post('/question/:id/edit', async (req, res) => {
       if (id) question.id = id;
     }
 
-    function normalizeNullableString(v) {
-      if (v == null) return null;
-      const s = String(v).trim();
-      return s.length ? s : null;
+    function normalizeNullableNumber(v) {
+      if (v == null || v === '') return null;
+      const n = parseInt(v);
+      return isNaN(n) ? null : n;
     }
-    question.uid = normalizeNullableString(req.body.uid);
-    question.parent_uid = normalizeNullableString(req.body.parent_uid);
+    question.parent_id = normalizeNullableNumber(req.body.parent_id);
     question.title = req.body.title;
     question.source = req.body.source;
     question.description = req.body.description;

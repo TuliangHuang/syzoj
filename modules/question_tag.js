@@ -17,7 +17,7 @@ app.get('/questions/tag/:tagIDs', async (req, res) => {
     let tags = await tagIDs.mapAsync(async tagID => QuestionTag.findById(tagID));
     const sort = req.query.sort || 'id';
     const order = req.query.order || 'desc';
-    if (!['id', 'title', 'uid'].includes(sort) || !['asc', 'desc'].includes(order)) {
+    if (!['id', 'title'].includes(sort) || !['asc', 'desc'].includes(order)) {
       throw new ErrorMessage('错误的排序参数。');
     }
     const sortVal = '`question`.`' + sort + '`';

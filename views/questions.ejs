@@ -25,7 +25,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
           <form action="<%= syzoj.utils.makeUrl(['questions', 'search']) %>" method="get" style="display: inline-block; ">
             <div class="ui search" style="width: 280px; height: 28px; ">
               <div class="ui left icon input" style="width: 100%; ">
-                <input class="prompt" style="width: 100%; " type="text" value="<%= req.query.keyword %>" placeholder="ID / UID / 题目名 …" name="keyword">
+                <input class="prompt" style="width: 100%; " type="text" value="<%= req.query.keyword %>" placeholder="ID / 题目名 …" name="keyword">
                 <i class="search icon"></i>
               </div>
               <div class="results" style="width: 100%; "></div>
@@ -110,7 +110,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
     <thead>
       <tr>
         <th class="one wide"><%- createSortableTitle('id', '编号', true) %></th>
-        <th class="two wide"><%- createSortableTitle('uid', 'UID', true) %></th>
+        
         <th class="left aligned"><%- createSortableTitle('title', '题目名称', true) %></th>
       </tr>
     </thead>
@@ -118,7 +118,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
     <% for (let question of questions) { %>
       <tr style="height: 44px; ">
         <td><b><%= question.id %></b></td>
-        <td><%= question.uid || '-' %></td>
+        
         <td class="left aligned">
           <div style="display: flex; justify-content: space-between; align-items: center; ">
             <a style="vertical-align: middle; " href="<%= syzoj.utils.makeUrl(['question', question.id]) %>"><%= question.title %></a>
