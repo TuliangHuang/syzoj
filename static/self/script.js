@@ -34,4 +34,19 @@ $(function () {
     document.body.appendChild(form);
     form.submit();
   });
+
+  // Global: Submit nearest form when pressing Cmd/Ctrl + Enter inside any textarea on edit pages
+  $(document).on('keydown', 'textarea', function (e) {
+    // Heuristic: only on URLs ending with '/edit' or containing '/edit?'
+    try {
+      var href = window.location.pathname || '';
+      var isEditPage = /\/(edit)(?:$|[\/\?])/.test(href) || /_edit(?:$|[\/\?])/.test(href);
+      if (!isEditPage) return;
+    } catch (err) {}
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'Enter' || e.keyCode === 13)) {
+      e.preventDefault();
+      var $form = $(this).closest('form');
+      if ($form.length) $form.submit();
+    }
+  });
 });
