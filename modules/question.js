@@ -204,7 +204,12 @@ app.post('/question/:id/edit', async (req, res) => {
       let customID = parseInt(req.body.id);
       if (customID && customID !== id) {
         if (await Question.findById(customID)) throw new ErrorMessage('ID 已被使用。');
-        await question.changeID(customID);
+        if (question.new) {
+          // New question: set explicit ID before first save to avoid WHERE `id` = undefined
+          question.id = customID;
+        } else {
+          await question.changeID(customID);
+        }
         id = customID;
       }
     }
@@ -217,7 +222,7 @@ app.post('/question/:id/edit', async (req, res) => {
     let newTagIDs = await req.body.tags.map(x => parseInt(x)).filterAsync(async x => QuestionTag.findById(x));
     await question.setTags(newTagIDs);
 
-    res.redirect(syzoj.utils.makeUrl(['question', id]));
+    res.redirect(syzoj.utils.makeUrl(['question', question.id]));
   } catch (e) {
     syzoj.log(e);
     res.render('error', { err: e });
