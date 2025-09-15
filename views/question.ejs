@@ -35,11 +35,6 @@
     <div class="column">
       <h2 class="ui header">题目</h2>
       <div class="font-content"><%- descriptionHtml %></div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="column">
       <% if (items && items.length) { %>
       <form class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['question', question.id, 'submit']) %>">
         <div class="field">
