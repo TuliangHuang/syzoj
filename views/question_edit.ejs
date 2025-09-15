@@ -20,7 +20,24 @@
       <div class="ui form"><div class="field">
         <div class="fields">
           <div class="eight wide field">
-            <label for="parent_id">Parent ID</label>
+            <label for="id">
+              <% if (question.new) { %>
+                题目编号
+              <% } else { %>
+                修改题目编号
+              <% } %>
+            </label>
+            <input type="text" id="id" name="id" placeholder="留空则自动延伸" value="<%= question.id ? question.id : '' %>">
+            <div style="margin-top: 15px; "></div>
+          </div>
+          <div class="eight wide field">
+            <label for="parent_id">
+              <% if (question.new) { %>
+                母题编号
+              <% } else { %>
+                修改母题编号
+              <% } %>
+            </label>
             <input class="font-content" type="text" id="parent_id" name="parent_id" value="<%= question.parent_id %>">
           </div>
         </div>

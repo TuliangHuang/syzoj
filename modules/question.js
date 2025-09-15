@@ -184,8 +184,12 @@ app.get('/question/:id/edit', async (req, res) => {
       question.id = id || undefined;
       question.new = true;
       question.tags = [];
+      question.allowedManage = true;
+      question.allowedEdit = true;
     } else {
       question.tags = await getQuestionTags(question.id);
+      question.allowedManage = true;
+      question.allowedEdit = true;
     }
 
     res.render('question_edit', { question });
@@ -205,6 +209,7 @@ app.post('/question/:id/edit', async (req, res) => {
     if (!question) {
       question = await Question.create();
       if (id) question.id = id;
+      question.new = true;
     }
 
     function normalizeNullableNumber(v) {
@@ -221,6 +226,16 @@ app.post('/question/:id/edit', async (req, res) => {
 
     if (!question.title) throw new ErrorMessage('题目名不能为空。');
 
+    // Allow admin to change ID similar to problem flow
+    if (await res.locals.user.hasPrivilege('manage_problem')) {
+      let customID = parseInt(req.body.id);
+      if (customID && customID !== id) {
+        if (await Question.findById(customID)) throw new ErrorMessage('ID 已被使用。');
+        await question.changeID(customID);
+        id = customID;
+      }
+    }
+
     await question.save();
 
     // Tags
@@ -229,7 +244,7 @@ app.post('/question/:id/edit', async (req, res) => {
     let newTagIDs = await req.body.tags.map(x => parseInt(x)).filterAsync(async x => QuestionTag.findById(x));
     await setQuestionTags(question.id, newTagIDs);
 
-    res.redirect(syzoj.utils.makeUrl(['question', question.id]));
+    res.redirect(syzoj.utils.makeUrl(['question', id]));
   } catch (e) {
     syzoj.log(e);
     res.render('error', { err: e });
