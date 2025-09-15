@@ -64,24 +64,6 @@ app.post('/question/:id/submit', async (req, res) => {
   }
 });
 
-async function setQuestionTags(questionId, newTagIDs) {
-  let maps = await QuestionTagMap.find({ where: { question_id: questionId } });
-  let oldTagIDs = maps.map(x => x.tag_id);
-
-  let delTagIDs = oldTagIDs.filter(x => !newTagIDs.includes(x));
-  let addTagIDs = newTagIDs.filter(x => !oldTagIDs.includes(x));
-
-  for (let tagID of delTagIDs) {
-    let map = await QuestionTagMap.findOne({ where: { question_id: questionId, tag_id: tagID } });
-    if (map) await map.destroy();
-  }
-
-  for (let tagID of addTagIDs) {
-    let map = await QuestionTagMap.create({ question_id: questionId, tag_id: tagID });
-    await map.save();
-  }
-}
-
 // List questions
 app.get('/questions', async (req, res) => {
   try {
@@ -233,7 +215,7 @@ app.post('/question/:id/edit', async (req, res) => {
     if (!req.body.tags) req.body.tags = [];
     else if (!Array.isArray(req.body.tags)) req.body.tags = [req.body.tags];
     let newTagIDs = await req.body.tags.map(x => parseInt(x)).filterAsync(async x => QuestionTag.findById(x));
-    await setQuestionTags(question.id, newTagIDs);
+    await question.setTags(newTagIDs);
 
     res.redirect(syzoj.utils.makeUrl(['question', id]));
   } catch (e) {

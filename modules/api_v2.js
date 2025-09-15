@@ -75,7 +75,6 @@ app.get('/api/v2/search/problems/:keyword*?', async (req, res) => {
 
 app.get('/api/v2/search/tags/:keyword*?', async (req, res) => {
   try {
-    let Problem = syzoj.model('problem');
     let ProblemTag = syzoj.model('problem_tag');
 
     let keyword = req.params.keyword || '';
@@ -115,7 +114,7 @@ app.get('/api/v2/search/question-tags/:keyword*?', async (req, res) => {
     let keyword = req.params.keyword || '';
     let tags = await QuestionTag.find({
       where: {
-        name: TypeORM.Like(`%${keyword}%`)
+        name: TypeORM.Like(`%${req.params.keyword}%`)
       },
       order: {
         name: 'ASC'

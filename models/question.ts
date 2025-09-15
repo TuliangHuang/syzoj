@@ -66,6 +66,34 @@ export default class Question extends Model {
     return res;
   }
 
+  async setTags(newTagIDs: number[]) {
+    let oldTagIDs = (await this.getTags()).map(x => x.id);
+
+    let delTagIDs = oldTagIDs.filter(x => !newTagIDs.includes(x));
+    let addTagIDs = newTagIDs.filter(x => !oldTagIDs.includes(x));
+
+    for (let tagID of delTagIDs) {
+      let map = await QuestionTagMap.findOne({
+        where: {
+          question_id: this.id,
+          tag_id: tagID
+        }
+      });
+      if (map) await map.destroy();
+    }
+
+    for (let tagID of addTagIDs) {
+      let map = await QuestionTagMap.create({
+        question_id: this.id,
+        tag_id: tagID
+      });
+      await map.save();
+    }
+
+    const questionTagCache: LRU<number, number[]> = (Question as any)._tagCache || ((Question as any)._tagCache = new LRU<number, number[]>({ max: syzoj.config.db.cache_size }));
+    questionTagCache.set(this.id, newTagIDs);
+  }
+
   async changeID(id) {
     const entityManager = TypeORM.getManager();
 
