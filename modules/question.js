@@ -4,15 +4,6 @@ let QuestionTagMap = syzoj.model('question_tag_map');
 
 const { tagColorOrder } = require('../constants');
 
-// Helpers
-async function getQuestionTags(questionId) {
-  let maps = await QuestionTagMap.find({
-    where: { question_id: questionId }
-  });
-  let tagIDs = maps.map(x => x.tag_id);
-  return await tagIDs.mapAsync(async tagID => QuestionTag.findById(tagID));
-}
-
 // View question detail
 app.get('/question/:id', async (req, res) => {
   try {
@@ -25,7 +16,7 @@ app.get('/question/:id', async (req, res) => {
       parent = await Question.findById(question.parent_id);
     }
 
-    question.tags = await getQuestionTags(question.id);
+    question.tags = await question.getTags();
 
     const combinedMarkdown = [
       parent && parent.description ? parent.description : '',
@@ -107,7 +98,7 @@ app.get('/questions', async (req, res) => {
     let questions = await Question.queryPage(paginate, query);
 
     await questions.forEachAsync(async question => {
-      question.tags = await getQuestionTags(question.id);
+      question.tags = await question.getTags();
     });
 
     const allTags = await QuestionTag.find({ order: { name: 'ASC' } });
@@ -149,7 +140,7 @@ app.get('/questions/search', async (req, res) => {
     let questions = await Question.queryPage(paginate, query);
 
     await questions.forEachAsync(async question => {
-      question.tags = await getQuestionTags(question.id);
+      question.tags = await question.getTags();
     });
 
     const allTags = await QuestionTag.find({ order: { name: 'ASC' } });
@@ -187,7 +178,7 @@ app.get('/question/:id/edit', async (req, res) => {
       question.allowedManage = true;
       question.allowedEdit = true;
     } else {
-      question.tags = await getQuestionTags(question.id);
+      question.tags = await question.getTags();
       question.allowedManage = true;
       question.allowedEdit = true;
     }

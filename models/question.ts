@@ -1,5 +1,11 @@
 import * as TypeORM from "typeorm";
 import Model from "./common";
+import QuestionTag from "./question_tag";
+import QuestionTagMap from "./question_tag_map";
+import LRU = require("lru-cache");
+const { tagColorOrder } = require('../constants');
+
+declare var syzoj: any;
 
 @TypeORM.Entity()
 export default class Question extends Model {
@@ -25,6 +31,40 @@ export default class Question extends Model {
 
   @TypeORM.Column({ nullable: true, type: "text" })
   tutorial: string;
+
+  async getTags() {
+    let tagIDs;
+    const questionTagCache: LRU<number, number[]> = (Question as any)._tagCache || ((Question as any)._tagCache = new LRU<number, number[]>({ max: syzoj.config.db.cache_size }));
+
+    if (questionTagCache.has(this.id)) {
+      tagIDs = questionTagCache.get(this.id);
+    } else {
+      let maps = await QuestionTagMap.find({
+        where: { question_id: this.id }
+      });
+
+      tagIDs = maps.map(x => x.tag_id);
+      questionTagCache.set(this.id, tagIDs);
+    }
+
+    let res = await (tagIDs as any).mapAsync(async tagID => {
+      return QuestionTag.findById(tagID);
+    });
+
+    const sortOrder = tagColorOrder;
+    const orderMap = {} as { [color: string]: number };
+    sortOrder.forEach((color, idx) => {
+      if (!(color in orderMap)) orderMap[color] = idx;
+    });
+    res.sort((a, b) => {
+      if (a.color === b.color) return a.name.localeCompare(b.name, 'zh');
+      const ia = orderMap[a.color];
+      const ib = orderMap[b.color];
+      if (ia !== undefined && ib !== undefined) return ia - ib;
+      return (a.color as any) < (b.color as any);
+    });
+    return res;
+  }
 
   async changeID(id) {
     const entityManager = TypeORM.getManager();
