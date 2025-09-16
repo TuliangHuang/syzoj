@@ -31,16 +31,23 @@
     </div>
   </div>
   <% } %>
-  <div class="row">
+  <div class="row" style="padding-bottom: 0; ">
     <div class="column">
       <h2 class="ui header">题目</h2>
+      <% if (descriptionHtml) { %>
       <div class="font-content"><%- descriptionHtml %></div>
-      <% if (items && items.length) { %>
+      <% } %>
+    </div>
+  </div>
+  
+  <% if (items && items.length) { %>
+  <div class="row">
+    <div class="column">
       <form class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['question', question.id, 'submit']) %>">
         <div class="field">
           <% var onlyOne = (items.length === 1); %>
           <% items.forEach(function(it, idx){ %>
-            <div class="ui segment basic" style="border: none; box-shadow: none; padding: 0; ">
+            <div class="ui basic segment" style="border: none; box-shadow: none; padding: 0; ">
               <% if(!onlyOne || it.prompt) { %>
               <div class="font-content" style="margin-bottom: 1em; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; ">
                 <% if (!onlyOne) { %><span><%= it.num %>.</span><% } %>
@@ -101,13 +108,12 @@
           <button type="submit" class="ui labeled icon button"><i class="ui edit icon"></i>提交</button>
         </div>
       </form>
-      <% } %>
-
       <% if (submitted) { %>
       <div class="ui positive message" style="margin-top: 10px; ">提交成功</div>
       <% } %>
     </div>
   </div>
+  <% } %>
 
   <% if (allowedEdit && answerHtml) { %>
   <div class="row">
