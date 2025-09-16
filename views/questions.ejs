@@ -38,7 +38,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
         <div class="ui toggle checkbox" id="show_tag">
           <style id="show_tag_style"></style>
           <script data-cfasync="false">
-          if (localStorage.getItem('show_tag_q') === '1') {
+          if (localStorage.getItem('show_tag_q') !== '0') {
             document.write('<input type="checkbox" checked>');
             document.getElementById('show_tag_style').innerHTML = '.show_tag_controled { white-space: nowrap; overflow: hidden; }';
           } else {
@@ -69,6 +69,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
             <% } %>
             <a style="margin-left: 10px; " href="<%= syzoj.utils.makeUrl(['questions', 'tag', 0, 'edit']) %>" class="ui labeled icon mini green button"><i class="plus icon"></i> 添加标签</a>
           <% } %>
+          <% if (allowedManageProblem) { %>
           <div style="margin-left: 10px; " class="ui mini buttons">
             <div class="ui labeled icon mini dropdown button" id="add_question_dropdown"><i class="plus icon"></i> 添加习题
             <div class="menu">
@@ -76,6 +77,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
             </div>
             </div>
           </div>
+          <% } %>
         </div>
       </div>
     </div>
