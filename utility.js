@@ -263,17 +263,6 @@ module.exports = {
     }
     if (lastIdx < text.length) descParts.push(text.slice(lastIdx));
 
-    function normalizeInlineHtml(html) {
-      if (!html) return '';
-      let s = String(html).trim();
-      s = s.replace(/<\/p>\s*<p>/gi, '<br>');
-      s = s.replace(/^<p>/i, '').replace(/<\/p>$/i, '');
-      s = s.replace(/^(<br\s*\/?>\s*)+/i, '');
-      s = s.replace(/(\s*<br\s*\/?>)+\s*$/i, '');
-      s = s.replace(/(<br\s*\/?>\s*){2,}/gi, '<br>');
-      return s;
-    }
-
     function splitOptionsByLetter(body) {
       const lines = String(body || '').split(/\r?\n/);
       const opts = [];
@@ -322,11 +311,11 @@ module.exports = {
     const items = await Promise.all(itemsRaw.map(async it => {
       if (it.type === 'mc' || it.type === 'ms') {
         const { promptSrc, optionsSrc } = splitPromptAndOptions(it.body || '');
-        const options = await Promise.all(optionsSrc.map(async t => normalizeInlineHtml(await this.markdown(t, null, noReplaceUI === true))));
-        const prompt = normalizeInlineHtml(await this.markdown(promptSrc || '', null, noReplaceUI === true));
+        const options = await Promise.all(optionsSrc.map(async t => await this.markdown(String(t).trim(), null, noReplaceUI === true)));
+        const prompt = await this.markdown(String(promptSrc || '').trim(), null, noReplaceUI === true);
         return { type: it.type, num: it.num, options, prompt, points: it.points || 1 };
       }
-      const prompt = normalizeInlineHtml(await this.markdown((it.body || ''), null, noReplaceUI === true));
+      const prompt = await this.markdown(String(it.body || '').trim(), null, noReplaceUI === true);
       return { type: it.type, num: it.num, prompt, points: it.points || 1 };
     }));
 
