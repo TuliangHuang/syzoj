@@ -9,6 +9,19 @@
   .padding { padding: 14px; }
   .ui.form textarea { resize: vertical; }
   .ui.form .field > label { font-weight: 600; }
+  .code-with-gutter { position: relative; }
+  .code-with-gutter .code-gutter {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 2.5em;
+    color: rgba(0, 0, 0, .4);
+    text-align: right;
+    padding-right: .5em;
+    user-select: none;
+  }
+  .code-with-gutter pre { padding-left: 3em; margin: 0; }
+  .code-gutter .code-ln { display: block; }
 </style>
 <div class="padding">
   <form method="post" action="<%= syzoj.utils.makeUrl(['question', req.params.id, 'edit']) %>">
@@ -88,6 +101,30 @@ $(function () {
   function render(output, input) {
     $.post('/api/markdown', { s: input.val() }, function (s) {
       output.html(s);
+      addLineNumbers(output);
+    });
+  }
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];
+    });
+  }
+  function addLineNumbers($root){
+    $root.find('pre > code').each(function(){
+      var code = this;
+      if (code.getAttribute('data-ln-processed') === '1') return;
+      var pre = code.parentNode;
+      var $pre = $(pre);
+      var $wrapper = $('<div class="code-with-gutter"></div>');
+      $pre.before($wrapper);
+      $wrapper.append('<div class="code-gutter"></div>');
+      $wrapper.append($pre);
+      var linesCount = (code.textContent || '').replace(/\n$/, '').split('\n').length;
+      var $gutter = $wrapper.find('.code-gutter');
+      var lnHtml = '';
+      for (var i = 1; i <= linesCount; i++) { lnHtml += '<span class="code-ln">'+ i +'</span>\n'; }
+      $gutter.html(lnHtml);
+      code.setAttribute('data-ln-processed', '1');
     });
   }
   function renderPreviewDescriptionAndOptions() {
@@ -95,6 +132,7 @@ $(function () {
     $.post('/api/v2/question/render', { s: text }, function(resp){
       if (!resp || resp.success !== true) return;
       $('#pv-description').html(resp.description || '');
+      addLineNumbers($('#pv-description'));
       var $title = $('#pv-items-title');
       var $form = $('#pv-items');
       var $list = $('#pv-items-list');
@@ -135,6 +173,7 @@ $(function () {
           $list.append(seg);
         });
         $('.ui.radio.checkbox, .ui.checkbox').checkbox();
+        addLineNumbers($list);
       } else {
         $title.hide();
         $form.hide();

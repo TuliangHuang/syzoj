@@ -1,6 +1,23 @@
 <% this.title = (question && question.title ? question.title : '习题') + ' - 习题'; %>
 <% include header %>
 
+<style>
+  .code-with-gutter { position: relative; }
+  .code-with-gutter .code-gutter {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 2.5em;
+    color: rgba(0, 0, 0, .4);
+    text-align: right;
+    padding-right: .5em;
+    user-select: none;
+  }
+  .code-with-gutter pre { padding-left: 3em; margin: 0; }
+  .code-gutter .code-ln { display: block; }
+  .font-content pre { margin: 0 0 1em 0; }
+</style>
+
 <div class="ui center aligned grid">
   <div class="row">
     <h1 class="ui header">
@@ -131,6 +148,25 @@
 $(function(){
   $('.ui.radio.checkbox').checkbox();
   $('.ui.checkbox').checkbox();
+  function addLineNumbers($root){
+    $root.find('pre > code').each(function(){
+      var code = this;
+      if (code.getAttribute('data-ln-processed') === '1') return;
+      var pre = code.parentNode;
+      var $pre = $(pre);
+      var $wrapper = $('<div class="code-with-gutter"></div>');
+      $pre.before($wrapper);
+      $wrapper.append('<div class="code-gutter"></div>');
+      $wrapper.append($pre);
+      var linesCount = (code.textContent || '').replace(/\n$/, '').split('\n').length;
+      var $gutter = $wrapper.find('.code-gutter');
+      var lnHtml = '';
+      for (var i = 1; i <= linesCount; i++) { lnHtml += '<span class="code-ln">'+ i +'</span>\n'; }
+      $gutter.html(lnHtml);
+      code.setAttribute('data-ln-processed', '1');
+    });
+  }
+  addLineNumbers($('.font-content'));
 });
 </script>
 
