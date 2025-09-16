@@ -163,6 +163,23 @@ app.apiRouter.post('/api/v2/question/render', async (req, res) => {
   }
 });
 
+// Render question items partial with provided data (server-side EJS)
+app.apiRouter.post('/api/v2/question/items/render', async (req, res) => {
+  try {
+    const items = (() => {
+      const raw = req.body.items;
+      if (!raw) return [];
+      if (Array.isArray(raw)) return raw;
+      try { return JSON.parse(raw); } catch (e) { return []; }
+    })();
+    const showAllPoints = String(req.body.showAllPoints) === 'true';
+    res.render('question_items', { items, showAllPoints });
+  } catch (e) {
+    syzoj.log(e);
+    res.send({ success: false, error: e.toString() });
+  }
+});
+
 function verifyJWT(token) {
   try {
     jwt.verify(token, syzoj.config.session_secret);

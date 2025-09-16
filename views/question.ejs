@@ -60,68 +60,11 @@
   <% if (items && items.length) { %>
   <div class="row">
     <div class="column">
-      <form class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['question', question.id, 'submit']) %>">
+      <div class="ui form">
         <div class="field">
-          <% var onlyOne = (items.length === 1); %>
-          <% items.forEach(function(it, idx){ %>
-            <div class="ui basic segment" style="border: none; box-shadow: none; padding: 0; ">
-              <% if(!onlyOne || it.prompt) { %>
-              <div class="font-content" style="margin-bottom: 1em; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; ">
-                <% if (!onlyOne) { %><span><%= it.num %>.</span><% } %>
-                <% if (it.prompt) { %>
-                  <div style="flex: 1 1 auto; min-width: 0; "><%- it.prompt %></div>
-                <% } %>
-                <% if (showAllPoints) { %>
-                  <span class="q-pts">（<%= it.points %>分）</span>
-                <% } %>
-              </div>
-              <% } %>
-              <% if (it.type === 'mc') { %>
-                <div class="grouped fields">
-                  <% (it.options || []).forEach(function(opt, i){ %>
-                    <div class="field">
-                      <div class="ui radio checkbox">
-                        <input type="radio" name="q[<%= it.num %>]" value="<%= i %>">
-                        <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= String.fromCharCode(65 + i) %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
-                      </div>
-                    </div>
-                  <% }); %>
-                </div>
-              <% } else if (it.type === 'ms') { %>
-                <div class="grouped fields">
-                  <% (it.options || []).forEach(function(opt, i){ %>
-                    <div class="field">
-                      <div class="ui checkbox">
-                        <input type="checkbox" name="q[<%= it.num %>]" value="<%= i %>">
-                        <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= String.fromCharCode(65 + i) %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
-                      </div>
-                    </div>
-                  <% }); %>
-                </div>
-              <% } else if (it.type === 'tf') { %>
-                <div class="grouped fields">
-                  <div class="field">
-                    <div class="ui radio checkbox">
-                      <input type="radio" name="q[<%= it.num %>]" value="T">
-                      <label>True</label>
-                    </div>
-                  </div>
-                  <div class="field">
-                    <div class="ui radio checkbox">
-                      <input type="radio" name="q[<%= it.num %>]" value="F">
-                      <label>False</label>
-                    </div>
-                  </div>
-                </div>
-              <% } else if (it.type === 'cl') { %>
-                <input type="text" name="q[<%= it.num %>]">
-              <% } else if (it.type === 'fr') { %>
-                <textarea name="q[<%= it.num %>]" rows="5"></textarea>
-              <% } %>
-            </div>
-          <% }); %>
-        </div>  
-      </form>
+          <% include question_items %>
+        </div>
+      </div>
     </div>
   </div>
   <% } %>

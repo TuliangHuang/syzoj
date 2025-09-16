@@ -145,35 +145,12 @@ $(function () {
           return;
         }
         var onlyOne = (resp.items.length === 1);
-        resp.items.forEach(function(it){
-          var seg = $('<div class="ui segment basic" style="border: none; box-shadow: none; padding: 0; "></div>');
-          if (!onlyOne || it.prompt) {
-            var $row = $('<div class="font-content" style="margin-bottom: 1em; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; "></div>');
-            if (!onlyOne) { $row.append('<span>'+ it.num +'.</span>'); }
-            if (it.prompt) { $row.append('<div style="flex: 1 1 auto; min-width: 0; ">'+ it.prompt +'</div>'); }
-            if (resp.showAllPoints) { $row.append('<span class="q-pts">（'+ (it.points || 1) +'分）</span>'); }
-            seg.append($row);
-          }
-          if (it.type === 'mc' || it.type === 'ms') {
-            var grouped = $('<div class="grouped fields"></div>');
-            (it.options || []).forEach(function(opt, i){
-              var isSingle = (it.type === 'mc');
-              var node = $('<div class="field">\n  <div class="ui '+(isSingle ? 'radio' : 'checkbox')+' checkbox">\n    <input type="'+(isSingle ? 'radio' : 'checkbox')+'" name="q['+ it.num +']" value="'+i+'">\n    <label style=\"display: inline-flex; align-items: baseline; gap: 6px; \" ><span>'+String.fromCharCode(65 + i)+'.</span><span style=\"display: inline-block; white-space: normal; \" >'+opt+'</span></label>\n  </div>\n</div>');
-              grouped.append(node);
-            });
-            seg.append(grouped);
-          } else if (it.type === 'tf') {
-            var tf = $('<div class="grouped fields">\n  <div class="field"><div class="ui radio checkbox"><input type="radio" name="q['+ it.num +']" value="T"><label>True</label></div></div>\n  <div class="field"><div class="ui radio checkbox"><input type="radio" name="q['+ it.num +']" value="F"><label>False</label></div></div>\n</div>');
-            seg.append(tf);
-          } else if (it.type === 'cl') {
-            seg.append('<input type="text" name="q['+ it.num +']">');
-          } else if (it.type === 'fr') {
-            seg.append('<textarea name="q['+ it.num +']" rows="5"></textarea>');
-          }
-          $list.append(seg);
+        // Use server-side partial rendering to ensure parity with question page
+        $.post('/api/v2/question/items/render', { items: JSON.stringify(resp.items), showAllPoints: resp.showAllPoints }, function (html) {
+          $list.html(html);
+          $('.ui.radio.checkbox, .ui.checkbox').checkbox();
+          addLineNumbers($list);
         });
-        $('.ui.radio.checkbox, .ui.checkbox').checkbox();
-        addLineNumbers($list);
       } else {
         $title.hide();
         $form.hide();
