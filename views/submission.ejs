@@ -92,7 +92,7 @@ pre > code.code-with-lines .line-content {
 .codebox-grid pre > code.code-with-lines { position: relative; z-index: 1; display: block; padding: 0; }
 
 /* Scope: tighten segment horizontally for this page */
-#submission_content .ui.segment { padding-left: 0 !important; padding-right: 0 !important; }
+#submission_content .ui.segment.with-lines { padding-left: 0 !important; padding-right: 0 !important; }
 </style>
 <span id="submission_content">
 <div class="padding" id="vueAppFuckSafari">
@@ -117,7 +117,7 @@ pre > code.code-with-lines .line-content {
     </tbody>
   </table>
 
-  <code-box no-escape :key="codeKey" v-bind:content="code">
+  <code-box no-escape :key="codeKey" v-bind:content="code" with-lines>
     <template v-if="formattedCode !== null">
       <a @click="toggleFormattedCode" class="codebox mini ui button">
         <template v-if="currentFormatted">
@@ -202,13 +202,19 @@ pre > code.code-with-lines .line-content {
            <strong v-html="title"></strong>
            <a v-if="download" style="color: #000; " :href="download"><i class="download icon"></i></a>
         </p>
-        <div class="ui existing segment">
+        <div class="ui existing segment" :class="{ 'with-lines': withLines }">
           <slot></slot>
-          <div class="codebox-grid">
-            <div class="line-numbers"><div class="ln-highlights"></div></div>
-            <pre v-if="!noEscape" style="margin-top: 0; margin-bottom: 0; "><div class="code-highlights"></div><code class="code-with-lines">{{ content }}</code></pre>
-            <pre v-if="noEscape" style="margin-top: 0; margin-bottom: 0; "><div class="code-highlights"></div><code class="code-with-lines" v-html="content"></code></pre>
-          </div>
+          <template v-if="withLines">
+            <div class="codebox-grid">
+              <div class="line-numbers"><div class="ln-highlights"></div></div>
+              <pre v-if="!noEscape" style="margin-top: 0; margin-bottom: 0; "><div class="code-highlights"></div><code class="code-with-lines">{{ content }}</code></pre>
+              <pre v-if="noEscape" style="margin-top: 0; margin-bottom: 0; "><div class="code-highlights"></div><code class="code-with-lines" v-html="content"></code></pre>
+            </div>
+          </template>
+          <template v-else>
+            <pre v-if="!noEscape" style="margin-top: 0; margin-bottom: 0; "><code>{{ content }}</code></pre>
+            <pre v-if="noEscape" style="margin-top: 0; margin-bottom: 0; "><code v-html="content"></code></pre>
+          </template>
         </div>
     </div>
 </script>
@@ -220,6 +226,10 @@ Vue.component("code-box", {
         title: String,
         content: String,
         noEscape: {
+            type: Boolean,
+            default: false
+        },
+        withLines: {
             type: Boolean,
             default: false
         },
