@@ -23,7 +23,7 @@
       <tbody>
         <% for (let item of quizzes) { %>
         <tr>
-          <td class="left aligned"><a href="<%= syzoj.utils.makeUrl(['quiz', item.quiz.id, 1]) %>"><%= item.quiz.title || ('#' + item.quiz.id) %></a></td>
+          <td class="left aligned"><a href="<%= syzoj.utils.makeUrl(['quiz', item.quiz.id, 'question', 1]) %>"><%= item.quiz.title || ('#' + item.quiz.id) %></a></td>
           <td class="left aligned font-content"><%= item.quiz.description || '' %></td>
           <td class="left aligned"><%= item.count %></td>
         </tr>

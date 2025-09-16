@@ -129,7 +129,8 @@ $(function () {
   }
   function renderPreviewDescriptionAndOptions() {
     var text = $('#description').val() || '';
-    $.post('/api/v2/question/render', { s: text }, function(resp){
+    var parentId = $('#parent_id').val();
+    $.post('/api/v2/question/render', { s: text, parent_id: parentId }, function(resp){
       if (!resp || resp.success !== true) return;
       $('#pv-description').html(resp.description || '');
       addLineNumbers($('#pv-description'));

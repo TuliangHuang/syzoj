@@ -155,7 +155,19 @@ app.apiRouter.post('/api/v2/markdown', async (req, res) => {
 app.apiRouter.post('/api/v2/question/render', async (req, res) => {
   try {
     const markdown = String(req.body.s || '');
-    const rendered = await syzoj.utils.renderQuestion(markdown, req.body.noReplaceUI === 'true');
+    // If parent_id is provided, prepend parent description like the question page
+    let combined = markdown;
+    const parentId = parseInt(req.body.parent_id);
+    if (parentId && parentId > 0) {
+      try {
+        const Question = syzoj.model('question');
+        const parent = await Question.findById(parentId);
+        if (parent && parent.description) {
+          combined = [parent.description, markdown].filter(Boolean).join('\n\n');
+        }
+      } catch (e) {}
+    }
+    const rendered = await syzoj.utils.renderQuestion(combined, req.body.noReplaceUI === 'true');
     res.send({ success: true, description: rendered.description, items: rendered.items || [], numberingMode: rendered.numberingMode, showAllPoints: rendered.showAllPoints });
   } catch (e) {
     syzoj.log(e);

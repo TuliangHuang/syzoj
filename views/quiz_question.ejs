@@ -1,42 +1,76 @@
 <% this.title = (quiz && quiz.title ? quiz.title : ('小测 #' + quiz.id)) + ' - 小测'; %>
 <% include header %>
 
-<style>
-  .quiz-dir { position: sticky; top: 0; background: white; z-index: 2; padding: 12px 0; border-bottom: 1px solid rgba(34,36,38,.15); }
-  .quiz-dir .ui.menu { justify-content: center; }
-  .quiz-dir .item.active { background: #f2f2f2; font-weight: bold; }
-</style>
-
-<div class="quiz-dir">
-  <div class="ui secondary pointing menu">
-    <% dir.forEach(function(d){ %>
-      <a class="item <%= d.idx === qid ? 'active' : '' %>" href="<%= d.url %>">#<%= d.idx %>（<%= d.points %>分）</a>
-    <% }) %>
-  </div>
-</div>
-
 <div class="ui center aligned grid">
   <div class="row">
-    <h2 class="ui header">第 <%= qid %> 题：<%= question.title || ('#' + question.id) %>
-      <div class="sub header">配分：<%= points %> 分</div>
-    </h2>
+    <div class="ui secondary pointing menu centered">
+      <% dir.forEach(function(d){ %>
+        <a class="item <%= d.idx === qid ? 'active' : '' %>" href="<%= d.url %>">#<%= d.idx %>（<%= d.points %>分）</a>
+      <% }) %>
+    </div>
+  </div>
+  <div class="row">
+    <div class="column">
+      <h2 class="ui header">
+        第 <%= qid %> 题
+        <div class="sub header">（ 共 <%= points %> 分 ）</div>
+      </h2>
+    </div>
   </div>
 </div>
 
 <div class="ui grid">
-  <div class="sixteen wide column">
-    <% include question_items %>
+  <div class="row" style="padding-bottom: 0; ">
+    <div class="column">
+      <h2 class="ui header">题目</h2>
+      <% if (descriptionHtml) { %>
+      <div class="font-content"><%- descriptionHtml %></div>
+      <% } %>
+    </div>
   </div>
+  <% if (items && items.length) { %>
+  <div class="row">
+    <div class="column">
+      <div class="ui form">
+        <div class="field">
+          <% include question_items %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% } %>
 </div>
 
 <div class="ui center aligned grid" style="margin-top: 20px;">
   <div class="row">
-    <div class="ui buttons">
-      <a class="ui button <%= prevUrl ? '' : 'disabled' %>" href="<%= prevUrl || '#' %>">上一题</a>
-      <div class="or"></div>
-      <a class="ui button primary <%= nextUrl ? '' : 'disabled' %>" href="<%= nextUrl || '#' %>">下一题</a>
+    <div class="ui pagination menu">
+      <a class="item <%= prevUrl ? '' : 'disabled' %>" href="<%= prevUrl || '#' %>">上一题</a>
+      <a class="item <%= nextUrl ? '' : 'disabled' %>" href="<%= nextUrl || '#' %>">下一题</a>
     </div>
   </div>
 </div>
 
 
+<script>
+$(function(){
+  function addLineNumbers($root){
+    $root.find('pre > code').each(function(){
+      var code = this;
+      if (code.getAttribute('data-ln-processed') === '1') return;
+      var pre = code.parentNode;
+      var $pre = $(pre);
+      var $wrapper = $('<div class="code-with-gutter"></div>');
+      $pre.before($wrapper);
+      $wrapper.append('<div class="code-gutter"></div>');
+      $wrapper.append($pre);
+      var linesCount = (code.textContent || '').replace(/\n$/, '').split('\n').length;
+      var $gutter = $wrapper.find('.code-gutter');
+      var lnHtml = '';
+      for (var i = 1; i <= linesCount; i++) { lnHtml += '<span class="code-ln">'+ i +'</span>\n'; }
+      $gutter.html(lnHtml);
+      code.setAttribute('data-ln-processed', '1');
+    });
+  }
+  addLineNumbers($('.font-content'));
+});
+</script>

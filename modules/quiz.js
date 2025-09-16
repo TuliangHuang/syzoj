@@ -18,7 +18,7 @@ app.get('/quizzes', async (req, res) => {
   }
 });
 
-app.get('/quiz/:id/:qid', async (req, res) => {
+app.get('/quiz/:id/question/:qid', async (req, res) => {
   try {
     const quizId = parseInt(req.params.id);
     const qid = parseInt(req.params.qid);
@@ -45,14 +45,60 @@ app.get('/quiz/:id/:qid', async (req, res) => {
 
     const rendered = await syzoj.utils.renderQuestion(combinedMarkdown);
 
-    const dir = await Promise.all(items.map(async (it, idx) => {
+    function sumPoints(arr) {
+      if (!arr || !arr.length) return 0;
+      return arr.reduce((s, it) => s + (Number(it.points) || 0), 0);
+    }
+
+    const originalTotalPoints = sumPoints(rendered.items || []);
+
+    let itemsForView = rendered.items || [];
+    let showAllPoints = rendered.showAllPoints;
+    if (entry.points != null && isFinite(entry.points)) {
+      const total = originalTotalPoints;
+      if (total > 0) {
+        const scale = Number(entry.points) / total;
+        itemsForView = (rendered.items || []).map(it => Object.assign({}, it, { points: (Number(it.points) || 0) * scale }));
+      } else {
+        itemsForView = (rendered.items || []).map(it => Object.assign({}, it, { points: 0 }));
+      }
+      showAllPoints = true;
+    }
+
+    // Limit directory to exactly up to 11 items: window [qid-5, qid+5]
+    const totalItems = items.length;
+    const windowSize = 11;
+    let start = 1, end = totalItems;
+    if (totalItems > windowSize) {
+      start = qid - 5;
+      if (start < 1) start = 1;
+      end = start + windowSize - 1; // ensure size 11
+      if (end > totalItems) {
+        end = totalItems;
+        start = Math.max(1, end - windowSize + 1);
+      }
+    }
+    const indices = [];
+    for (let i = start - 1; i <= end - 1; i++) indices.push(i);
+
+    const dir = await Promise.all(indices.map(async (idx) => {
+      const it = items[idx];
       const q = await Question.findById(it.question_id);
+      // Compute total points for menu: use explicit quiz points if set; otherwise sum original question points
+      let totalPts = (it.points != null && isFinite(it.points)) ? Number(it.points) : null;
+      if (totalPts == null) {
+        let parentQ = null;
+        if (q && q.parent_id) parentQ = await Question.findById(q.parent_id);
+        const combined = [parentQ && parentQ.description ? parentQ.description : '', q ? (q.description || '') : ''].filter(Boolean).join('\n\n');
+        const r = await syzoj.utils.renderQuestion(combined);
+        totalPts = sumPoints(r.items || []);
+      }
       return {
         idx: idx + 1,
         id: it.question_id,
         title: q ? (q.title || ('#' + q.id)) : ('#' + it.question_id),
-        points: it.points || 0,
-        url: syzoj.utils.makeUrl(['quiz', quizId, idx + 1])
+        points: totalPts || 0,
+        url: syzoj.utils.makeUrl(['quiz', quizId, 'question', idx + 1])
       };
     }));
 
@@ -63,12 +109,12 @@ app.get('/quiz/:id/:qid', async (req, res) => {
       question,
       parent,
       descriptionHtml: rendered.description,
-      items: rendered.items || [],
+      items: itemsForView,
       numberingMode: rendered.numberingMode,
-      showAllPoints: rendered.showAllPoints,
-      points: entry.points || 0,
-      prevUrl: qid > 1 ? syzoj.utils.makeUrl(['quiz', quizId, qid - 1]) : null,
-      nextUrl: qid < items.length ? syzoj.utils.makeUrl(['quiz', quizId, qid + 1]) : null
+      showAllPoints,
+      points: (entry.points != null && isFinite(entry.points)) ? Number(entry.points) : originalTotalPoints,
+      prevUrl: qid > 1 ? syzoj.utils.makeUrl(['quiz', quizId, 'question', qid - 1]) : null,
+      nextUrl: qid < items.length ? syzoj.utils.makeUrl(['quiz', quizId, 'question', qid + 1]) : null
     });
   } catch (e) {
     syzoj.log(e);
@@ -90,7 +136,10 @@ app.get('/quiz/:id/edit', async (req, res) => {
     }
 
     const items = await quiz.getItems();
-    const lines = items.map(it => `${it.question_id} ${it.points || 0}`).join('\n');
+    const lines = items.map(it => {
+      const pts = it.points;
+      return (pts != null && isFinite(pts)) ? `${it.question_id} ${pts}` : `${it.question_id}`;
+    }).join('\n');
 
     res.render('quiz_edit', {
       quiz,
@@ -123,10 +172,12 @@ app.post('/quiz/:id/edit', async (req, res) => {
       if (!line) continue;
       const parts = line.replace(/[,，]/g, ' ').split(/\s+/);
       const qid = parseInt(parts[0]);
-      let pts = parts.length > 1 ? parseFloat(parts[1]) : 0;
+      let pts = parts.length > 1 ? parseFloat(parts[1]) : null;
       if (!(qid > 0)) continue;
-      if (!isFinite(pts)) pts = 0;
-      items.push({ question_id: qid, points: pts });
+      if (!isFinite(pts)) pts = null;
+      const item = { question_id: qid };
+      if (pts != null) item.points = pts;
+      items.push(item);
     }
 
     if (!items.length) throw new ErrorMessage('题目列表不能为空。');
@@ -136,7 +187,7 @@ app.post('/quiz/:id/edit', async (req, res) => {
     await quiz.setItems(items);
     await quiz.save();
 
-    res.redirect(syzoj.utils.makeUrl(['quiz', quiz.id, 1]));
+    res.redirect(syzoj.utils.makeUrl(['quiz', quiz.id, 'question', 1]));
   } catch (e) {
     syzoj.log(e);
     res.render('error', { err: e });

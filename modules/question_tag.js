@@ -50,7 +50,8 @@ app.get('/questions/tag/:tagIDs', async (req, res) => {
       curOrder: order === 'asc',
       allTags,
       tagColorOrder,
-      allowedManageTag: res.locals.user && await res.locals.user.hasPrivilege('manage_problem_tag')
+      allowedManageTag: res.locals.user && await res.locals.user.hasPrivilege('manage_problem_tag'),
+      allowedManageProblem: res.locals.user && await res.locals.user.hasPrivilege('manage_problem')
     });
   } catch (e) {
     syzoj.log(e);
