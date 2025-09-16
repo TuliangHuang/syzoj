@@ -1,0 +1,24 @@
+<% this.title = (quiz && quiz.id ? ('编辑小测 #' + quiz.id) : '新建小测') + ' - 小测'; %>
+<% include header %>
+
+<div class="ui container">
+  <h2 class="ui header"><%= quiz.id ? ('编辑小测 #' + quiz.id) : '新建小测' %></h2>
+
+  <form class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['quiz', quiz.id || 0, 'edit']) %>">
+    <div class="field">
+      <label>标题</label>
+      <input type="text" name="title" value="<%= quiz.title || '' %>" placeholder="小测标题">
+    </div>
+    <div class="field">
+      <label>描述（可选）</label>
+      <textarea name="description" rows="3"><%= quiz.description || '' %></textarea>
+    </div>
+    <div class="field">
+      <label>题目与分值（每行：题目编号 空格 分值）</label>
+      <textarea name="lines" rows="10" placeholder="如：\n101 10\n102 15\n203 20"><%= lines || '' %></textarea>
+    </div>
+    <button class="ui primary button" type="submit">保存</button>
+  </form>
+</div>
+
+

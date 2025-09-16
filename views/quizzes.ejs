@@ -1,0 +1,50 @@
+<% this.title = '小测' %>
+<% include header %>
+<div class="padding">
+    <% if (quizzes.length) { %>
+    <% if (user && user.is_admin) { %>
+    <form class="ui mini form">
+      <div class="inline fields" style="margin-bottom: 25px; white-space: nowrap; ">
+        <a href="<%= syzoj.utils.makeUrl(['quiz', 0, 'edit']) %>" class="ui mini labeled icon right floated button" style="margin-left: auto; ">
+          <i class="ui icon write"></i>
+          添加小测
+        </a>
+     </div>
+    </form>
+    <% } %>
+    <table class="ui very basic center aligned table">
+      <thead>
+        <tr>
+          <th class="left aligned">小测名称</th>
+          <th class="left aligned">描述</th>
+          <th class="left aligned">题目数</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (let item of quizzes) { %>
+        <tr>
+          <td class="left aligned"><a href="<%= syzoj.utils.makeUrl(['quiz', item.quiz.id, 1]) %>"><%= item.quiz.title || ('#' + item.quiz.id) %></a></td>
+          <td class="left aligned font-content"><%= item.quiz.description || '' %></td>
+          <td class="left aligned"><%= item.count %></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+    <% } else { %>
+    <div class="ui placeholder segment">
+      <div class="ui icon header">
+        <i class="hourglass half icon" style="margin-bottom: 20px; "></i>
+        暂无小测
+      </div>
+      <% if (user && user.is_admin) { %>
+      <a href="<%= syzoj.utils.makeUrl(['quiz', 0, 'edit']) %>" class="ui primary labeled icon button">
+        <i class="ui icon write"></i>
+        添加第一个小测
+      </a>
+      <% } %>
+    </div>
+    <% } %>
+  <br>
+  <% include page %>
+</div>
+<% include footer %>

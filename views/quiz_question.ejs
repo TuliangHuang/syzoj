@@ -1,0 +1,42 @@
+<% this.title = (quiz && quiz.title ? quiz.title : ('小测 #' + quiz.id)) + ' - 小测'; %>
+<% include header %>
+
+<style>
+  .quiz-dir { position: sticky; top: 0; background: white; z-index: 2; padding: 12px 0; border-bottom: 1px solid rgba(34,36,38,.15); }
+  .quiz-dir .ui.menu { justify-content: center; }
+  .quiz-dir .item.active { background: #f2f2f2; font-weight: bold; }
+</style>
+
+<div class="quiz-dir">
+  <div class="ui secondary pointing menu">
+    <% dir.forEach(function(d){ %>
+      <a class="item <%= d.idx === qid ? 'active' : '' %>" href="<%= d.url %>">#<%= d.idx %>（<%= d.points %>分）</a>
+    <% }) %>
+  </div>
+</div>
+
+<div class="ui center aligned grid">
+  <div class="row">
+    <h2 class="ui header">第 <%= qid %> 题：<%= question.title || ('#' + question.id) %>
+      <div class="sub header">配分：<%= points %> 分</div>
+    </h2>
+  </div>
+</div>
+
+<div class="ui grid">
+  <div class="sixteen wide column">
+    <% include question_items %>
+  </div>
+</div>
+
+<div class="ui center aligned grid" style="margin-top: 20px;">
+  <div class="row">
+    <div class="ui buttons">
+      <a class="ui button <%= prevUrl ? '' : 'disabled' %>" href="<%= prevUrl || '#' %>">上一题</a>
+      <div class="or"></div>
+      <a class="ui button primary <%= nextUrl ? '' : 'disabled' %>" href="<%= nextUrl || '#' %>">下一题</a>
+    </div>
+  </div>
+</div>
+
+
