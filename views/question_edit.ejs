@@ -280,19 +280,13 @@ $(function () {
           return syzoj.alert('创建标签失败。');
         }
         var tag = resp.tag;
-        // Add to dropdown if not exists and select it
-        var current = $('#search_tags').val() || [];
-        if (current.map(function(x){ return parseInt(x); }).indexOf(parseInt(tag.id)) === -1) {
-          $('#search_tags').dropdown('setup menu', {
-            values: []
-          });
-          // append option if missing
-          if ($('#search_tags option[value="'+ tag.id +'"]').length === 0) {
-            $('#search_tags').append('<option value="'+ tag.id +'">'+ $('<div/>').text(tag.name).html() +'</option>');
-          }
-          current.push(String(tag.id));
+        var $dropdown = $('#search_tags');
+        // append option if missing
+        if ($dropdown.find('option[value="'+ tag.id +'"]').length === 0) {
+          $dropdown.append('<option value="'+ tag.id +'">'+ $('<div/>').text(tag.name).html() +'</option>');
         }
-        $('#search_tags').dropdown('set selected', String(tag.id));
+        // select in the multi-select so it appears in the UI immediately
+        $dropdown.dropdown('set selected', String(tag.id));
         // clear inputs
         $('#new_tag_name').val('');
         $('#new_tag_color').dropdown('clear');
