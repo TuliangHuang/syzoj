@@ -1,6 +1,23 @@
 <% this.title = (quiz && quiz.title ? quiz.title : ('小测 #' + quiz.id)) + ' - 小测'; %>
 <% include header %>
 
+<style>
+  .code-with-gutter { position: relative; }
+  .code-with-gutter .code-gutter {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 2.5em;
+    color: rgba(0, 0, 0, .4);
+    text-align: right;
+    padding-right: .5em;
+    user-select: none;
+  }
+  .code-with-gutter pre { padding-left: 3em; margin: 0; }
+  .code-gutter .code-ln { display: block; }
+  .font-content pre { margin: 0 0 1em 0; }
+  </style>
+
 <div class="ui center aligned grid">
   <div class="row">
     <div class="ui secondary pointing menu centered">
@@ -60,6 +77,8 @@
 
 <script>
 $(function(){
+  $('.ui.radio.checkbox').checkbox();
+  $('.ui.checkbox').checkbox();
   function addLineNumbers($root){
     $root.find('pre > code').each(function(){
       var code = this;
@@ -78,6 +97,9 @@ $(function(){
       code.setAttribute('data-ln-processed', '1');
     });
   }
-  addLineNumbers($('.font-content'));
+  // Apply to entire page to cover code blocks inside question items and options
+  addLineNumbers($(document.body));
 });
 </script>
+
+<% include footer %>
