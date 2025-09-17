@@ -141,6 +141,39 @@ app.get('/api/v2/search/question-tags/:keyword*?', async (req, res) => {
   }
 });
 
+// Create question tag (v2)
+app.apiRouter.post('/api/v2/question-tags', async (req, res) => {
+  try {
+    if (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem_tag')) {
+      return res.status(403).json({ success: false, error: '权限不足。' });
+    }
+
+    const QuestionTag = syzoj.model('question_tag');
+
+    let name = String(req.body.name || '').trim();
+    let color = String(req.body.color || '').trim();
+
+    if (!name) {
+      return res.status(400).json({ success: false, error: '标签名称不能为空。' });
+    }
+
+    let existing = await QuestionTag.findOne({ where: { name: name } });
+    if (existing) {
+      return res.json({ success: true, tag: { id: existing.id, name: existing.name, color: existing.color } });
+    }
+
+    let tag = await QuestionTag.create();
+    tag.name = name;
+    tag.color = color || 'black';
+    await tag.save();
+
+    return res.json({ success: true, tag: { id: tag.id, name: tag.name, color: tag.color } });
+  } catch (e) {
+    syzoj.log(e);
+    return res.status(500).json({ success: false, error: '服务器错误。' });
+  }
+});
+
 app.apiRouter.post('/api/v2/markdown', async (req, res) => {
   try {
     let s = await syzoj.utils.markdown(req.body.s.toString(), null, req.body.noReplaceUI === 'true');

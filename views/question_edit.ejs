@@ -22,6 +22,11 @@
   }
   .code-with-gutter pre { padding-left: 3em; margin: 0; }
   .code-gutter .code-ln { display: block; }
+  .spaced-block { margin-top: 15px; }
+  .add-tag-button { height: 38px; }
+  .add-tag-row { display: flex; align-items: center; gap: 8px; }
+  .add-tag-row .flex-1 { flex: 1 1 auto; }
+  .add-tag-inline { display: flex; align-items: center; gap: 6px; }
 </style>
 <div class="padding">
   <form method="post" action="<%= syzoj.utils.makeUrl(['question', req.params.id, 'edit']) %>">
@@ -41,7 +46,6 @@
               <% } %>
             </label>
             <input type="text" id="id" name="id" placeholder="留空则自动延伸" value="<%= question.id ? question.id : '' %>">
-            <div style="margin-top: 15px; "></div>
           </div>
           <div class="eight wide field">
             <label for="parent_id">
@@ -54,26 +58,98 @@
             <input class="font-content" type="text" id="parent_id" name="parent_id" value="<%= question.parent_id %>">
           </div>
         </div>
-        <label for="title">题目名称</label>
-        <input class="font-content" type="text" id="title" name="title" value="<%= question.title %>">
-        <label style="margin-top: 15px; ">标签</label>
-        <select class="ui fluid search dropdown" multiple="" id="search_tags" name="tags">
-          <% for (let tag of (question.tags || [])) { %>
-            <option value="<%= tag.id %>" selected><%= tag.name %></option>
-          <% } %>
-        </select>
-        <div class="fields">
-          <div class="sixteen wide field">
-            <label style="margin-top: 15px; " for="source">来源</label>
-            <input class="font-content" type="text" id="source" name="source" value="<%= question.source %>">
+        <div class="field">
+          <label for="title">题目名称</label>
+          <input class="font-content" type="text" id="title" name="title" value="<%= question.title %>">
+        </div>
+        <div class="field spaced-block">
+          <div class="fields" style="align-items: flex-end; ">
+          <div class="eight wide field">
+            <label>标签</label>
+            <select class="ui fluid search dropdown" multiple="" id="search_tags" name="tags">
+              <% for (let tag of (question.tags || [])) { %>
+                <option value="<%= tag.id %>" selected><%= tag.name %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="eight wide field">
+            <label>添加新标签</label>
+            <div class="add-tag-inline">
+              <input type="text" id="new_tag_name" class="font-content" placeholder="Name" style="flex: 1 1 auto; ">
+              <div class="ui selection dropdown" id="new_tag_color">
+                <input type="hidden" value="">
+                <i class="dropdown icon"></i>
+                <div class="default text">Colors</div>
+                <div class="menu">
+                  <div class="item" data-value="red">
+                    <div class="ui red empty circular label"></div>
+                    Red
+                  </div>
+                  <div class="item" data-value="blue">
+                    <div class="ui blue empty circular label"></div>
+                    Blue
+                  </div>
+                  <div class="item" data-value="black">
+                    <div class="ui black empty circular label"></div>
+                    Black
+                  </div>
+                  <div class="item" data-value="purple">
+                    <div class="ui purple empty circular label"></div>
+                    Purple
+                  </div>
+                  <div class="item" data-value="orange">
+                    <div class="ui orange empty circular label"></div>
+                    Orange
+                  </div>
+                  <div class="item" data-value="yellow">
+                    <div class="ui yellow empty circular label"></div>
+                    Yellow
+                  </div>
+                  <div class="item" data-value="pink">
+                    <div class="ui pink empty circular label"></div>
+                    Pink
+                  </div>
+                  <div class="item" data-value="green">
+                    <div class="ui green empty circular label"></div>
+                    Green
+                  </div>
+                  <div class="item" data-value="olive">
+                    <div class="ui olive empty circular label"></div>
+                    Olive
+                  </div>
+                  <div class="item" data-value="teal">
+                    <div class="ui teal empty circular label"></div>
+                    Teal
+                  </div>
+                  <div class="item" data-value="violet">
+                    <div class="ui violet empty circular label"></div>
+                    Violet
+                  </div>
+                </div>
+              </div>
+              <button type="button" id="add_new_tag_btn" class="ui green icon button add-tag-button" title="添加新标签">
+                <i class="plus icon"></i>
+              </button>
+            </div>
+          </div>
           </div>
         </div>
-        <label style="margin-top: 15px; " for="description">题目描述</label>
-        <textarea class="markdown-edit" rows="15" id="description" name="description"><%= question.description %></textarea>
-        <label style="margin-top: 15px; " for="answer">标准答案</label>
-        <textarea class="markdown-edit" rows="10" id="answer" name="answer"><%= question.answer %></textarea>
-        <label style="margin-top: 15px; " for="tutorial">题解</label>
-        <textarea class="markdown-edit" rows="10" id="tutorial" name="tutorial"><%= question.tutorial %></textarea>
+        <div class="field spaced-block">
+          <label for="source">来源</label>
+          <input class="font-content" type="text" id="source" name="source" value="<%= question.source %>">
+        </div>
+        <div class="field spaced-block">
+          <label for="description">题目描述</label>
+          <textarea class="markdown-edit" rows="15" id="description" name="description"><%= question.description %></textarea>
+        </div>
+        <div class="field spaced-block">
+          <label for="answer">标准答案</label>
+          <textarea class="markdown-edit" rows="10" id="answer" name="answer"><%= question.answer %></textarea>
+        </div>
+        <div class="field spaced-block">
+          <label for="tutorial">题解</label>
+          <textarea class="markdown-edit" rows="10" id="tutorial" name="tutorial"><%= question.tutorial %></textarea>
+        </div>
       </div></div>
     </div>
     <div class="ui bottom attached tab segment" data-tab="preview" id="preview">
@@ -188,6 +264,44 @@ $(function () {
         cache: false
       }
     });
+  $('#new_tag_color').dropdown();
+  $('#add_new_tag_btn').click(function(){
+    var name = ($('#new_tag_name').val() || '').trim();
+    var color = $('#new_tag_color').dropdown('get value');
+    if (!name) {
+      return syzoj.alert('请输入标签名称。');
+    }
+    $.ajax({
+      url: '/api/v2/question-tags',
+      method: 'POST',
+      data: { name: name, color: color },
+      success: function(resp){
+        if (!resp || resp.success !== true || !resp.tag) {
+          return syzoj.alert('创建标签失败。');
+        }
+        var tag = resp.tag;
+        // Add to dropdown if not exists and select it
+        var current = $('#search_tags').val() || [];
+        if (current.map(function(x){ return parseInt(x); }).indexOf(parseInt(tag.id)) === -1) {
+          $('#search_tags').dropdown('setup menu', {
+            values: []
+          });
+          // append option if missing
+          if ($('#search_tags option[value="'+ tag.id +'"]').length === 0) {
+            $('#search_tags').append('<option value="'+ tag.id +'">'+ $('<div/>').text(tag.name).html() +'</option>');
+          }
+          current.push(String(tag.id));
+        }
+        $('#search_tags').dropdown('set selected', String(tag.id));
+        // clear inputs
+        $('#new_tag_name').val('');
+        $('#new_tag_color').dropdown('clear');
+      },
+      error: function(){
+        syzoj.alert('创建标签失败。');
+      }
+    });
+  });
 });
 </script>
 <% include footer %>
