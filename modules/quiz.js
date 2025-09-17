@@ -23,10 +23,15 @@ app.get('/quiz/:id', async (req, res) => {
         const r = await syzoj.utils.renderQuestion(combined);
         totalPts = sumPoints(r.items || []);
       }
+      let examTags = [];
+      try {
+        if (q) examTags = await q.getExamTags();
+      } catch (e) { examTags = []; }
       return {
         idx: idx + 1,
         id: it.question_id,
         type: q ? (q.type || null) : null,
+        examTags,
         points: totalPts || 0,
         url: syzoj.utils.makeUrl(['quiz', quizId, 'question', idx + 1])
       };
@@ -224,7 +229,7 @@ app.post('/quiz/:id/edit', async (req, res) => {
     await quiz.setItems(items);
     await quiz.save();
 
-    res.redirect(syzoj.utils.makeUrl(['quiz', quiz.id, 'question', 1]));
+    res.redirect(syzoj.utils.makeUrl(['quiz', quiz.id]));
   } catch (e) {
     syzoj.log(e);
     res.render('error', { err: e });

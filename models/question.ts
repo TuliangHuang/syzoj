@@ -97,6 +97,12 @@ export default class Question extends Model {
     questionTagCache.set(this.id, newTagIDs);
   }
 
+  async getExamTags() {
+    const tags = await this.getTags();
+    const allowed = new Set(['pink', 'olive', 'yellow']);
+    return tags.filter(t => allowed.has((t as any).color));
+  }
+
   async changeID(id) {
     const entityManager = TypeORM.getManager();
 

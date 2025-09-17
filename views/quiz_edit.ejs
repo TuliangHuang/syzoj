@@ -10,16 +10,15 @@
       <input type="text" name="title" value="<%= quiz.title || '' %>" placeholder="小测标题">
     </div>
     <div class="field">
-      <label>描述（可选）</label>
+      <label>描述</label>
       <textarea name="description" rows="3"><%= quiz.description || '' %></textarea>
     </div>
     <div class="field">
-      <label>题目与分值（每行：题目编号 空格 分值）</label>
+      <label>题目与分值（每行：题目编号 分值）</label>
       <textarea name="lines" rows="10" placeholder="如：&#10;101 10&#10;102 15&#10;203 20"><%= lines || '' %></textarea>
     </div>
     <button class="ui primary button" type="submit">保存</button>
   </form>
 </div>
-
 
 <% include footer %>

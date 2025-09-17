@@ -22,18 +22,26 @@
         <table class="ui very basic celled table">
           <thead>
             <tr>
-              <th class="two wide center aligned">序号</th>
+              <th class="two wide left aligned">序号</th>
               <th class="four wide left aligned">题目类型</th>
-              <th class="two wide right aligned">分值 / <%= totalPoints %></th>
-              <th class="three wide right aligned">得分</th>
+              <th class="six wide left aligned">知识点</th>
+              <th class="two wide right aligned">分值（总分 <%= totalPoints %>）</th>
+              <th class="two wide right aligned">得分</th>
             </tr>
           </thead>
           <tbody>
             <% if (questions && questions.length) { %>
               <% questions.forEach(function(q){ %>
               <tr>
-                <td class="center aligned"><a href="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'question', q.idx]) %>">#<%= q.idx %></a></td>
+                <td class="left aligned"><a href="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'question', q.idx]) %>">#<%= q.idx %></a></td>
                 <td class="left aligned"><%= q.type || '' %></td>
+                <td class="left aligned">
+                  <% if (q.examTags && q.examTags.length) { %>
+                    <% q.examTags.forEach(function(tag, i){ %>
+                      <a href="<%= syzoj.utils.makeUrl(['questions', 'tag', tag.id]) %>" class="ui tiny <%= tag.color %> label" style="margin-left: 4px; "><%= tag.name %></a>
+                    <% }) %>
+                  <% } %>
+                </td>
                 <td class="right aligned"><%= q.points %></td>
                 <td class="right aligned">0</td>
               </tr>
