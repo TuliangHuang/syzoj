@@ -43,8 +43,16 @@
 <div class="ui center aligned grid" style="margin-top: 20px;">
   <div class="row">
     <div class="ui pagination menu">
-      <a class="item <%= prevUrl ? '' : 'disabled' %>" href="<%= prevUrl || '#' %>">上一题</a>
-      <a class="item <%= nextUrl ? '' : 'disabled' %>" href="<%= nextUrl || '#' %>">下一题</a>
+      <% if (prevUrl) { %>
+      <a class="icon item" href="<%= prevUrl %>" title="上一题" aria-label="上一题"><i class="arrow left icon"></i></a>
+      <% } else { %>
+      <a class="icon item" href="<%= syzoj.utils.makeUrl(['quiz', quiz.id]) %>" title="返回" aria-label="返回"><i class="close icon"></i></a>
+      <% } %>
+      <% if (nextUrl) { %>
+      <a class="icon item" href="<%= nextUrl %>" title="下一题" aria-label="下一题"><i class="arrow right icon"></i></a>
+      <% } else { %>
+      <a class="icon item" href="<%= syzoj.utils.makeUrl(['quiz', quiz.id]) %>" title="提交" aria-label="提交"><i class="check icon"></i></a>
+      <% } %>
     </div>
   </div>
 </div>
