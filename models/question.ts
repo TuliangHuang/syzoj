@@ -20,6 +20,9 @@ export default class Question extends Model {
   @TypeORM.Column({ nullable: true, type: "varchar", length: 80 })
   title: string;
 
+  @TypeORM.Column({ nullable: true, type: "varchar", length: 40 })
+  type: string;
+
   @TypeORM.Column({ nullable: true, type: "text" })
   source: string;
 

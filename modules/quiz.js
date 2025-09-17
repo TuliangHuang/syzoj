@@ -1,6 +1,46 @@
 let Quiz = syzoj.model('quiz');
 let Question = syzoj.model('question');
 
+app.get('/quiz/:id', async (req, res) => {
+  try {
+    const quizId = parseInt(req.params.id);
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) throw new ErrorMessage('无此小测。');
+
+    const items = await quiz.getItems();
+    function sumPoints(arr) {
+      if (!arr || !arr.length) return 0;
+      return arr.reduce((s, it) => s + (Number(it.points) || 0), 0);
+    }
+
+    const questions = await Promise.all(items.map(async (it, idx) => {
+      const q = await Question.findById(it.question_id);
+      let totalPts = (it.points != null && isFinite(it.points)) ? Number(it.points) : null;
+      if (totalPts == null) {
+        let parentQ = null;
+        if (q && q.parent_id) parentQ = await Question.findById(q.parent_id);
+        const combined = [parentQ && parentQ.description ? parentQ.description : '', q ? (q.description || '') : ''].filter(Boolean).join('\n\n');
+        const r = await syzoj.utils.renderQuestion(combined);
+        totalPts = sumPoints(r.items || []);
+      }
+      return {
+        idx: idx + 1,
+        id: it.question_id,
+        type: q ? (q.type || null) : null,
+        points: totalPts || 0,
+        url: syzoj.utils.makeUrl(['quiz', quizId, 'question', idx + 1])
+      };
+    }));
+
+    const totalPoints = questions.reduce((s, q) => s + (Number(q.points) || 0), 0);
+
+    res.render('quiz', { quiz, questions, totalPoints });
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', { err: e });
+  }
+});
+
 app.get('/quizzes', async (req, res) => {
   try {
     let paginate = syzoj.utils.paginate(await Quiz.countForPagination({}), req.query.page, syzoj.config.page.contest);
@@ -65,18 +105,15 @@ app.get('/quiz/:id/question/:qid', async (req, res) => {
       showAllPoints = true;
     }
 
-    // Limit directory to exactly up to 11 items: window [qid-5, qid+5]
+    // Limit directory to up to 10 items: window [qid-3, qid+6]
     const totalItems = items.length;
-    const windowSize = 11;
-    let start = 1, end = totalItems;
-    if (totalItems > windowSize) {
-      start = qid - 5;
-      if (start < 1) start = 1;
-      end = start + windowSize - 1; // ensure size 11
-      if (end > totalItems) {
-        end = totalItems;
-        start = Math.max(1, end - windowSize + 1);
-      }
+    const windowSize = 10;
+    let start = qid - 3;
+    if (start < 1) start = 1;
+    let end = start + windowSize - 1;
+    if (end > totalItems) {
+      end = totalItems;
+      start = Math.max(1, end - windowSize + 1);
     }
     const indices = [];
     for (let i = start - 1; i <= end - 1; i++) indices.push(i);

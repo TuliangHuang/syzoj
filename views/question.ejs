@@ -50,7 +50,7 @@
   <% } %>
   <div class="row" style="padding-bottom: 0; ">
     <div class="column">
-      <h2 class="ui header">题目</h2>
+      <h2 class="ui header"><%= (question && question.type) ? question.type : '题目' %></h2>
       <% if (descriptionHtml) { %>
       <div class="font-content"><%- descriptionHtml %></div>
       <% } %>

@@ -20,7 +20,8 @@
 
 <div class="ui center aligned grid">
   <div class="row">
-    <div class="ui secondary pointing menu centered">
+    <div class="ui secondary pointing menu">
+      <a class="item" href="<%= syzoj.utils.makeUrl(['quiz', quiz.id]) %>" title="返回小测" aria-label="返回小测"><i class="bars icon"></i></a>
       <% dir.forEach(function(d){ %>
         <a class="item <%= d.idx === qid ? 'active' : '' %>" href="<%= d.url %>">#<%= d.idx %>（<%= d.points %>分）</a>
       <% }) %>
@@ -42,7 +43,7 @@
 <div class="ui grid">
   <div class="row" style="padding-bottom: 0; ">
     <div class="column">
-      <h2 class="ui header">题目</h2>
+      <h2 class="ui header"><%= (question && question.type) ? question.type : '题目' %></h2>
       <% if (descriptionHtml) { %>
       <div class="font-content"><%- descriptionHtml %></div>
       <% } %>

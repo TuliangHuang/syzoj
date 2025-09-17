@@ -1,0 +1,52 @@
+<% this.title = (quiz && quiz.title ? quiz.title : ('小测 #' + quiz.id)) + ' - 小测'; %>
+<% include header %>
+<div class="padding">
+  <h1><%= quiz.title || ('小测 #' + quiz.id) %></h1>
+  <% if (quiz.description) { %>
+  <div class="font-content" style="margin-bottom: 20px; "><%- quiz.description %></div>
+  <% } %>
+  <div class="ui grid">
+    <div class="row">
+        <div class="ui buttons" style="margin-bottom: 15px; ">
+            <a class="ui small button" href="<%= syzoj.utils.makeUrl(['quizzes']) %>">返回列表</a>
+            <% if (user && user.is_admin) { %>
+            <a class="ui small primary button" href="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'edit']) %>">编辑小测</a>
+            <% } %>
+            <% if (questions && questions.length) { %>
+            <a class="ui small positive button" href="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'question', 1]) %>">开始作答</a>
+            <% } %>
+        </div>
+    </div>
+    <div class="row">
+      <div class="column">
+        <table class="ui very basic celled table">
+          <thead>
+            <tr>
+              <th class="two wide center aligned">序号</th>
+              <th class="four wide left aligned">题目类型</th>
+              <th class="two wide right aligned">分值 / <%= totalPoints %></th>
+              <th class="three wide right aligned">得分</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (questions && questions.length) { %>
+              <% questions.forEach(function(q){ %>
+              <tr>
+                <td class="center aligned"><a href="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'question', q.idx]) %>">#<%= q.idx %></a></td>
+                <td class="left aligned"><%= q.type || '' %></td>
+                <td class="right aligned"><%= q.points %></td>
+                <td class="right aligned">0</td>
+              </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="3" class="center aligned">该小测尚未添加题目。</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<% include footer %>

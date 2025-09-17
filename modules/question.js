@@ -213,6 +213,7 @@ app.post('/question/:id/edit', async (req, res) => {
     }
     question.parent_id = normalizeNullableNumber(req.body.parent_id);
     question.title = req.body.title;
+    question.type = (req.body.type || '').trim() || null;
     question.source = req.body.source;
     question.description = req.body.description;
     question.answer = req.body.answer;

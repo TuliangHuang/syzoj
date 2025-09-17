@@ -59,8 +59,16 @@
           </div>
         </div>
         <div class="field">
-          <label for="title">题目名称</label>
-          <input class="font-content" type="text" id="title" name="title" value="<%= question.title %>">
+          <div class="fields" style="align-items: flex-end; ">
+            <div class="eight wide field">
+              <label for="title">题目名称</label>
+              <input class="font-content" type="text" id="title" name="title" value="<%= question.title %>">
+            </div>
+            <div class="eight wide field">
+              <label for="type">题目类型</label>
+              <input class="font-content" type="text" id="type" name="type" value="<%= question.type || '' %>">
+            </div>
+          </div>
         </div>
         <div class="field spaced-block">
           <div class="fields" style="align-items: flex-end; ">
@@ -154,7 +162,7 @@
     </div>
     <div class="ui bottom attached tab segment" data-tab="preview" id="preview">
       <h1 class="ui header problem_header" id="pv-title"></h1>
-      <h2 class="ui header">题目</h2>
+      <h2 class="ui header" id="pv-type">题目</h2>
       <div class="font-content" id="pv-description"></div>
       <div class="ui form" id="pv-items" style="display: none; ">
         <div class="field" id="pv-items-list"></div>
@@ -238,6 +246,8 @@ $(function () {
 
   $("#preview_tab").click(function () {
     $("#pv-title").text($("#title").val());
+    var t = ($("#type").val() || '').trim();
+    $("#pv-type").text(t ? t : '题目');
     $("#pv-description, #pv-answer, #pv-tutorial").text('Loading...');
     renderPreviewDescriptionAndOptions();
     render($("#pv-answer"), $("#answer"));
