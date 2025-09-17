@@ -87,6 +87,19 @@
   <% } %>
 </div>
 
+<div class="ui center aligned grid" style="margin-top: 20px;">
+  <div class="row">
+    <div class="ui pagination menu">
+      <% if (prevUrl) { %>
+      <a class="icon item" href="<%= prevUrl %>" title="上一题" aria-label="上一题"><i class="arrow left icon"></i></a>
+      <% } %>
+      <% if (nextUrl) { %>
+      <a class="icon item" href="<%= nextUrl %>" title="下一题" aria-label="下一题"><i class="arrow right icon"></i></a>
+      <% } %>
+    </div>
+  </div>
+</div>
+
 <script>
 $(function(){
   $('.ui.radio.checkbox').checkbox();

@@ -33,6 +33,25 @@ app.get('/question/:id', async (req, res) => {
       tutorialHtml = question.tutorial ? await syzoj.utils.markdown(question.tutorial) : null;
     }
 
+    // Compute previous/next question URLs by ID
+    let prevUrl = null, nextUrl = null;
+    try {
+      // previous: max id < current id
+      const prev = await Question.findOne({
+        where: { id: TypeORM.LessThan(id) },
+        order: { id: 'DESC' }
+      });
+      if (prev) prevUrl = syzoj.utils.makeUrl(['question', prev.id]);
+    } catch (e) {}
+    try {
+      // next: min id > current id
+      const next = await Question.findOne({
+        where: { id: TypeORM.MoreThan(id) },
+        order: { id: 'ASC' }
+      });
+      if (next) nextUrl = syzoj.utils.makeUrl(['question', next.id]);
+    } catch (e) {}
+
     res.render('question', {
       question,
       parent,
@@ -44,7 +63,9 @@ app.get('/question/:id', async (req, res) => {
       tagColorOrder,
       allowedEdit,
       answerHtml,
-      tutorialHtml
+      tutorialHtml,
+      prevUrl,
+      nextUrl
     });
   } catch (e) {
     syzoj.log(e);
