@@ -1,5 +1,5 @@
 <% var onlyOne = (items && items.length === 1); %>
-<% (items || []).forEach(function(it){ %>
+<% (items || []).forEach(function(it, idx){ %>
   <div class="ui basic segment" style="border: none; box-shadow: none; padding: 0; ">
     <% if(!onlyOne || it.prompt) { %>
     <div class="font-content" style="margin-bottom: 1em; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; ">
@@ -17,7 +17,7 @@
         <% (it.options || []).forEach(function(opt, i){ %>
           <div class="field">
             <div class="ui radio checkbox">
-              <input type="radio">
+              <input type="radio" name="mc_<%= idx %>">
               <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= String.fromCharCode(65 + i) %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
             </div>
           </div>
@@ -38,13 +38,13 @@
       <div class="grouped fields">
         <div class="field">
           <div class="ui radio checkbox">
-            <input type="radio">
+            <input type="radio" name="tf_<%= idx %>">
             <label>True</label>
           </div>
         </div>
         <div class="field">
           <div class="ui radio checkbox">
-            <input type="radio">
+            <input type="radio" name="tf_<%= idx %>">
             <label>False</label>
           </div>
         </div>
