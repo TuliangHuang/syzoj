@@ -1,3 +1,4 @@
+<% if (typeof existingAnswers === 'undefined' || existingAnswers == null) { existingAnswers = []; } %>
 <% var onlyOne = (items && items.length === 1); %>
 <% (items || []).forEach(function(it, idx){ %>
   <div class="ui basic segment" style="border: none; box-shadow: none; padding: 0; ">
@@ -17,8 +18,9 @@
         <% (it.options || []).forEach(function(opt, i){ %>
           <div class="field">
             <div class="ui radio checkbox">
-              <input type="radio" name="mc_<%= idx %>">
-              <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= String.fromCharCode(65 + i) %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
+              <% var val = String.fromCharCode(65 + i); %>
+              <input type="radio" name="a_<%= idx %>" value="<%= val %>" <%= (existingAnswers && existingAnswers[idx] === val) ? 'checked' : '' %> >
+              <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= val %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
             </div>
           </div>
         <% }); %>
@@ -28,8 +30,9 @@
         <% (it.options || []).forEach(function(opt, i){ %>
           <div class="field">
             <div class="ui checkbox">
-              <input type="checkbox">
-              <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= String.fromCharCode(65 + i) %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
+              <% var val = String.fromCharCode(65 + i); %>
+              <input type="checkbox" name="a_<%= idx %>" value="<%= val %>" <%= (existingAnswers && Array.isArray(existingAnswers[idx]) ? existingAnswers[idx] : (existingAnswers && typeof existingAnswers[idx] === 'string' ? existingAnswers[idx].split('') : [])).indexOf(val) >= 0 ? 'checked' : '' %> >
+              <label style="display: inline-flex; align-items: baseline; gap: 6px; "><span><%= val %>.</span><span style="display: inline-block; white-space: normal; "><%- opt %></span></label>
             </div>
           </div>
         <% }); %>
@@ -38,21 +41,21 @@
       <div class="grouped fields">
         <div class="field">
           <div class="ui radio checkbox">
-            <input type="radio" name="tf_<%= idx %>">
+            <input type="radio" name="a_<%= idx %>" value="T" <%= (existingAnswers && existingAnswers[idx] === 'T') ? 'checked' : '' %> >
             <label>True</label>
           </div>
         </div>
         <div class="field">
           <div class="ui radio checkbox">
-            <input type="radio" name="tf_<%= idx %>">
+            <input type="radio" name="a_<%= idx %>" value="F" <%= (existingAnswers && existingAnswers[idx] === 'F') ? 'checked' : '' %> >
             <label>False</label>
           </div>
         </div>
       </div>
     <% } else if (it.type === 'cl') { %>
-      <input type="text">
+      <input type="text" name="a_<%= idx %>" value="<%= existingAnswers && existingAnswers[idx] ? existingAnswers[idx] : '' %>">
     <% } else if (it.type === 'fr') { %>
-      <textarea rows="5"></textarea>
+      <textarea rows="5" name="a_<%= idx %>"><%= existingAnswers && existingAnswers[idx] ? existingAnswers[idx] : '' %></textarea>
     <% } %>
   </div>
 <% }); %>

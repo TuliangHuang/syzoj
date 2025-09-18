@@ -13,7 +13,16 @@
             <a class="ui small primary button" href="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'edit']) %>">编辑小测</a>
             <% } %>
             <% if (questions && questions.length) { %>
-            <a class="ui small positive button" href="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'question', 1]) %>">开始作答</a>
+              <% if (latestAttempt) { %>
+                <a class="ui small positive button" href="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'question', 1], { aid: latestAttempt.id }) %>">继续作答</a>
+                <form action="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'attempt', 'restart']) %>" method="post" style="display: inline; ">
+                  <button class="ui small orange button" type="submit">重新作答</button>
+                </form>
+              <% } else { %>
+                <form action="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'attempt', 'start']) %>" method="post" style="display: inline; ">
+                  <button class="ui small positive button" type="submit">开始作答</button>
+                </form>
+              <% } %>
             <% } %>
         </div>
     </div>
@@ -26,7 +35,7 @@
               <th class="four wide left aligned">题目类型</th>
               <th class="six wide left aligned">知识点</th>
               <th class="two wide right aligned">分值（总分 <%= totalPoints %>）</th>
-              <th class="two wide right aligned">得分</th>
+              <th class="two wide right aligned">得分<% if (typeof earnedTotal === 'number') { %>（已得 <%= earnedTotal %> 分）<% } %></th>
             </tr>
           </thead>
           <tbody>
@@ -43,7 +52,12 @@
                   <% } %>
                 </td>
                 <td class="right aligned"><%= q.points %></td>
-                <td class="right aligned">0</td>
+                <td class="right aligned">
+                  <% if (typeof q.earned === 'number') { %>
+                    <% var _earned = Number(q.earned) || 0; var _points = Number(q.points) || 0; var _color = (_earned >= _points) ? '#21ba45' : (_earned > 0 ? '#fbbd08' : '#db2828'); %>
+                    <span style="color: <%= _color %>;"><%= _earned %></span>
+                  <% } %>
+                </td>
               </tr>
               <% }) %>
             <% } else { %>

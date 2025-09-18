@@ -14,14 +14,17 @@ export default class Quiz extends Model {
   @TypeORM.Column({ nullable: true, type: "text" })
   description: string;
 
-  // JSON-encoded array: [{ question_id: number, points: number }]
-  @TypeORM.Column({ nullable: true, type: "text" })
-  items: string;
+  @TypeORM.Column({ nullable: true, type: "json" })
+  items: any;
 
   async getItems(): Promise<Array<{ question_id: number; points: number }>> {
     try {
-      const parsed = JSON.parse(this.items || "[]");
-      if (Array.isArray(parsed)) return parsed;
+      const val: any = (this as any).items;
+      if (Array.isArray(val)) return val as any;
+      if (typeof val === 'string') {
+        const parsed = JSON.parse(val || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      }
       return [];
     } catch (e) {
       return [];
@@ -29,7 +32,8 @@ export default class Quiz extends Model {
   }
 
   async setItems(items: Array<{ question_id: number; points: number }>) {
-    this.items = JSON.stringify(items || []);
+    // Assign directly; mapper will handle json or text depending on column type
+    (this as any).items = items || [] as any;
   }
 
   async getQuestionIds(): Promise<number[]> {

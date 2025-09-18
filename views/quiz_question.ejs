@@ -52,11 +52,13 @@
   <% if (items && items.length) { %>
   <div class="row">
     <div class="column">
-      <div class="ui form">
+      <form id="qq-form" class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'question', qid, 'save'], aid ? { aid } : null) %>">
+        <input type="hidden" name="aid" value="<%= aid || '' %>">
         <div class="field">
           <% include question_items %>
         </div>
-      </div>
+        <div id="autosave-status" class="ui tiny text" style="margin-top: 6px; color: rgba(0,0,0,.5); "></div>
+      </form>
     </div>
   </div>
   <% } %>
@@ -73,7 +75,7 @@
       <% if (nextUrl) { %>
       <a class="icon item" href="<%= nextUrl %>" title="下一题" aria-label="下一题"><i class="arrow right icon"></i></a>
       <% } else { %>
-      <a class="icon item" href="<%= syzoj.utils.makeUrl(['quiz', quiz.id]) %>" title="提交" aria-label="提交"><i class="check icon"></i></a>
+      <a class="icon item" href="<%= syzoj.utils.makeUrl(['quiz', quiz.id]) %>" title="返回" aria-label="返回"><i class="check icon"></i></a>
       <% } %>
     </div>
   </div>
@@ -84,6 +86,56 @@
 $(function(){
   $('.ui.radio.checkbox').checkbox();
   $('.ui.checkbox').checkbox();
+  var $form = $('#qq-form');
+  var $status = $('#autosave-status');
+
+  function setStatus(text) {
+    if (!$status.length) return;
+    $status.text(text);
+  }
+
+  var saveInFlight = false;
+  var saveQueued = false;
+  function doSave(next) {
+    if (!$form.length) return Promise.resolve();
+    var data = $form.serializeArray();
+    if (next) data.push({ name: 'next', value: '1' });
+    saveInFlight = true;
+    setStatus('正在保存…');
+    return $.ajax({
+      url: $form.attr('action'),
+      type: 'POST',
+      data: $.param(data),
+    }).then(function(){
+      setStatus('已保存');
+    }).catch(function(){
+      setStatus('保存失败，稍后重试');
+    }).always(function(){
+      saveInFlight = false;
+      if (saveQueued) { saveQueued = false; doSave(); }
+    });
+  }
+
+  var debounced;
+  function queueSave() {
+    if (debounced) clearTimeout(debounced);
+    debounced = setTimeout(function(){
+      if (saveInFlight) { saveQueued = true; return; }
+      doSave();
+    }, 400);
+  }
+
+  // Auto-save on interactions
+  $(document).on('change', '#qq-form input, #qq-form textarea', queueSave);
+  $(document).on('input', '#qq-form input[type=text], #qq-form textarea', queueSave);
+
+  // Intercept pagination clicks to save before navigation
+  $('.ui.pagination.menu a').on('click', function(e){
+    if (!$form.length) return;
+    e.preventDefault();
+    var href = $(this).attr('href');
+    doSave().then(function(){ window.location.href = href; });
+  });
   function addLineNumbers($root){
     $root.find('pre > code').each(function(){
       var code = this;
