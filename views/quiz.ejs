@@ -1,12 +1,21 @@
 <% this.title = (quiz && quiz.title ? quiz.title : ('小测 #' + quiz.id)) + ' - 小测'; %>
 <% include header %>
 <div class="padding">
-  <h1><%= quiz.title || ('小测 #' + quiz.id) %></h1>
-  <% if (quiz.description) { %>
-  <div class="font-content" style="margin-bottom: 20px; "><%- quiz.description %></div>
-  <% } %>
   <div class="ui grid">
     <div class="row">
+      <div class="column">
+        <h1><%= quiz.title || ('小测 #' + quiz.id) %></h1>
+      </div>
+    </div>
+    <% if (quiz.description) { %>
+    <div class="row">
+      <div class="column">
+        <div class="font-content" style="margin-bottom: 20px; "><%- quiz.description %></div>
+      </div>
+    </div>
+    <% } %>
+    <div class="row">
+      <div class="column">
         <div class="ui buttons" style="margin-bottom: 15px; ">
             <a class="ui small button" href="<%= syzoj.utils.makeUrl(['quizzes']) %>">返回列表</a>
             <% if (user && user.is_admin) { %>
@@ -15,16 +24,20 @@
             <% if (questions && questions.length) { %>
               <% if (latestAttempt) { %>
                 <a class="ui small positive button" href="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'question', 1], { aid: latestAttempt.id }) %>">继续作答</a>
-                <form action="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'attempt', 'restart']) %>" method="post" style="display: inline; ">
-                  <button class="ui small orange button" type="submit">重新作答</button>
-                </form>
+                <button class="ui small orange button" type="submit" form="quiz-restart-form">重新作答</button>
               <% } else { %>
-                <form action="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'attempt', 'start']) %>" method="post" style="display: inline; ">
-                  <button class="ui small positive button" type="submit">开始作答</button>
-                </form>
+                <button class="ui small positive button" type="submit" form="quiz-start-form">开始作答</button>
               <% } %>
             <% } %>
         </div>
+        <% if (questions && questions.length) { %>
+          <% if (latestAttempt) { %>
+          <form id="quiz-restart-form" action="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'attempt', 'restart']) %>" method="post"></form>
+          <% } else { %>
+          <form id="quiz-start-form" action="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'attempt', 'start']) %>" method="post"></form>
+          <% } %>
+        <% } %>
+      </div>
     </div>
     <div class="row">
       <div class="column">
