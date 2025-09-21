@@ -26,31 +26,37 @@ app.get('/question/:id', async (req, res) => {
     const rendered = await syzoj.utils.renderQuestion(combinedMarkdown);
 
     const allowedEdit = res.locals.user && await res.locals.user.hasPrivilege('manage_problem');
+    const canViewSolutions = allowedEdit || (syzoj.config && syzoj.config.allow_solutions_for_non_privileged === true);
 
     let answerHtml = null, tutorialHtml = null;
-    if (allowedEdit) {
+    if (canViewSolutions) {
       answerHtml = question.answer ? await syzoj.utils.markdown(question.answer) : null;
       tutorialHtml = question.tutorial ? await syzoj.utils.markdown(question.tutorial) : null;
     }
 
-    // Compute previous/next question URLs by ID
-    let prevUrl = null, nextUrl = null;
-    try {
-      // previous: max id < current id
-      const prev = await Question.findOne({
-        where: { id: TypeORM.LessThan(id) },
-        order: { id: 'DESC' }
-      });
-      if (prev) prevUrl = syzoj.utils.makeUrl(['question', prev.id]);
-    } catch (e) {}
-    try {
-      // next: min id > current id
-      const next = await Question.findOne({
-        where: { id: TypeORM.MoreThan(id) },
-        order: { id: 'ASC' }
-      });
-      if (next) nextUrl = syzoj.utils.makeUrl(['question', next.id]);
-    } catch (e) {}
+    // Navigation: either show prev/next by ID, or a random button for tag-random context
+    let prevUrl = null, nextUrl = null, randomUrl = null;
+    const tagIDsParam = (req.query.tagIDs || '').toString().trim();
+    if (tagIDsParam) {
+      randomUrl = syzoj.utils.makeUrl(['questions', 'tag', tagIDsParam, 'random']);
+    } else {
+      try {
+        // previous: max id < current id
+        const prev = await Question.findOne({
+          where: { id: TypeORM.LessThan(id) },
+          order: { id: 'DESC' }
+        });
+        if (prev) prevUrl = syzoj.utils.makeUrl(['question', prev.id]);
+      } catch (e) {}
+      try {
+        // next: min id > current id
+        const next = await Question.findOne({
+          where: { id: TypeORM.MoreThan(id) },
+          order: { id: 'ASC' }
+        });
+        if (next) nextUrl = syzoj.utils.makeUrl(['question', next.id]);
+      } catch (e) {}
+    }
 
     res.render('question', {
       question,
@@ -65,7 +71,9 @@ app.get('/question/:id', async (req, res) => {
       answerHtml,
       tutorialHtml,
       prevUrl,
-      nextUrl
+      nextUrl,
+      randomUrl,
+      canViewSolutions
     });
   } catch (e) {
     syzoj.log(e);
@@ -113,7 +121,9 @@ app.get('/questions', async (req, res) => {
       allTags: allTags,
       tagColorOrder,
       allowedManageTag: res.locals.user && await res.locals.user.hasPrivilege('manage_problem_tag'),
-      allowedManageProblem: res.locals.user && await res.locals.user.hasPrivilege('manage_problem')
+      allowedManageProblem: res.locals.user && await res.locals.user.hasPrivilege('manage_problem'),
+      showSolutionsForUser: syzoj.config && syzoj.config.allow_solutions_for_non_privileged === true,
+      isAdmin: !!(res.locals.user && res.locals.user.is_admin)
     });
   } catch (e) {
     syzoj.log(e);
@@ -155,7 +165,9 @@ app.get('/questions/search', async (req, res) => {
       allTags: allTags,
       tagColorOrder,
       allowedManageTag: res.locals.user && await res.locals.user.hasPrivilege('manage_problem_tag'),
-      allowedManageProblem: res.locals.user && await res.locals.user.hasPrivilege('manage_problem')
+      allowedManageProblem: res.locals.user && await res.locals.user.hasPrivilege('manage_problem'),
+      showSolutionsForUser: syzoj.config && syzoj.config.allow_solutions_for_non_privileged === true,
+      isAdmin: !!(res.locals.user && res.locals.user.is_admin)
     });
   } catch (e) {
     syzoj.log(e);
@@ -164,6 +176,24 @@ app.get('/questions/search', async (req, res) => {
 });
 
 // (moved) question tag routes are now in web/modules/question_tag.js
+
+// Toggle showing solutions for non-privileged users (admin-only, site-wide)
+app.post('/questions/toggle-solutions', async (req, res) => {
+  try {
+    if (!res.locals.user || !res.locals.user.is_admin) {
+      return res.status(403).json({ ok: false, error: 'forbidden' });
+    }
+    const on = String(req.body.on || '0') === '1';
+    if (!syzoj.configInFile) syzoj.configInFile = {};
+    syzoj.configInFile.allow_solutions_for_non_privileged = on;
+    syzoj.reloadConfig();
+    await syzoj.utils.saveConfig();
+    res.json({ ok: true, on });
+  } catch (e) {
+    syzoj.log(e);
+    res.status(500).json({ ok: false, error: e && e.message });
+  }
+});
 
 // Create / edit question
 app.get('/question/:id/edit', async (req, res) => {

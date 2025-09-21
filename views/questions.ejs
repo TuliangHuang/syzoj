@@ -62,6 +62,14 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
           </script>
           <label>显示分类标签</label>
         </div>
+        <% if (isAdmin) { %>
+        <div style="margin-left: 10px; display: inline-block; ">
+          <div class="ui toggle checkbox" id="toggle_solutions">
+            <input type="checkbox"<% if (showSolutionsForUser) { %> checked<% } %>>
+            <label>显示答案与题解（全站）</label>
+          </div>
+        </div>
+        <% } %>
         <div style="margin-left: 10px; display: inline-block; ">
           <% if (allowedManageTag) { %>
             <% if (typeof tags !== 'undefined' && tags.length === 1) { %>
@@ -178,6 +186,16 @@ document.addEventListener('keydown', function (event) {
 
 $(function () {
   $('#add_question_dropdown').dropdown();
+  <% if (isAdmin) { %>
+    $('#toggle_solutions').checkbox('setting', 'onChange', function(){
+      var checked = $('#toggle_solutions').checkbox('is checked');
+      $.ajax({
+        url: '<%= syzoj.utils.makeUrl(['questions', 'toggle-solutions']) %>',
+        method: 'POST',
+        data: { on: checked ? '1' : '0' }
+      });
+    });
+  <% } %>
 });
 </script>
 <style>
