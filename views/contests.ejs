@@ -16,9 +16,10 @@
       <thead>
         <tr>
           <th class="left aligned">比赛名称</th>
-          <th class="left aligned">描述</th>
+          <th class="left aligned mobile hidden">描述</th>
           <th class="left aligned">开始时间</th>
           <th class="left aligned">时长</th>
+          <th class="left aligned">赛制</th>
           <th>状态</th>
         </tr>
       </thead>
@@ -39,9 +40,10 @@
             <% tag = '<span class="ui header"><div class="ui mini yellow label">已归档</div></span>' %>
           <% } %>
           <td class="left aligned"><a href="<%= syzoj.utils.makeUrl(['contest', contest.id]) %>"><%= contest.title %></a></td>
-          <td class="left aligned font-content"><%- contest.subtitle %></td>
+          <td class="left aligned font-content mobile hidden"><%- contest.subtitle %></td>
           <td class="left aligned"><%= syzoj.utils.formatDate(contest.start_time, 'L H:mm') %></td>
           <td class="left aligned"><%= syzoj.utils.formatDuration(contest.end_time - contest.start_time) %></td>
+          <td class="left aligned"><%= { 'noi': 'NOI', 'ioi': 'IOI', 'acm': 'ICPC' }[contest.type] %></td>
           <td><%- tag %></td>
         </tr>
         <% } %>
