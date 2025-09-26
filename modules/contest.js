@@ -70,7 +70,6 @@ app.get('/contest/:id/edit', async (req, res) => {
 
 app.post('/contest/:id/edit', async (req, res) => {
   try {
-
     let contest_id = parseInt(req.params.id);
     let contest = await Contest.findById(contest_id);
     let ranklist = null;
@@ -83,10 +82,6 @@ app.post('/contest/:id/edit', async (req, res) => {
       contest.holder_id = res.locals.user.id;
 
       ranklist = await ContestRanklist.create();
-
-      // Only new contest can be set type
-      if (!['noi', 'ioi', 'acm'].includes(req.body.type)) throw new ErrorMessage('无效的赛制。');
-      contest.type = req.body.type;
     } else {
       // if contest exists, both system administrators and contest administrators can edit it.
       if (!res.locals.user || (!res.locals.user.is_admin && !contest.admins.includes(res.locals.user.id.toString()))) throw new ErrorMessage('您没有权限进行此操作。');
@@ -102,6 +97,9 @@ app.post('/contest/:id/edit', async (req, res) => {
     }
     await ranklist.save();
     contest.ranklist_id = ranklist.id;
+
+    if (!['noi', 'ioi', 'acm'].includes(req.body.type)) throw new ErrorMessage('无效的赛制。');
+    await contest.setType(req.body.type);
 
     if (!req.body.title.trim()) throw new ErrorMessage('比赛名不能为空。');
     contest.title = req.body.title;
@@ -124,6 +122,55 @@ app.post('/contest/:id/edit', async (req, res) => {
     res.render('error', {
       err: e
     });
+  }
+});
+
+app.get('/contest/:id/reset', async (req, res) => {
+  try {
+    let contest_id = parseInt(req.params.id);
+    let contest = await Contest.findById(contest_id);
+    
+    if (!contest) {
+      return res.render('error', { err: new Error('比赛不存在') });
+    }
+
+    // 检查权限：只有系统管理员和比赛管理员可以重新统计
+    if (!res.locals.user || (!res.locals.user.is_admin && !contest.admins.includes(res.locals.user.id.toString()))) {
+      return res.render('error', { err: new Error('您没有权限进行此操作') });
+    }
+
+    // 调用 reset 函数
+    await contest.reset();
+    
+    // 直接跳转到比赛页面
+    res.redirect(`/contest/${contest.id}`);
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', { err: e });
+  }
+});
+
+app.post('/contest/:id/reset', async (req, res) => {
+  try {
+    let contest_id = parseInt(req.params.id);
+    let contest = await Contest.findById(contest_id);
+    
+    if (!contest) {
+      return res.json({ success: false, message: '比赛不存在' });
+    }
+
+    // 检查权限：只有系统管理员和比赛管理员可以重新统计
+    if (!res.locals.user || (!res.locals.user.is_admin && !contest.admins.includes(res.locals.user.id.toString()))) {
+      return res.json({ success: false, message: '您没有权限进行此操作' });
+    }
+
+    // 调用 reset 函数
+    await contest.reset();
+    
+    res.json({ success: true, message: '重新统计完成' });
+  } catch (e) {
+    syzoj.log(e);
+    res.json({ success: false, message: e.message || '重新统计失败' });
   }
 });
 
@@ -162,21 +209,31 @@ app.get('/contest/:id', async (req, res) => {
       for (let problem of problems) {
         if (contest.type === 'noi') {
           if (player.score_details[problem.problem.id]) {
-            let judge_state = await JudgeState.findById(player.score_details[problem.problem.id].judge_id);
-            problem.status = judge_state.status;
-            if (!contest.ended && !await problem.problem.isAllowedEditBy(res.locals.user) && !['Compile Error', 'Waiting', 'Compiling'].includes(problem.status)) {
-              problem.status = 'Submitted';
+            let judge_id = await player.getJudgeId(problem.problem.id);
+            if (judge_id > 0) {
+              let judge_state = await JudgeState.findById(judge_id);
+              if (judge_state) {
+                problem.status = judge_state.status;
+                if (!contest.ended && !await problem.problem.isAllowedEditBy(res.locals.user) && !['Compile Error', 'Waiting', 'Compiling'].includes(problem.status)) {
+                  problem.status = 'Submitted';
+                }
+              }
             }
-            problem.judge_id = player.score_details[problem.problem.id].judge_id;
+            problem.judge_id = judge_id;
           }
         } else if (contest.type === 'ioi') {
           if (player.score_details[problem.problem.id]) {
-            let judge_state = await JudgeState.findById(player.score_details[problem.problem.id].judge_id);
-            problem.status = judge_state.status;
-            problem.judge_id = player.score_details[problem.problem.id].judge_id;
-            await contest.loadRelationships();
-            let multiplier = contest.ranklist.ranking_params[problem.problem.id] || 1.0;
-            problem.feedback = (judge_state.score * multiplier).toString() + ' / ' + (100 * multiplier).toString();
+            let judge_id = await player.getJudgeId(problem.problem.id);
+            if (judge_id > 0) {
+              let judge_state = await JudgeState.findById(judge_id);
+              if (judge_state) {
+                problem.status = judge_state.status;
+                await contest.loadRelationships();
+                let multiplier = contest.ranklist.ranking_params[problem.problem.id] || 1.0;
+                problem.feedback = (judge_state.score * multiplier).toString() + ' / ' + (100 * multiplier).toString();
+              }
+            }
+            problem.judge_id = judge_id;
           }
         } else if (contest.type === 'acm') {
           if (player.score_details[problem.problem.id]) {
@@ -184,7 +241,7 @@ app.get('/contest/:id', async (req, res) => {
               accepted: player.score_details[problem.problem.id].accepted,
               unacceptedCount: player.score_details[problem.problem.id].unacceptedCount
             };
-            problem.judge_id = player.score_details[problem.problem.id].judge_id;
+            problem.judge_id = await player.getJudgeId(problem.problem.id);
           } else {
             problem.status = null;
           }
@@ -197,7 +254,7 @@ app.get('/contest/:id', async (req, res) => {
       hasStatistics = true;
 
       await contest.loadRelationships();
-      let players = await contest.ranklist.getPlayers();
+      let players = contest.ranklist.players || [];
 
       if (hasStatistics) {
         await problems.forEachAsync(async (item) => {
@@ -213,8 +270,9 @@ app.get('/contest/:id', async (req, res) => {
           problem.statistics.partially = 0;
         }
 
-        for (let player of players) {
-          if (player.score_details[problem.problem.id]) {
+        for (let rankedPlayer of players) {
+          let player = await ContestPlayer.findById(rankedPlayer.player_id);
+          if (player && player.score_details && player.score_details[problem.problem.id]) {
             problem.statistics.attempt++;
             if ((contest.type === 'acm' && player.score_details[problem.problem.id].accepted) || ((contest.type === 'noi' || contest.type === 'ioi') && player.score_details[problem.problem.id].score === 100)) {
               problem.statistics.accepted++;
@@ -259,34 +317,67 @@ app.get('/contest/:id/ranklist', async (req, res) => {
 
     await contest.loadRelationships();
 
-    let players_id = [];
-    for (let i = 1; i <= contest.ranklist.ranklist.player_num; i++) players_id.push(contest.ranklist.ranklist[i]);
-
-    let ranklist = await players_id.mapAsync(async player_id => {
-      let player = await ContestPlayer.findById(player_id);
-
-      if (contest.type === 'noi' || contest.type === 'ioi') {
-        player.score = 0;
+    let players = contest.ranklist.players || [];
+    let ranklist = await players.mapAsync(async playerData => {
+      let player = await ContestPlayer.findById(playerData.player_id);
+      let user = await User.findById(playerData.user_id);
+      // 检查 player 和 user 是否存在
+      if (!player || !user) {
+        return null; // 跳过无效的玩家数据
       }
 
+      // 加载 judge_state 用于显示
+      // 检查 player.score_details 是否存在
+      if (!player.score_details) {
+        throw new Error(`ContestPlayer ${player.id} 的 score_details 为空，数据异常`);
+      }
       for (let i in player.score_details) {
-        player.score_details[i].judge_state = await JudgeState.findById(player.score_details[i].judge_id);
-
-        /*** XXX: Clumsy duplication, see ContestRanklist::updatePlayer() ***/
+        let score_detail = player.score_details[i];
+        let judgeId = 0;
+        
+        // 根据赛制选择对应的评测ID
+        judgeId = await player.getJudgeId(problem.problem.id);
+        
+        if (judgeId > 0) {
+          score_detail.judge_state = await JudgeState.findById(judgeId);
+        }
+        
+        // 将计算好的 judgeId 存储到 score_detail 中供前端使用
+        score_detail.judge_id = judgeId;
+        
+        // 计算时间字段供前端使用
+        if (contest.type === 'ioi') {
+          score_detail.submit_time = score_detail.best_time;
+          score_detail.score = score_detail.best_score;  // IOI使用最高分
+        } else if (contest.type === 'noi') {
+          score_detail.submit_time = score_detail.latest_time;
+          score_detail.score = score_detail.latest_score;  // NOI使用最新分
+        } else if (contest.type === 'acm') {
+          score_detail.submit_time = score_detail.accepted_time;
+          score_detail.score = score_detail.accepted ? 100 : 0;  // ACM使用通过状态
+        }
+        
+        // 计算 weighted_score 用于显示（临时计算，不保存）
         if (contest.type === 'noi' || contest.type === 'ioi') {
           let multiplier = (contest.ranklist.ranking_params || {})[i] || 1.0;
-          player.score_details[i].weighted_score = player.score_details[i].score == null ? null : Math.round(player.score_details[i].score * multiplier);
-          player.score += player.score_details[i].weighted_score;
+          let score = contest.type === 'ioi' ? score_detail.best_score : score_detail.latest_score;
+          score_detail.weighted_score = score == null ? null : Math.round(score * multiplier);
         }
       }
 
-      let user = await User.findById(player.user_id);
-
       return {
         user: user,
-        player: player
+        player: {
+          ...player,
+          score: score_detail.score,
+          latest: score_detail.latest,
+          timeSum: score_detail.timeSum
+        }
       };
     });
+
+    // 过滤掉 null 值（无效的玩家数据）
+    ranklist = ranklist.filter(item => item !== null);
 
     let problems_id = await contest.getProblems();
     let problems = await problems_id.mapAsync(async id => await Problem.findById(id));
@@ -324,12 +415,9 @@ app.get('/contest/:id/upsolving', async (req, res) => {
     let problems_id = await contest.getProblems();
     let problems = await problems_id.mapAsync(async id => await Problem.findById(id));
 
-    let players_id = [];
-    for (let i = 1; i <= contest.ranklist.ranklist.player_num; i++) players_id.push(contest.ranklist.ranklist[i]);
-
-    let ranklist = await players_id.mapAsync(async player_id => {
-      let player = await ContestPlayer.findById(player_id);
-      let user = await User.findById(player.user_id);
+    let ranklist = await contest.ranklist.players.mapAsync(async playerData => {
+      let player = await ContestPlayer.findById(playerData.player_id);
+      let user = await User.findById(playerData.user_id);
       return {
         user: user,
         player: player,

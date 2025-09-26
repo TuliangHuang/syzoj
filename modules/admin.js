@@ -204,16 +204,17 @@ app.post('/admin/rating/add', async (req, res) => {
     const newcalc = await RatingCalculation.create({ contest_id: contest.id });
     await newcalc.save();
 
-    if (!contest.ranklist || contest.ranklist.ranklist.player_num <= 1) {
+    if (!contest.ranklist || !contest.ranklist.players || contest.ranklist.players.length <= 1) {
       throw new ErrorMessage("比赛人数太少。");
     }
 
     const players = [];
-    for (let i = 1; i <= contest.ranklist.ranklist.player_num; i++) {
-      const user = await User.findById((await ContestPlayer.findById(contest.ranklist.ranklist[i])).user_id);
+    for (let i = 0; i < contest.ranklist.players.length; i++) {
+      const player = contest.ranklist.players[i];
+      const user = await User.findById(player.user_id);
       players.push({
         user: user,
-        rank: i,
+        rank: i + 1,
         currentRating: user.rating
       });
     }

@@ -29,23 +29,29 @@
               <label>赛制</label>
               <div class="field">
                 <div class="ui radio checkbox">
-                  <input <% if (contest.id) { %>disabled <% } %>type="radio" name="type" id="type-noi" value="noi"<% if (contest.type === 'noi') { %> checked="checked"<% } %>>
+                  <input type="radio" name="type" id="type-noi" value="noi"<% if (contest.type === 'noi') { %> checked="checked"<% } %>>
                   <label for="type-noi">NOI</label>
                 </div>
               </div>
               <div class="field">
                 <div class="ui radio checkbox">
-                  <input <% if (contest.id) { %>disabled <% } %>type="radio" name="type" id="type-ioi" value="ioi"<% if (contest.type === 'ioi') { %> checked="checked"<% } %>>
+                  <input type="radio" name="type" id="type-ioi" value="ioi"<% if (contest.type === 'ioi') { %> checked="checked"<% } %>>
                   <label for="type-ioi">IOI</label>
                 </div>
               </div>
               <div class="field">
                 <div class="ui radio checkbox">
-                  <input <% if (contest.id) { %>disabled <% } %>type="radio" name="type" id="type-acm" value="acm"<% if (contest.type === 'acm') { %> checked="checked"<% } %>>
+                  <input type="radio" name="type" id="type-acm" value="acm"<% if (contest.type === 'acm') { %> checked="checked"<% } %>>
                   <label for="type-acm">ICPC</label>
                 </div>
               </div>
             </div>
+            <% if (contest.id) { %>
+            <div class="ui info message">
+              <i class="info circle icon"></i>
+              修改赛制将重新计算所有玩家的排名数据。
+            </div>
+            <% } %>
 
             <div class="field">
                 <label>比赛公告</label>

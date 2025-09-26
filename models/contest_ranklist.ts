@@ -14,52 +14,87 @@ export default class ContestRanklist extends Model {
   @TypeORM.Column({ nullable: true, type: "json" })
   ranking_params: any;
 
-  @TypeORM.Column({ default: JSON.stringify({ player_num: 0 }), type: "json" })
-  ranklist: any;
+  @TypeORM.Column({ default: JSON.stringify([]), type: "json" })
+  players: any[];
 
-  async getPlayers() {
-    let a = [];
-    for (let i = 1; i <= this.ranklist.player_num; i++) {
-      a.push(await ContestPlayer.findById(this.ranklist[i]));
-    }
-    return a;
-  }
+  async updatePlayer(contest, player, skipSort = false) {
+    let players = this.players || [];
+    let rankedPlayer = null;
 
-  async updatePlayer(contest, player) {
-    let players = await this.getPlayers(), newPlayer = true;
-    for (let x of players) {
-      if (x.user_id === player.user_id) {
-        newPlayer = false;
+    // 查找是否已存在该玩家
+    for (let i = 0; i < players.length; i++) {
+      if (players[i].user_id === player.user_id) {
+        rankedPlayer = players[i];
+        rankedPlayer.player_id = player.id;
         break;
       }
     }
 
-    if (newPlayer) {
-      players.push(player);
-    }
+    if (rankedPlayer === null) {
+      rankedPlayer = {
+        player_id: player.id,
+        user_id: player.user_id,
+      };
+      players.push(rankedPlayer);
+    }  
+    rankedPlayer.latest = 0;
+    rankedPlayer.score = 0;
+    rankedPlayer.timeSum = 0;
 
     if (contest.type === 'noi' || contest.type === 'ioi') {
-      for (let player of players) {
-        player.latest = 0;
-        player.score = 0;
+      // NOI/IOI 赛制：计算加权总分和最新提交时间
+      for (let i in player.score_details) {
+        if (!player.score_details[i]) continue;
+        
+        let score_detail = player.score_details[i];
+        let score = null;
+        let time = 0;
 
-        for (let i in player.score_details) {
-          if (!player.score_details || !player.score_details[i]) continue;
+        if (contest.type === 'ioi') {
+          // IOI: 使用最高分
+          score = score_detail.best_score;
+          time = score_detail.best_time;
+        } else if (contest.type === 'noi') {
+          // NOI: 使用最新分
+          score = score_detail.latest_score;
+          time = score_detail.latest_time;
+        }
 
-          let judge_state = await JudgeState.findById(player.score_details[i].judge_id);
-          if (!judge_state) continue;
+        rankedPlayer.latest = Math.max(rankedPlayer.latest, time);
 
-          player.latest = Math.max(player.latest, judge_state.submit_time);
-
-          if (player.score_details[i].score != null) {
-            let multiplier = this.ranking_params[i] || 1.0;
-            player.score_details[i].weighted_score = Math.round(player.score_details[i].score * multiplier);
-            player.score += player.score_details[i].weighted_score;
-          }
+        if (score != null) {
+          let multiplier = this.ranking_params[i] || 1.0;
+          let weightedScore = Math.round(score * multiplier);
+          rankedPlayer.score += weightedScore;
         }
       }
+    } else {
+      // ACM 赛制：计算通过题目数和总时间
+      for (let i in player.score_details) {
+        if (player.score_details[i].accepted) {
+          rankedPlayer.score++;
+          rankedPlayer.timeSum += (player.score_details[i].accepted_time - contest.start_time) + 
+                                 (player.score_details[i].unaccepted_count * 20 * 60);
+        }
+      }
+    }
 
-      players.sort((a, b) => {
+    // 更新 players 数组
+    this.players = players;
+    
+    // 排序（如果不需要跳过）
+    if (!skipSort) {
+      await this.sortPlayers(contest, false); // 不保存，因为下面会保存
+    }
+    
+    // 保存到数据库
+    await this.save();
+  }
+
+  // 批量排序方法
+  async sortPlayers(contest, saveToDb = true) {
+    if (contest.type === 'noi' || contest.type === 'ioi') {
+      this.players.sort((a, b) => {
         if (a.score > b.score) return -1;
         if (b.score > a.score) return 1;
         if (a.latest < b.latest) return -1;
@@ -67,16 +102,7 @@ export default class ContestRanklist extends Model {
         return 0;
       });
     } else {
-      for (let player of players) {
-        player.timeSum = 0;
-        for (let i in player.score_details) {
-          if (player.score_details[i].accepted) {
-            player.timeSum += (player.score_details[i].acceptedTime - contest.start_time) + (player.score_details[i].unacceptedCount * 20 * 60);
-          }
-        }
-      }
-
-      players.sort((a, b) => {
+      this.players.sort((a, b) => {
         if (a.score > b.score) return -1;
         if (b.score > a.score) return 1;
         if (a.timeSum < b.timeSum) return -1;
@@ -85,7 +111,9 @@ export default class ContestRanklist extends Model {
       });
     }
 
-    this.ranklist = { player_num: players.length };
-    for (let i = 0; i < players.length; i++) this.ranklist[i + 1] = players[i].id;
+    // 保存到数据库（如果需要）
+    if (saveToDb) {
+      await this.save();
+    }
   }
 }

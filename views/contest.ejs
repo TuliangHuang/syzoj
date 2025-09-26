@@ -39,6 +39,9 @@
           <a class="ui small positive button" href="<%= submissionsUrl %>">提交记录</a>
           <% if (isSupervisior) { %>
             <a class="ui small button" href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'edit']) %>">编辑比赛</a>
+            <button class="ui small button" id="reset-contest-btn" onclick="resetContest()">
+              <i class="refresh icon"></i>重新统计
+            </button>
           <% } %>
         </div>
       </div>
@@ -165,5 +168,37 @@ $(function () {
     });
   }, 5000);
 });
+
+function resetContest() {
+  if (confirm('确定要重新统计比赛数据吗？这将从数据库重新读取所有有效提交并重新计算排名。此操作可能需要一些时间。')) {
+    // 禁用按钮防止重复点击
+    $('#reset-contest-btn').addClass('loading disabled');
+    
+    // 发送 POST 请求到后端
+    $.post('<%= syzoj.utils.makeUrl(["contest", contest.id, "reset"]) %>', {})
+    .done(function(data) {
+      if (data.success) {
+        alert('重新统计完成！');
+        location.reload(); // 刷新页面显示最新数据
+      } else {
+        alert('重新统计失败：' + (data.message || '未知错误'));
+      }
+    })
+    .fail(function(xhr) {
+      let message = '重新统计失败';
+      try {
+        const response = JSON.parse(xhr.responseText);
+        message = response.message || message;
+      } catch (e) {
+        // 使用默认消息
+      }
+      alert(message);
+    })
+    .always(function() {
+      // 恢复按钮状态
+      $('#reset-contest-btn').removeClass('loading disabled');
+    });
+  }
+}
 </script>
 <% include footer %>

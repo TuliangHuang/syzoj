@@ -7,6 +7,7 @@ import User from "./user";
 import Problem from "./problem";
 import ContestRanklist from "./contest_ranklist";
 import ContestPlayer from "./contest_player";
+import JudgeState from "./judge_state";
 
 enum ContestType {
   NOI = "noi",
@@ -149,5 +150,92 @@ export default class Contest extends Model {
   isEnded(now?) {
     if (!now) now = syzoj.utils.getCurrentDate();
     return now >= this.end_time;
+  }
+
+  async setType(newType: string) {
+    if (!['ioi', 'noi', 'acm'].includes(newType)) {
+      throw new ErrorMessage('无效的赛制类型。');
+    }
+    this.type = newType as ContestType;
+    await this.save();
+
+    await this.loadRelationships();
+    let players = this.ranklist.players;
+
+    for (let playerData of players) {
+      let player = await ContestPlayer.findById(playerData.player_id);
+      if (!player) {
+        throw new Error(`找不到 ContestPlayer ${playerData.player_id}，数据异常`);
+      }
+      await this.ranklist.updatePlayer(this, player, true); // skipSort = true
+    }
+    
+    // 最后进行一次全量排序
+    await this.ranklist.sortPlayers(this);
+  }
+
+  async reset() {
+    // 1. 从数据库重新读取有效提交（比赛时间内的提交）
+    let problems = await this.getProblems();
+    let validJudgeStates = await JudgeState.find({
+      where: {
+        submit_time: TypeORM.Between(this.start_time, this.end_time),
+        problem_id: TypeORM.In(problems),
+        type: 1,  // 只包含比赛提交
+        type_info: this.id  // 指定比赛ID
+      },
+      order: {
+        submit_time: 'ASC'
+      }
+    });
+
+    // 2. 获取所有参与的用户ID
+    let userIds = Array.from(new Set(validJudgeStates.map(js => js.user_id)));
+
+    // 3. 删除现有的 ContestPlayer 记录
+    await ContestPlayer.delete({
+      contest_id: this.id
+    });
+
+    // 3.5. 清空 ranklist
+    await this.loadRelationships();
+    this.ranklist.players = [];
+    await this.ranklist.save();
+
+    // 4. 重新创建 ContestPlayer 记录
+    let players = [];
+    for (let userId of userIds) {
+      let player = await ContestPlayer.create({
+        contest_id: this.id,
+        user_id: userId,
+        score_details: {}
+      });
+      await player.save();
+      players.push(player);
+    }
+
+    // 5. 按时间顺序处理有效提交，调用 updateScore
+    for (let judgeState of validJudgeStates) {
+      let player = players.find(p => p.user_id === judgeState.user_id);
+      if (player) {
+        await player.updateScore(judgeState);
+        await player.save();
+      }
+    }
+
+    // 6. 重新计算 ranklist
+    // 注意：loadRelationships 在第195行已经调用过，这里不需要重复调用
+    
+    // 批量更新所有玩家到 ranklist（使用延迟排序优化）
+    for (let player of players) {
+      // 重新加载玩家数据以确保 score_details 是最新的
+      await player.reload();
+      
+      // 使用延迟排序选项更新玩家
+      await this.ranklist.updatePlayer(this, player, true); // skipSort = true
+    }
+    
+    // 最后进行一次批量排序
+    await this.ranklist.sortPlayers(this);
   }
 }
