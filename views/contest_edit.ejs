@@ -45,6 +45,12 @@
                   <label for="type-acm">ICPC</label>
                 </div>
               </div>
+              <div class="field">
+                <div class="ui radio checkbox">
+                  <input type="radio" name="type" id="type-open" value="open"<% if (contest.type === 'open') { %> checked="checked"<% } %>>
+                  <label for="type-open">OPEN</label>
+                </div>
+              </div>
             </div>
             <% if (contest.id) { %>
             <div class="ui info message">

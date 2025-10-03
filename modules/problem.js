@@ -629,8 +629,14 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
       let problems_id = await contest.getProblems();
       if (!problems_id.includes(id)) throw new ErrorMessage('无此题目。');
 
-      judge_state.type = 1;
-      judge_state.type_info = contest_id;
+      if (contest.type === 'open') {
+        // OPEN contest 的提交视为普通提交（type=0），不使用 type_info
+        judge_state.type = 0;
+        judge_state.type_info = null;
+      } else {
+        judge_state.type = 1;
+        judge_state.type_info = contest_id;
+      }
 
       await judge_state.save();
     } else {

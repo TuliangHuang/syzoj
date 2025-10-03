@@ -98,7 +98,7 @@ app.post('/contest/:id/edit', async (req, res) => {
     await ranklist.save();
     contest.ranklist_id = ranklist.id;
 
-    if (!['noi', 'ioi', 'acm'].includes(req.body.type)) throw new ErrorMessage('无效的赛制。');
+    if (!['noi', 'ioi', 'acm', 'open'].includes(req.body.type)) throw new ErrorMessage('无效的赛制。');
     await contest.setType(req.body.type);
 
     if (!req.body.title.trim()) throw new ErrorMessage('比赛名不能为空。');
@@ -307,6 +307,7 @@ app.get('/contest/:id/ranklist', async (req, res) => {
     const curUser = res.locals.user;
 
     if (!contest) throw new ErrorMessage('无此比赛。');
+    if (contest.type === 'open') throw new ErrorMessage('OPEN 比赛不提供排行榜。');
     // if contest is non-public, both system administrators and contest administrators can see it.
     if (!contest.is_public && (!res.locals.user || (!res.locals.user.is_admin && !contest.admins.includes(res.locals.user.id.toString())))) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
 

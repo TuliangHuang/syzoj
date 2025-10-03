@@ -43,7 +43,7 @@
           <td class="left aligned font-content mobile hidden"><%- contest.subtitle %></td>
           <td class="left aligned"><%= syzoj.utils.formatDate(contest.start_time, 'L H:mm') %></td>
           <td class="left aligned"><%= syzoj.utils.formatDuration(contest.end_time - contest.start_time) %></td>
-          <td class="left aligned"><%= { 'noi': 'NOI', 'ioi': 'IOI', 'acm': 'ICPC' }[contest.type] %></td>
+          <td class="left aligned"><%= { 'noi': 'NOI', 'ioi': 'IOI', 'acm': 'ICPC', 'open': 'OPEN' }[contest.type] %></td>
           <td><%- tag %></td>
         </tr>
         <% } %>

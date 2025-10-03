@@ -12,7 +12,8 @@ import JudgeState from "./judge_state";
 enum ContestType {
   NOI = "noi",
   IOI = "ioi",
-  ICPC = "acm"
+  ICPC = "acm",
+  OPEN = "open"
 }
 
 @TypeORM.Entity()
@@ -153,7 +154,7 @@ export default class Contest extends Model {
   }
 
   async setType(newType: string) {
-    if (!['ioi', 'noi', 'acm'].includes(newType)) {
+    if (!['ioi', 'noi', 'acm', 'open'].includes(newType)) {
       throw new ErrorMessage('无效的赛制类型。');
     }
     this.type = newType as ContestType;
@@ -177,13 +178,22 @@ export default class Contest extends Model {
   async reset() {
     // 1. 从数据库重新读取有效提交（比赛时间内的提交）
     let problems = await this.getProblems();
+    let where: any = {
+      submit_time: TypeORM.Between(this.start_time, this.end_time),
+      problem_id: TypeORM.In(problems)
+    };
+
+    if (this.type === 'open') {
+      // OPEN 比赛统计来源于普通提交（type = 0）
+      where.type = 0;
+    } else {
+      // 其他比赛统计来源于比赛提交（type = 1，type_info = contest_id）
+      where.type = 1;
+      where.type_info = this.id;
+    }
+
     let validJudgeStates = await JudgeState.find({
-      where: {
-        submit_time: TypeORM.Between(this.start_time, this.end_time),
-        problem_id: TypeORM.In(problems),
-        type: 1,  // 只包含比赛提交
-        type_info: this.id  // 指定比赛ID
-      },
+      where,
       order: {
         submit_time: 'ASC'
       }
