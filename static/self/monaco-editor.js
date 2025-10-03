@@ -1,7 +1,36 @@
 require.config({
   paths: {
     vs: window.pathLib + "monaco-editor/0.53.0/vs",
-    'vs/language/typescript/monaco.contribution': window.pathSelfLib + 'monaco-typescript-stub'
+    // wrappers
+    'monaco-contrib-wrapper-ts': window.pathSelfLib + 'monaco-contrib-wrapper-ts',
+    'monaco-contrib-wrapper-json': window.pathSelfLib + 'monaco-contrib-wrapper-json',
+    'monaco-contrib-wrapper-css': window.pathSelfLib + 'monaco-contrib-wrapper-css',
+    'monaco-contrib-wrapper-html': window.pathSelfLib + 'monaco-contrib-wrapper-html',
+    // aliases to original contributions
+    'vscontrib/typescript': 'vs/language/typescript/monaco.contribution',
+    'vscontrib/json': 'vs/language/json/monaco.contribution',
+    'vscontrib/css': 'vs/language/css/monaco.contribution',
+    'vscontrib/html': 'vs/language/html/monaco.contribution'
+  },
+  map: {
+    '*': {
+      'vs/language/typescript/monaco.contribution': 'monaco-contrib-wrapper-ts',
+      'vs/language/json/monaco.contribution': 'monaco-contrib-wrapper-json',
+      'vs/language/css/monaco.contribution': 'monaco-contrib-wrapper-css',
+      'vs/language/html/monaco.contribution': 'monaco-contrib-wrapper-html'
+    },
+    'monaco-contrib-wrapper-ts': {
+      'vs/language/typescript/monaco.contribution': 'vscontrib/typescript'
+    },
+    'monaco-contrib-wrapper-json': {
+      'vs/language/json/monaco.contribution': 'vscontrib/json'
+    },
+    'monaco-contrib-wrapper-css': {
+      'vs/language/css/monaco.contribution': 'vscontrib/css'
+    },
+    'monaco-contrib-wrapper-html': {
+      'vs/language/html/monaco.contribution': 'vscontrib/html'
+    }
   }
 });
 
@@ -13,6 +42,14 @@ window.onEditorLoaded = function (fn) {
     window.editorLoadedHandles.push(fn);
   }
 };
+
+// Predefine stubs to short-circuit problematic language contributions
+if (typeof define === 'function' && define.amd) {
+  try { define('vs/language/typescript/monaco.contribution', [], function(){ console.warn('[stubbed] vs/language/typescript/monaco.contribution'); return {}; }); } catch(_) {}
+  try { define('vs/language/json/monaco.contribution', [], function(){ console.warn('[stubbed] vs/language/json/monaco.contribution'); return {}; }); } catch(_) {}
+  try { define('vs/language/css/monaco.contribution', [], function(){ console.warn('[stubbed] vs/language/css/monaco.contribution'); return {}; }); } catch(_) {}
+  try { define('vs/language/html/monaco.contribution', [], function(){ console.warn('[stubbed] vs/language/html/monaco.contribution'); return {}; }); } catch(_) {}
+}
 
 require(['vs/editor/editor.main'], function () {
   (function() {

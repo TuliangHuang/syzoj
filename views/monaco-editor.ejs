@@ -7,6 +7,36 @@
     if (message.startsWith('Duplicate definition of module')) return;
     originalConsoleWarn.apply(console, arguments);
   };
+  // Minimal Symbol.toStringTag polyfill guard
+  (function(){
+    try { if (typeof Symbol !== 'undefined' && Symbol.toStringTag) { var o = {}; Object.defineProperty(o, Symbol.toStringTag, { value: 'X' }); } } catch(e) {}
+  })();
+  // Instrument defineProperty/defineProperties to log bad descriptors
+  (function(){
+    var _dp = Object.defineProperty;
+    var _dps = Object.defineProperties;
+    Object.defineProperty = function(obj, prop, desc) {
+      if (desc === undefined) {
+        try { console.error('[defineProperty-undefined]', prop); console.trace(); } catch(_){}
+        desc = { value: undefined, configurable: true, writable: true, enumerable: true };
+      }
+      return _dp.call(Object, obj, prop, desc);
+    };
+    Object.defineProperties = function(obj, props) {
+      if (props && typeof props === 'object') {
+        for (var k in props) {
+          if (props[k] === undefined) {
+            try { console.error('[defineProperties-undefined]', k); console.trace(); } catch(_){}
+            props[k] = { value: undefined, configurable: true, writable: true, enumerable: true };
+          }
+        }
+      } else if (props === undefined) {
+        try { console.error('[defineProperties-undefined-map]'); console.trace(); } catch(_){}
+        props = {};
+      }
+      return _dps.call(Object, obj, props);
+    };
+  })();
 </script>
 
 <!-- Load monaco-editor -->
