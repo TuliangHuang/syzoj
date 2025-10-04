@@ -179,6 +179,17 @@ app.get('/submission/:id', async (req, res) => {
 
       if ((!contest.ended || !contest.is_public) &&
         !(await judge.problem.isAllowedEditBy(res.locals.user) || await contest.isSupervisior(curUser))) {
+        const clientIp = req.headers['x-forwarded-for'] || req.ip || (req.connection && req.connection.remoteAddress) || '';
+        syzoj.log({
+          event: 'contest_access_blocked',
+          route: req.originalUrl,
+          method: req.method,
+          ip: clientIp,
+          userId: curUser ? curUser.id : null,
+          username: curUser ? curUser.username : null,
+          judgeId: id,
+          contestId: contest.id
+        });
         throw new Error("比赛未结束或未公开。");
       }
     }
