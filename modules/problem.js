@@ -3,7 +3,10 @@ let JudgeState = syzoj.model('judge_state');
 let FormattedCode = syzoj.model('formatted_code');
 let Contest = syzoj.model('contest');
 let ProblemTag = syzoj.model('problem_tag');
+let ProblemTagMap = syzoj.model('problem_tag_map');
 let Article = syzoj.model('article');
+
+const TypeORM = require('typeorm');
 
 const randomstring = require('randomstring');
 const fs = require('fs-extra');
@@ -13,6 +16,83 @@ let Judger = syzoj.lib('judger');
 const { tagColorOrder } = require('../constants');
 let CodeFormatter = syzoj.lib('code_formatter');
 const { countCodeTokens } = syzoj.lib('tokenizer');
+
+async function hydrateProblemsForList(problems, user) {
+  if (!problems || problems.length === 0) return;
+
+  const problemIds = problems.map(p => p.id);
+
+  // Compute allowedEdit without N calls
+  let canManageProblem = false;
+  if (user) {
+    canManageProblem = await user.hasPrivilege('manage_problem');
+  }
+  for (const p of problems) {
+    p.allowedEdit = !!(user && (canManageProblem || p.user_id === user.id));
+  }
+
+  // Batch load judge states (accepted first, then latest if none)
+  const judgeStateMap = new Map();
+  if (user && problemIds.length) {
+    const accepted = await JudgeState.createQueryBuilder()
+      .where('user_id = :uid', { uid: user.id })
+      .andWhere('problem_id IN (:...ids)', { ids: problemIds })
+      .andWhere('status = :st', { st: 'Accepted' })
+      .orderBy('submit_time', 'DESC')
+      .getMany();
+    for (const st of accepted) {
+      if (!judgeStateMap.has(st.problem_id)) judgeStateMap.set(st.problem_id, st);
+    }
+    const missing = problemIds.filter(id => !judgeStateMap.has(id));
+    if (missing.length) {
+      const latest = await JudgeState.createQueryBuilder()
+        .where('user_id = :uid', { uid: user.id })
+        .andWhere('problem_id IN (:...ids)', { ids: missing })
+        .orderBy('submit_time', 'DESC')
+        .getMany();
+      for (const st of latest) {
+        if (!judgeStateMap.has(st.problem_id)) judgeStateMap.set(st.problem_id, st);
+      }
+    }
+  }
+
+  // Batch load tags
+  const tagMapByProblem = new Map();
+  if (problemIds.length) {
+    const maps = await ProblemTagMap.createQueryBuilder()
+      .where('problem_id IN (:...ids)', { ids: problemIds })
+      .getMany();
+    const tagIds = Array.from(new Set(maps.map(m => m.tag_id)));
+    const tags = tagIds.length ? await ProblemTag.createQueryBuilder().whereInIds(tagIds).getMany() : [];
+    const tagById = new Map(tags.map(t => [t.id, t]));
+
+    // Sorting same as Problem.getTags()
+    const sortOrder = tagColorOrder;
+    const orderMap = {};
+    sortOrder.forEach((color, idx) => { if (!(color in orderMap)) orderMap[color] = idx; });
+
+    for (const m of maps) {
+      if (!tagMapByProblem.has(m.problem_id)) tagMapByProblem.set(m.problem_id, []);
+      const tag = tagById.get(m.tag_id);
+      if (tag) tagMapByProblem.get(m.problem_id).push(tag);
+    }
+
+    for (const [pid, arr] of tagMapByProblem) {
+      arr.sort((a, b) => {
+        if (a.color === b.color) return a.name.localeCompare(b.name, 'zh');
+        const ia = orderMap[a.color];
+        const ib = orderMap[b.color];
+        if (ia !== undefined && ib !== undefined) return ia - ib;
+        return a.color < b.color ? -1 : 1;
+      });
+    }
+  }
+
+  for (const p of problems) {
+    if (user) p.judge_state = judgeStateMap.get(p.id) || null;
+    p.tags = tagMapByProblem.get(p.id) || [];
+  }
+}
 
 app.get('/problems', async (req, res) => {
   try {
@@ -41,11 +121,7 @@ app.get('/problems', async (req, res) => {
     let paginate = syzoj.utils.paginate(await Problem.countForPagination(query), req.query.page, syzoj.config.page.problem);
     let problems = await Problem.queryPage(paginate, query);
 
-    await problems.forEachAsync(async problem => {
-      problem.allowedEdit = await problem.isAllowedEditBy(res.locals.user);
-      problem.judge_state = await problem.getJudgeState(res.locals.user, true);
-      problem.tags = await problem.getTags();
-    });
+    await hydrateProblemsForList(problems, res.locals.user);
 
     const allTags = await ProblemTag.find({ order: { name: 'ASC' } });
     res.render('problems', {
@@ -107,11 +183,7 @@ app.get('/problems/search', async (req, res) => {
     let paginate = syzoj.utils.paginate(await Problem.countForPagination(query), req.query.page, syzoj.config.page.problem);
     let problems = await Problem.queryPage(paginate, query);
 
-    await problems.forEachAsync(async problem => {
-      problem.allowedEdit = await problem.isAllowedEditBy(res.locals.user);
-      problem.judge_state = await problem.getJudgeState(res.locals.user, true);
-      problem.tags = await problem.getTags();
-    });
+    await hydrateProblemsForList(problems, res.locals.user);
 
     const allTags = await ProblemTag.find({ order: { name: 'ASC' } });
     res.render('problems', {
