@@ -26,17 +26,14 @@ app.get('/submissions', async (req, res) => {
     const curUser = res.locals.user;
 
     let query = JudgeState.createQueryBuilder();
-    let isFiltered = false;
 
     let inContest = false;
 
     let user = await User.fromName(req.query.submitter || '');
     if (user) {
       query.andWhere('user_id = :user_id', { user_id: user.id });
-      isFiltered = true;
     } else if (req.query.submitter) {
       query.andWhere('user_id = :user_id', { user_id: 0 });
-      isFiltered = true;
     }
 
     if (!req.query.contest) {
@@ -72,19 +69,15 @@ app.get('/submissions', async (req, res) => {
     let maxScore = parseInt(req.query.max_score);
     if (!isNaN(maxScore)) query.andWhere('score <= :maxScore', { maxScore });
 
-    if (!isNaN(minScore) || !isNaN(maxScore)) isFiltered = true;
-
     if (req.query.language) {
       if (req.query.language === 'submit-answer') {
         query.andWhere(new TypeORM.Brackets(qb => {
           qb.orWhere('language = :language', { language: '' })
             .orWhere('language IS NULL');
         }));
-        isFiltered = true;
       } else if (req.query.language === 'non-submit-answer') {
         query.andWhere('language != :language', { language: '' })
              .andWhere('language IS NOT NULL');
-        isFiltered = true;
       } else {
         query.andWhere('language = :language', { language: req.query.language });
       }
@@ -92,7 +85,6 @@ app.get('/submissions', async (req, res) => {
 
     if (req.query.status) {
       query.andWhere('status = :status', { status: req.query.status });
-      isFiltered = true;
     }
 
     if (!inContest && (!curUser || !await curUser.hasPrivilege('manage_problem'))) {
@@ -103,7 +95,6 @@ app.get('/submissions', async (req, res) => {
           throw new ErrorMessage("无此题目。");
         if (await problem.isAllowedUseBy(res.locals.user)) {
           query.andWhere('problem_id = :problem_id', { problem_id: parseInt(req.query.problem_id) || 0 });
-          isFiltered = true;
         } else {
           throw new ErrorMessage("您没有权限进行此操作。");
         }
@@ -112,7 +103,6 @@ app.get('/submissions', async (req, res) => {
       }
     } else if (req.query.problem_id) {
       query.andWhere('problem_id = :problem_id', { problem_id: parseInt(req.query.problem_id) || 0 });
-      isFiltered = true;
     }
 
     let judge_state, paginate;
@@ -153,7 +143,6 @@ app.get('/submissions', async (req, res) => {
       pushType: 'rough',
       form: req.query,
       displayConfig: displayConfig,
-      isFiltered: isFiltered,
       fast_pagination: syzoj.config.submissions_page_fast_pagination
     });
   } catch (e) {

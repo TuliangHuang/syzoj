@@ -406,11 +406,12 @@ app.get('/contest/:id/upsolving', async (req, res) => {
     // if contest is non-public, both system administrators and contest administrators can see it.
     if (!contest.is_public && (!res.locals.user || (!res.locals.user.is_admin && !contest.admins.includes(res.locals.user.id.toString())))) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
 
-    if ([contest.allowedSeeingResult() && contest.allowedSeeingOthers(),
-    contest.isEnded(),
-    await contest.isSupervisior(curUser)].every(x => !x))
-      throw new ErrorMessage('您没有权限进行此操作。');
-
+    if (contest.type !== 'open') {
+      if ([contest.allowedSeeingResult() && contest.allowedSeeingOthers(),
+      contest.isEnded(),
+      await contest.isSupervisior(curUser)].every(x => !x))
+        throw new ErrorMessage('您没有权限进行此操作。');
+    }
     await contest.loadRelationships();
 
     let problems_id = await contest.getProblems();
@@ -458,6 +459,20 @@ app.get('/contest/:id/upsolving', async (req, res) => {
 });
 
 function getDisplayConfig(contest) {
+  if (contest.type === 'open') {
+    return {
+      showScore: true,
+      showUsage: true,
+      showCode: true,
+      showResult: true,
+      showOthers: true,
+      showTestdata: true,
+      showDetailResult: true,
+      inContest: true,
+      showOptions: false,
+      showRejudge: false
+    };
+  }
   return {
     showScore: contest.allowedSeeingScore(),
     showUsage: false,
@@ -479,11 +494,6 @@ app.get('/contest/:id/submissions', async (req, res) => {
     // if contest is non-public, both system administrators and contest administrators can see it.
     if (!contest.is_public && (!res.locals.user || (!res.locals.user.is_admin && !contest.admins.includes(res.locals.user.id.toString())))) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
 
-    if (contest.isEnded()) {
-      res.redirect(syzoj.utils.makeUrl(['submissions'], { contest: contest_id }));
-      return;
-    }
-
     const displayConfig = getDisplayConfig(contest);
     let problems_id = await contest.getProblems();
     const curUser = res.locals.user;
@@ -492,11 +502,9 @@ app.get('/contest/:id/submissions', async (req, res) => {
 
     let query = JudgeState.createQueryBuilder();
 
-    let isFiltered = false;
     if (displayConfig.showOthers) {
       if (user) {
         query.andWhere('user_id = :user_id', { user_id: user.id });
-        isFiltered = true;
       }
     } else {
       if (curUser == null || // Not logined
@@ -504,7 +512,6 @@ app.get('/contest/:id/submissions', async (req, res) => {
         throw new ErrorMessage("您没有权限执行此操作。");
       }
       query.andWhere('user_id = :user_id', { user_id: curUser.id });
-      isFiltered = true;
     }
 
     if (displayConfig.showScore) {
@@ -512,8 +519,6 @@ app.get('/contest/:id/submissions', async (req, res) => {
       if (!isNaN(minScore)) query.andWhere('score >= :minScore', { minScore });
       let maxScore = parseInt(req.body.max_score);
       if (!isNaN(maxScore)) query.andWhere('score <= :maxScore', { maxScore });
-
-      if (!isNaN(minScore) || !isNaN(maxScore)) isFiltered = true;
     }
 
     if (req.query.language) {
@@ -528,24 +533,42 @@ app.get('/contest/:id/submissions', async (req, res) => {
       } else {
         query.andWhere('language = :language', { language: req.body.language })
       }
-      isFiltered = true;
     }
 
     if (displayConfig.showResult) {
       if (req.query.status) {
         query.andWhere('status = :status', { status: req.query.status });
-        isFiltered = true;
       }
     }
 
     if (req.query.problem_id) {
       problem_id = problems_id[parseInt(req.query.problem_id) - 1] || 0;
       query.andWhere('problem_id = :problem_id', { problem_id })
-      isFiltered = true;
+    }
+    // 限制题目范围为本场比赛题目
+    if (Array.isArray(problems_id) && problems_id.length) {
+      query.andWhere('problem_id IN (:...pids)', { pids: problems_id });
+    } else {
+      // 无题目时强制空结果
+      query.andWhere('problem_id = :nonePid', { nonePid: -1 });
     }
 
-    query.andWhere('type = 1')
-         .andWhere('type_info = :contest_id', { contest_id });
+    if (contest.type === 'open') {
+      // OPEN 比赛：视图展示普通提交，且限定为本场参赛选手
+      query.andWhere('type = 0');
+      await contest.loadRelationships();
+      const players = contest.ranklist && contest.ranklist.players ? contest.ranklist.players : [];
+      const playerUserIds = await players.mapAsync(async p => (await ContestPlayer.findById(p.player_id))?.user_id).then(arr => arr.filter(Boolean));
+      if (playerUserIds.length === 0) {
+        query.andWhere('user_id = :none', { none: -1 });
+      } else {
+        query.andWhere('user_id IN (:...uids)', { uids: playerUserIds });
+      }
+    } else {
+      // 非 OPEN 比赛：仅显示比赛内提交
+      query.andWhere('type = 1')
+           .andWhere('type_info = :contest_id', { contest_id });
+    }
 
     let judge_state, paginate;
 
@@ -589,7 +612,6 @@ app.get('/contest/:id/submissions', async (req, res) => {
       form: req.query,
       displayConfig: displayConfig,
       pushType: pushType,
-      isFiltered: isFiltered,
       fast_pagination: syzoj.config.submissions_page_fast_pagination
     });
   } catch (e) {
@@ -606,6 +628,7 @@ app.get('/contest/submission/:id', async (req, res) => {
     const id = parseInt(req.params.id);
     const judge = await JudgeState.findById(id);
     if (!judge) throw new ErrorMessage("提交记录 ID 不正确。");
+
     const curUser = res.locals.user;
     if ((!curUser) || judge.user_id !== curUser.id) throw new ErrorMessage("您没有权限执行此操作。");
 
@@ -618,6 +641,9 @@ app.get('/contest/submission/:id', async (req, res) => {
 
     const displayConfig = getDisplayConfig(contest);
     displayConfig.showCode = true;
+    if (contest.type === 'open') {
+      displayConfig.showOptions = true;
+    }
 
     await judge.loadRelationships();
     const problems_id = await contest.getProblems();

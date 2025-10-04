@@ -3,7 +3,7 @@
 <% include util %>
 <script src="<%- lib('textfit/2.3.1/textFit.min.js') %>"></script>
 <div class="padding">
-  <% if (displayConfig.inContest) { %>
+  <% if (displayConfig.inContest && contest.type !== 'open') { %>
     <div class="ui large info message">
       <div class="ui header">比赛 - <%= contest.title %></div>
       <% if (displayConfig.showOthers) { %>
@@ -14,7 +14,7 @@
     </div>
   <% } %>
 
-  <form action="<%= syzoj.utils.makeUrl(displayConfig.inContest ? ['contest', contest.id, 'submissions'] : ['submissions']) %>" class="ui mini form" method="get" role="form" id="form">
+  <form action="<%= syzoj.utils.makeUrl(displayConfig.inContest && contest.type !== 'open' ? ['contest', contest.id, 'submissions'] : ['submissions']) %>" class="ui mini form" method="get" role="form" id="form">
     <input type="hidden" name="contest" value="<%= form.contest %>" />
     <div class="inline fields" style="margin-bottom: 25px; white-space: nowrap; ">
       <label style="font-size: 1.2em; margin-right: 1px; ">题目：</label>
@@ -112,13 +112,8 @@
   <div style="background-color: #fff; height: 18px; margin-top: -18px; "></div>
   <div class="ui placeholder segment" style="margin-top: -5px; ">
     <div class="ui icon header">
-      <% if (isFiltered) { %>
       <i class="ui search icon" style="margin-bottom: 20px; "></i>
       找不到符合条件的提交
-      <% } else { %>
-      <i class="ui file icon" style="margin-bottom: 20px; "></i>
-      暂无提交
-      <% } %>
     </div>
   </div>
   <% } else { %>

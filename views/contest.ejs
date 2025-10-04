@@ -33,10 +33,7 @@
           <% if(seeResult) { %>
             <a class="ui small yellow button" href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'upsolving']) %>">补题情况</a>
           <% } %>
-          <% let submissionsUrl = seeResult ?
-            syzoj.utils.makeUrl(['submissions'], {contest: contest.id}) :
-            syzoj.utils.makeUrl(['contest', contest.id, 'submissions']); %>
-          <a class="ui small positive button" href="<%= submissionsUrl %>">提交记录</a>
+          <a class="ui small positive button" href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'submissions']) %>">提交记录</a>
           <% if (isSupervisior) { %>
             <a class="ui small button" href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'edit']) %>">编辑比赛</a>
             <button class="ui small button" id="reset-contest-btn" onclick="resetContest()">
@@ -62,13 +59,15 @@
          <table class="ui selectable celled table">
             <thead>
               <tr>
-                <th class="one wide" style="text-align: center">状态</th>
-                <th>题目</th>
-                <% if (hasStatistics) { %>
-                  <th class="one wide center aligned">统计</th>
+                <% if (contest.type !== 'open') { %>
+                  <th class="one wide" style="text-align: center">状态</th>
                 <% } %>
                 <% if (seeResult) { %>
                   <th class="one wide" style="text-align: center">补题</th>
+                <% } %>
+                <th>题目</th>
+                <% if (hasStatistics) { %>
+                  <th class="one wide center aligned">统计</th>
                 <% } %>
               </tr>
             </thead>
@@ -79,6 +78,7 @@
                 i++;
               %>
               <tr>
+                <% if (contest.type !== 'open') { %>
                 <td class="center aligned" style="white-space: nowrap; ">
                 <% if (problem.judge_id) { %>
                   <a href="<%= syzoj.utils.makeUrl(['contest', 'submission', problem.judge_id]) %>">
@@ -108,6 +108,18 @@
                   <% } %>
                 <% } %>
                 </td>
+                <% } %>
+                <% if (seeResult) { %>
+                  <td class="center aligned" style="white-space: nowrap; ">
+                    <% if (problem.judge_state) { %>
+                        <a href="<%= syzoj.utils.makeUrl(['submission', problem.judge_state.id]) %>">
+                          <span class="status <%= problem.judge_state.status.toLowerCase().split(' ').join('_') %>">
+                            <i class="<%= icon[problem.judge_state.status] || 'remove' %> icon"></i>
+                          </span>
+                        </a>
+                    <% } %>
+                  </td>
+                <% } %>
                 <td>
                   <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i]) %>"><%= syzoj.utils.prefixWithLetter(i, problem.problem.title) %></a>
                   <div class="show_tag_controled" style="float: right; ">
@@ -136,17 +148,6 @@
                     /
                   <% } %>
                   <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'submissions'], { problem_id: i }) %>"><%= problem.statistics.attempt %></a>
-                  </td>
-                <% } %>
-                <% if (seeResult) { %>
-                  <td class="center aligned" style="white-space: nowrap; ">
-                    <% if (problem.judge_state) { %>
-                        <a href="<%= syzoj.utils.makeUrl(['submission', problem.judge_state.id]) %>">
-                          <span class="status <%= problem.judge_state.status.toLowerCase().split(' ').join('_') %>">
-                            <i class="<%= icon[problem.judge_state.status] || 'remove' %> icon"></i>
-                          </span>
-                        </a>
-                    <% } %>
                   </td>
                 <% } %>
               </tr>

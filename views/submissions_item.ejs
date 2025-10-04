@@ -10,7 +10,7 @@ function formatSize(x, precision) {
   return fixed + ' ' + unit;
 }
 
-const submissionUrl = <%- serializejs(displayConfig.inContest ?
+const submissionUrl = <%- serializejs(displayConfig.inContest && contest.type !== 'open' ?
   syzoj.utils.makeUrl(['contest', 'submission', '20000528']) :
   syzoj.utils.makeUrl(['submission', '20000528'])) %>;
 const problemUrl = <%- serializejs(displayConfig.inContest ?
