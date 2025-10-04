@@ -35,12 +35,16 @@
                     <% 
                     if (problem.playerStatusMap.has(item.user.id)) { 
                      const judge_state = problem.playerStatusMap.get(item.user.id);
+                     const meta = getStatusMeta(judge_state.status);
                     %>
-                    <a href="<%= syzoj.utils.makeUrl(['submission', judge_state.id]) %>">
-                      <span class="status <%= judge_state.status.toLowerCase().split(' ').join('_') %>">
-                        <i class="<%= icon[judge_state.status] || 'remove' %> icon"></i>
+                    <a href="<%= syzoj.utils.makeUrl(['submission', judge_state.id]) %>" title="<%= judge_state.status %>">
+                      <span class="status <%= meta.toLowerCase().split(' ').join('_') %>">
+                        <i class="<%= icon[meta] || 'remove' %> icon"></i>
                       </span>
                     </a>
+                    <div class="submit_time"><%= syzoj.utils.formatDate(judge_state.submit_time) %></div>
+                    <% } else { %>
+                      <span style="color: #bbb; ">—</span>
                     <% } %>
                   </td>
                 <% } %>
