@@ -21,7 +21,7 @@ if (isVJudge) testcases = [];
 }
 </style>
 
-<% include monaco-editor %>
+<% include code-editor %>
 
 <div class="ui center aligned grid">
     <div class="row">
@@ -269,7 +269,7 @@ if (isVJudge) testcases = [];
                 </div>
                 <div class="twelve wide stretched column" style="position: relative; padding-left: 0; margin-left: calc(-1rem - 1px); width: calc(75% + 1rem + 13px) !important; ">
                   <% for (let i = 0; i < cases.length; i++) { %>
-                    <div id="editor-<%= i %>" class="editor" style="position: absolute; width: 100%; height: calc(100% - 28px); border: 1px solid #D4D4D5; overflow: hidden; <%= i === 0 ? '' : 'visibility: hidden; ' %>" contenteditable>
+                    <div id="editor-<%= i %>" class="editor" style="position: absolute; width: 100%; height: calc(100% - 28px); border: 1px solid #D4D4D5; overflow: hidden; <%= i === 0 ? '' : 'visibility: hidden; ' %>">
                       <%- this.showLoadingEditor(); %>
                     </div>
                   <% } %>
@@ -323,7 +323,6 @@ if (isVJudge) testcases = [];
                     <%
                     let languageList = languages ? Object.keys(languages) : syzoj.config.enabled_languages;
                     const languageMap = languages || syzoj.languages;
-                    // 如果 testcases 存在且 testcases.fmts 不为空，过滤 languageList
                     if (testcases && Array.isArray(testcases.fmts) && testcases.fmts.length > 0) {
                       languageList = languageList.filter(lang => {
                         const langConfig = languageMap[lang];
@@ -348,7 +347,7 @@ if (isVJudge) testcases = [];
                   </div>
                 </div>
                 <div class="twelve wide stretched column" style="position: relative; padding-left: 0; margin-left: calc(-1rem - 1px); width: calc(75% + 1rem + 13px) !important; ">
-                  <div id="editor" style="position: absolute; width: 100%; height: calc(100% - 28px); border: 1px solid #D4D4D5; overflow: hidden; " class="editor" contenteditable>
+                  <div id="editor" style="position: absolute; width: 100%; height: calc(100% - 28px); border: 1px solid #D4D4D5; overflow: hidden; " class="editor">
                     <%- this.showLoadingEditor(); %>
                   </div>
                 </div>
@@ -401,7 +400,7 @@ if (isVJudge) testcases = [];
           .not($(this))
           .removeClass('active')
       ;
-      monaco.editor.setModelLanguage(editor.getModel(), $(this).data('mode'));
+      // Language switching is no-op for simple editor
     });
   });
 </script>
