@@ -711,6 +711,11 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
       }
 
       await judge_state.save();
+
+      // 对于 OPEN 比赛，也需要在提交后创建/更新 ContestPlayer（与其他赛制一致）
+      if (contest.type === 'open') {
+        await contest.newSubmission(judge_state);
+      }
     } else {
       if (!await problem.isAllowedUseBy(curUser)) throw new ErrorMessage('您没有权限进行此操作。');
       judge_state.type = 0;
