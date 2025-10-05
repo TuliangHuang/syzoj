@@ -13,7 +13,8 @@
              Page
 *******************************/
 
-@import url('https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin');
+/* Replaced external Google Fonts with local Lato */
+@import url('../../../google-fonts/lato.css');
 html,
 body {
   height: 100%;
