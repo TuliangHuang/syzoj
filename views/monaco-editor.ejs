@@ -1,0 +1,14 @@
+<script>
+  window.pathSelfLib = "<%- selfLib('') %>";
+  window.pathCdnVs = '<%- lib('monaco-editor/0.52.2/min/vs') %>';
+</script>
+<link rel="stylesheet" href="<%- selfLib('monaco-editor.css') %>">
+<link rel="stylesheet" href="<%- lib('monaco-editor/0.52.2/min/vs/editor/editor.main.css') %>">
+<script src="<%- selfLib('monaco-editor.js') %>"></script>
+<%
+this.showLoadingEditor = () => {
+%>
+<div class="ui active medium text loader">编辑器加载中 …</div>
+<%
+};
+%>
