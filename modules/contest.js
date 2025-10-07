@@ -336,8 +336,8 @@ app.get('/contest/:id/ranklist', async (req, res) => {
         let score_detail = player.score_details[i];
         let judgeId = 0;
         
-        // 根据赛制选择对应的评测ID
-        judgeId = await player.getJudgeId(problem.problem.id);
+        // 根据赛制选择对应的评测ID（i 为题目 ID 键）
+        judgeId = await player.getJudgeId(parseInt(i));
         
         if (judgeId > 0) {
           score_detail.judge_state = await JudgeState.findById(judgeId);
@@ -370,9 +370,9 @@ app.get('/contest/:id/ranklist', async (req, res) => {
         user: user,
         player: {
           ...player,
-          score: score_detail.score,
-          latest: score_detail.latest,
-          timeSum: score_detail.timeSum
+          score: playerData.score,
+          latest: playerData.latest,
+          timeSum: playerData.timeSum
         }
       };
     });
@@ -637,6 +637,7 @@ app.get('/contest/submission/:id', async (req, res) => {
     }
 
     const contest = await Contest.findById(judge.type_info);
+    contest.running = contest.isRunning();
     contest.ended = contest.isEnded();
 
     const displayConfig = getDisplayConfig(contest);
@@ -694,6 +695,11 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
     let problem = await Problem.findById(problem_id);
     await problem.loadRelationships();
 
+    // Expose permissions for editing/managing the problem while viewed in contest
+    problem.allowedEdit = await problem.isAllowedEditBy(res.locals.user);
+    problem.allowedManage = await problem.isAllowedManageBy(res.locals.user);
+
+    contest.running = contest.isRunning();
     contest.ended = contest.isEnded();
     if (!await contest.isSupervisior(curUser) && !(contest.isRunning() || contest.isEnded())) {
       if (await problem.isAllowedUseBy(res.locals.user)) {

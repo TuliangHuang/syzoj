@@ -697,7 +697,10 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
     if (contest_id) {
       contest = await Contest.findById(contest_id);
       if (!contest) throw new ErrorMessage('无此比赛。');
-      if ((!contest.isRunning()) && (!await contest.isSupervisior(curUser))) throw new ErrorMessage('比赛未开始或已结束。');
+      const now = syzoj.utils.getCurrentDate();
+      // 禁止比赛时间外的任何提交（包括管理员）
+      if (now < contest.start_time) throw new ErrorMessage('比赛尚未开始。');
+      if (now > contest.end_time) throw new ErrorMessage('比赛已结束。');
       let problems_id = await contest.getProblems();
       if (!problems_id.includes(id)) throw new ErrorMessage('无此题目。');
 
