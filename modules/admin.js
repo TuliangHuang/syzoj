@@ -4,6 +4,7 @@ let JudgeState = syzoj.model('judge_state');
 let Article = syzoj.model('article');
 let Contest = syzoj.model('contest');
 let User = syzoj.model('user');
+const RegistrationRequest = syzoj.model('registration_request');
 let UserPrivilege = syzoj.model('user_privilege');
 const RatingCalculation = syzoj.model('rating_calculation');
 const RatingHistory = syzoj.model('rating_history');
@@ -543,5 +544,86 @@ app.get('/admin/serviceID', async (req, res) => {
     res.render('error', {
       err: e
     })
+  }
+});
+
+// Registration review list
+app.get('/admin/registrations', async (req, res) => {
+  try {
+    if (!res.locals.user || !(res.locals.user.is_admin || await res.locals.user.hasPrivilege('manage_user'))) throw new ErrorMessage('您没有权限进行此操作。');
+    const status = req.query.status || 'pending';
+    const requests = await RegistrationRequest.find({
+      where: { status },
+      order: { id: 'DESC' }
+    });
+    res.render('admin_registrations', {
+      requests: requests,
+      curStatus: status
+    });
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', { err: e });
+  }
+});
+
+// Approve registration
+app.post('/admin/registrations/:id/approve', async (req, res) => {
+  try {
+    if (!res.locals.user || !(res.locals.user.is_admin || await res.locals.user.hasPrivilege('manage_user'))) throw new ErrorMessage('您没有权限进行此操作。');
+    const id = parseInt(req.params.id);
+    const rr = await RegistrationRequest.findById(id);
+    if (!rr) throw new ErrorMessage('找不到该注册请求。');
+    if (rr.status !== 'pending') throw new ErrorMessage('该请求已处理。');
+
+    // Re-validate uniqueness
+    if (await User.fromName(rr.username)) throw new ErrorMessage('用户名已被占用。');
+    if (rr.email) {
+      const existEmail = await User.findOne({ where: { email: rr.email } });
+      if (existEmail) throw new ErrorMessage('邮件地址已被占用。');
+    }
+
+    const user = await User.create({
+      username: rr.username,
+      password: rr.password,
+      email: rr.email || null,
+      nickname: rr.nickname || null,
+      is_show: syzoj.config.default.user.show,
+      rating: syzoj.config.default.user.rating,
+      register_time: parseInt((new Date()).getTime() / 1000)
+    });
+    await user.save();
+
+    rr.status = 'approved';
+    rr.reviewer_id = res.locals.user.id;
+    rr.decided_time = parseInt((new Date()).getTime() / 1000);
+    rr.review_reason = (req.body.reason || '').toString();
+    await rr.save();
+
+    res.redirect(syzoj.utils.makeUrl(['admin', 'registrations'], { status: 'pending' }));
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', { err: e });
+  }
+});
+
+// Reject registration
+app.post('/admin/registrations/:id/reject', async (req, res) => {
+  try {
+    if (!res.locals.user || !(res.locals.user.is_admin || await res.locals.user.hasPrivilege('manage_user'))) throw new ErrorMessage('您没有权限进行此操作。');
+    const id = parseInt(req.params.id);
+    const rr = await RegistrationRequest.findById(id);
+    if (!rr) throw new ErrorMessage('找不到该注册请求。');
+    if (rr.status !== 'pending') throw new ErrorMessage('该请求已处理。');
+
+    rr.status = 'rejected';
+    rr.reviewer_id = res.locals.user.id;
+    rr.decided_time = parseInt((new Date()).getTime() / 1000);
+    rr.review_reason = (req.body.reason || '').toString();
+    await rr.save();
+
+    res.redirect(syzoj.utils.makeUrl(['admin', 'registrations'], { status: 'pending' }));
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', { err: e });
   }
 });

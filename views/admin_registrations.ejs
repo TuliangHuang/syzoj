@@ -1,0 +1,65 @@
+<% this.adminPage = 'registrations'; %>
+<% include admin_header %>
+
+<div class="ui grid">
+  <div class="row">
+    <div class="column">
+      <div class="ui secondary pointing menu">
+        <a class="item<% if (curStatus === 'pending') { %> active<% } %>" href="<%= syzoj.utils.makeUrl(['admin','registrations'], { status: 'pending' }) %>">待审核</a>
+        <a class="item<% if (curStatus === 'approved') { %> active<% } %>" href="<%= syzoj.utils.makeUrl(['admin','registrations'], { status: 'approved' }) %>">已通过</a>
+        <a class="item<% if (curStatus === 'rejected') { %> active<% } %>" href="<%= syzoj.utils.makeUrl(['admin','registrations'], { status: 'rejected' }) %>">已拒绝</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="column">
+      <table class="ui celled table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>用户名</th>
+            <th>昵称</th>
+            <th>邮箱</th>
+            <th>状态</th>
+            <th>提交时间</th>
+            <th>备注</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (!requests || !requests.length) { %>
+            <tr><td colspan="6" style="text-align:center;">暂无记录</td></tr>
+          <% } %>
+          <% for (const r of requests) { %>
+            <tr>
+              <td><%= r.id %></td>
+              <td><%= r.username %></td>
+              <td><%= r.nickname || '' %></td>
+              <td><%= r.email || '' %></td>
+              <td><%= r.status %></td>
+              <td><%= syzoj.utils.formatDate(r.created_time) %></td>
+              <td>
+                <% if (r.status === 'pending') { %>
+                  <form id="form-<%= r.id %>" method="post">
+                    <textarea name="reason" style="width: 100%; border: none; outline: none; resize: vertical; min-height: 34px;"></textarea>
+                  </form>
+                <% } else { %>
+                  <%= r.review_reason || '' %>
+                <% } %>
+              </td>
+              <td>
+                <% if (r.status === 'pending') { %>
+                  <button class="ui icon green button" type="submit" title="通过" form="form-<%= r.id %>" formaction="<%= syzoj.utils.makeUrl(['admin','registrations', r.id, 'approve']) %>"><i class="check icon"></i></button>
+                  <button class="ui icon red button" type="submit" title="拒绝" form="form-<%= r.id %>" formaction="<%= syzoj.utils.makeUrl(['admin','registrations', r.id, 'reject']) %>"><i class="close icon"></i></button>
+                <% } %>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<% include admin_footer %>

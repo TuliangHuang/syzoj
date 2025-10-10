@@ -1,4 +1,5 @@
 let User = syzoj.model('user');
+const RegistrationRequest = syzoj.model('registration_request');
 let Problem = syzoj.model('problem');
 let File = syzoj.model('file');
 const UserPrivilege = syzoj.model('user_privilege');
@@ -87,44 +88,49 @@ app.post('/api/sign_up', async (req, res) => {
     if (!syzoj.utils.isValidUsername(req.body.username)) throw 2002;
 
     if (syzoj.config.register_mail) {
-      let sendObj = {
+      // If approval is required, store a registration request and notify admins/reviewers.
+      // Prevent duplicate pending requests for same username or email.
+      const existingPending = await RegistrationRequest.findOne({ where: {
+        username: String(req.body.username)
+      } });
+      if (existingPending && existingPending.status === 'pending') {
+        // Treat as already submitted
+        return res.send(JSON.stringify({ error_code: 2 }));
+      }
+
+      const reqRecord = await RegistrationRequest.create({
         username: req.body.username,
         password: req.body.password,
         email: email,
-        prevUrl: req.body.prevUrl
-      };
-
-      const token = jwt.sign(sendObj, syzoj.config.email_jwt_secret, {
-        subject: 'register',
-        expiresIn: '2d'
+        nickname: (req.body.nickname || '').trim() || null,
+        status: 'pending',
+        created_time: parseInt((new Date()).getTime() / 1000)
       });
+      await reqRecord.save();
 
-      const vurl = syzoj.utils.getCurrentLocation(req, true) + syzoj.utils.makeUrl(['api', 'sign_up_confirm'], { token: token });
       try {
         // Collect recipients: configured admin email and all users with manage_user privilege or admins
         let recipientSet = new Set();
-        if (syzoj.config.email.admin) recipientSet.add(syzoj.config.email.admin);
+        if (syzoj.config.email && syzoj.config.email.admin) recipientSet.add(syzoj.config.email.admin);
 
         const adminUsers = await User.find({ where: { is_admin: true } });
         for (const u of adminUsers || []) if (u.email) recipientSet.add(u.email);
-
-        const managePrivs = await UserPrivilege.find({ where: { privilege: 'manage_user' } });
-        if (managePrivs && managePrivs.length) {
-          // Fetch users for these privileges
-          for (const p of managePrivs) {
-            const u = await User.findById(p.user_id);
-            if (u && u.email) recipientSet.add(u.email);
-          }
-        }
-
         const recipients = Array.from(recipientSet).join(',');
-        if (!recipients) throw new Error('无可用的审核邮箱地址。');
-
-        await Email.send(
-          recipients,
-          `${req.body.username} 的 ${syzoj.config.title} 注册验证邮件`,
-          `<p>请点击该链接完成用户在 ${syzoj.config.title} 的注册：</p><p><a href="${vurl}">${vurl}</a></p>`
-        );
+        if (recipients) {
+          const reviewUrl = syzoj.utils.getCurrentLocation(req, true) + syzoj.utils.makeUrl(['admin', 'registrations']);
+          await Email.send(
+            recipients,
+            `${req.body.username} 的 ${syzoj.config.title} 注册审核请求`,
+            `<p>有新的注册请求等待审核：</p>
+             <ul>
+               <li>用户名：${req.body.username}</li>
+               <li>昵称：${(req.body.nickname || '').trim() || '(未填写)'} </li>
+               <li>邮箱：${email || '(未填写)'} </li>
+             </ul>
+             <p>请前往后台审核页面处理：</p>
+             <p><a href="${reviewUrl}">${reviewUrl}</a></p>`
+          );
+        }
       } catch (e) {
         return res.send({
           error_code: 2010,
@@ -132,7 +138,7 @@ app.post('/api/sign_up', async (req, res) => {
         });
       }
 
-      res.send(JSON.stringify({ error_code: 2 }));
+      return res.send(JSON.stringify({ error_code: 2 }));
     } else {
       user = await User.create({
         username: req.body.username,

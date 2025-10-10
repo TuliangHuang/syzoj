@@ -14,6 +14,10 @@
                     <label for="email">邮箱（可选）</label>
                     <input type="email" placeholder="留空则不绑定邮箱，找回密码请联系管理员" id="email">
                 </div>
+                <div class="field">
+                    <label for="nickname">昵称（建议）</label>
+                    <input type="text" id="nickname" placeholder="最好填写您的真实姓名便于老师审核，本信息对其他用户保密">
+                </div>
                 <div class="two fields">
                     <div class="field">
                     <label class="ui header">密码</label>
@@ -59,6 +63,7 @@ function submit() {
           username: $("#username").val(),
           password: password,
           email: $("#email").val(),
+          nickname: $("#nickname").val(),
           prevUrl: <%- serializejs(req.query.url || '/') %>
         },
         success: function(data) {
