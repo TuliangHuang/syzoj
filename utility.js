@@ -95,11 +95,13 @@ module.exports = {
   formatDuration(x) {
     const sgn = x < 0 ? '-' : '';
     x = Math.abs(x);
-    const hours = Math.floor(x / 3600);
+    const days = Math.floor(x / 86400);
+    const hours = Math.floor(x / 3600) % 24;
     const minutes = x / 60 % 60;
     let duration = sgn;
-    if (hours) { duration += hours + " hour" + ((hours > 1) ? 's' : ''); }
-    if (minutes) { duration += (hours ? ' ' : '') + minutes + " minute" + ((minutes > 1) ? 's' : ''); }
+    if (days) { duration += days + " day" + ((days > 1) ? 's' : ''); }
+    if (hours) { duration += (days ? ' ' : '') + hours + " hour" + ((hours > 1) ? 's' : ''); }
+    if (minutes) { duration += ((days || hours) ? ' ' : '') + minutes + " minute" + ((minutes > 1) ? 's' : ''); }
     if (duration === '') duration = "0 hours";
     return sgn + duration;
   },
