@@ -4,6 +4,7 @@
 .ui.label.pointing.below.right::before { left: 88%; }
 .ui.label.pointing.below.left { margin-bottom: 0; }
 .ui.label.pointing.below.right { margin-bottom: 0; float: right; }
+.show_tag_controled { white-space: nowrap; }
 #back_to_contest { display: none;  }
 </style>
 <% include header %>
@@ -56,7 +57,7 @@
   <% if (unveiled) { %>
     <div class="row">
       <div class="column">
-         <table class="ui selectable celled table">
+         <table class="ui selectable celled center aligned table">
             <thead>
               <tr>
                 <% if (contest.type !== 'open') { %>
@@ -77,7 +78,7 @@
               for (let problem of problems) {
                 i++;
               %>
-              <tr>
+              <tr style="height: 44px; ">
                 <% if (contest.type !== 'open') { %>
                 <td class="center aligned" style="white-space: nowrap; ">
                 <% if (problem.judge_id) { %>
@@ -120,9 +121,10 @@
                     <% } %>
                   </td>
                 <% } %>
-                <td>
-                  <a href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i]) %>"><%= syzoj.utils.prefixWithLetter(i, problem.problem.title) %></a>
-                  <div class="show_tag_controled" style="float: right; ">
+                <td class="left aligned">
+                  <a style="vertical-align: middle; " href="<%= syzoj.utils.makeUrl(['contest', contest.id, 'problem', i]) %>"><%= syzoj.utils.prefixWithLetter(i, problem.problem.title) %></a>
+                  <div class="show_tag_controled" style="float: right; height">
+                      <span class="ui header" style="opacity: 0; ">hack</span>
                     <%
                     if (problem.tags) {
                       for (let tag of problem.tags.slice().reverse()) {
