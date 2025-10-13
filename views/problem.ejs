@@ -107,6 +107,9 @@ if (isVJudge) testcases = [];
             <%= tag.name %>
           </a>
         <% } %>
+        <% if (problem.difficulty != null) { %>
+          <span class="ui black basic label"><%= problem.difficulty %></span>
+        <% } %>
       </div>
     <% } %>
 </div>
