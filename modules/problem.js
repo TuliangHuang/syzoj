@@ -907,6 +907,42 @@ app.get('/problem/:id/testdata/download/:filename?', async (req, res) => {
   }
 });
 
+app.get('/problem/:id/testdata/preview/:filename', async (req, res) => {
+  try {
+    let id = parseInt(req.params.id);
+    let problem = await Problem.findById(id);
+
+    if (!problem) throw new ErrorMessage('无此题目。');
+    // 仅允许有编辑权限的用户在数据管理页进行预览
+    if (!await problem.isAllowedEditBy(res.locals.user)) throw new ErrorMessage('您没有权限进行此操作。');
+    if (typeof req.params.filename === 'string' && (req.params.filename.includes('../'))) throw new ErrorMessage('您没有权限进行此操作。)');
+
+    let path = require('path');
+    let filename = path.join(problem.getTestdataPath(), req.params.filename);
+    if (!await syzoj.utils.isFile(filename)) throw new ErrorMessage('文件不存在。');
+
+    const stat = await fs.stat(filename);
+    const MAX_BYTES = 64 * 1024; // 64KB 预览
+    const readBytes = Math.min(stat.size, MAX_BYTES);
+
+    // 读取前 MAX_BYTES 字节
+    const fd = await fs.open(filename, 'r');
+    try {
+      const buffer = Buffer.alloc(readBytes);
+      await fs.read(fd, buffer, 0, readBytes, 0);
+      const content = buffer.toString('utf8');
+      res.set('Content-Type', 'application/json; charset=utf-8');
+      res.send({ success: true, filename: req.params.filename, truncated: stat.size > MAX_BYTES, content });
+    } finally {
+      await fs.close(fd);
+    }
+  } catch (e) {
+    syzoj.log(e);
+    res.status(404);
+    res.send({ success: false, error: e.toString ? e.toString() : e });
+  }
+});
+
 app.get('/problem/:id/download/additional_file', async (req, res) => {
   try {
     let id = parseInt(req.params.id);
