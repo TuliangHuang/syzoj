@@ -418,14 +418,20 @@ app.get('/contest/:id/upsolving', async (req, res) => {
     let problems = await problems_id.mapAsync(async id => await Problem.findById(id));
 
     let ranklist = await contest.ranklist.players.mapAsync(async playerData => {
-      let player = await ContestPlayer.findById(playerData.player_id);
       let user = await User.findById(playerData.user_id);
       return {
         user: user,
-        player: player,
         total: 0,
       };
     });
+
+    // Ensure current user appears in upsolving ranklist
+    if (curUser) {
+      const exists = ranklist.some(item => item.user && item.user.id === curUser.id);
+      if (!exists) {
+        ranklist.push({ user: curUser, total: 0 });
+      }
+    }
 
     await problems.forEachAsync(async (problem) => {
       const statusMap = new Map();
@@ -448,7 +454,8 @@ app.get('/contest/:id/upsolving', async (req, res) => {
     res.render('contest_upsolving', {
       contest: contest,
       ranklist: ranklist,
-      problems: problems
+      problems: problems,
+      currentUserId: curUser ? curUser.id : null
     });
   } catch (e) {
     syzoj.log(e);

@@ -100,7 +100,7 @@ if (isVJudge) testcases = [];
         <% } %>
      </div>
     <% } %>
-    <% if (problem.tags && problem.tags.length && problem.allowedManage) { %>
+    <% if (problem.tags && problem.tags.length) { %>
       <div class="row" style="margin-top: -23px">
         <% for (let tag of problem.tags) { %>
           <a href="<%= syzoj.utils.makeUrl(['problems', 'tag', tag.id]) %>" class="ui <%= tag.color %> label">
@@ -253,11 +253,13 @@ if (isVJudge) testcases = [];
   <% } %>
     <div class="row">
         <div class="column">
-          <% if (!contest || contest.running) { %>
-            <%
-            const formUrl = syzoj.utils.makeUrl(['problem', problem.id, 'submit'], { contest_id: contest ? contest.id : undefined });
-            %>
-            <form action="<%= formUrl %>" method="post" onsubmit="return submit_code()" id="submit_code" enctype="multipart/form-data">
+          <%
+          const formUrl = syzoj.utils.makeUrl(['problem', problem.id, 'submit'], { contest_id: (contest && contest.running) ? contest.id : undefined });
+          %>
+          <% if (contest && !contest.running) { %>
+            <div class="ui warning message">比赛未在进行，提交被视为非比赛提交。</div>
+          <% } %>
+          <form action="<%= formUrl %>" method="post" onsubmit="return submit_code()" id="submit_code" enctype="multipart/form-data">
             <% if (problem.type === 'submit-answer') { %>
               <%
               let cases = [];
@@ -380,10 +382,7 @@ if (isVJudge) testcases = [];
                 <button type="submit" class="ui labeled icon button"><i class="ui edit icon"></i>提交</button>
               </div>
             <% } %>
-            </form>
-          <% } else { %>
-            <div class="ui warning message">比赛未在进行，暂不可提交。</div>
-          <% } %>
+          </form>
         </div>
     </div>
 </div>

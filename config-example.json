@@ -60,17 +60,17 @@
   },
   "page": {
     "problem": 50,
-    "problem_statistics": 10,
-    "judge_state": 10,
+    "problem_statistics": 20,
+    "judge_state": 20,
     "ranklist_index": 10,
     "problems_index": 5,
     "contests_index": 5,
     "ranklist": 50,
-    "discussion": 10,
-    "article_comment": 10,
-    "contest": 10,
-    "edit_contest_problem_list": 10,
-    "edit_problem_tag_list": 10
+    "discussion": 20,
+    "article_comment": 20,
+    "contest": 20,
+    "edit_contest_problem_list": 20,
+    "edit_problem_tag_list": 20
   },
   "enabled_languages": [
     "cpp17",

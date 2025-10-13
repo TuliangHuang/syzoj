@@ -6,6 +6,9 @@
   margin-top: 5px;
   color: #000;
 }
+.active-user-row {
+  background-color: #fff9db;
+}
 </style>
 <div class="padding">
 <h1 class="ui center aligned header" style="margin-bottom: 30px; "><%= contest.title %></h1>
@@ -27,12 +30,12 @@
             <%
             for (const item of ranklist) {
             %>
-            <tr>
+            <tr class="<%= (typeof currentUserId !== 'undefined' && currentUserId && item.user && item.user.id === currentUserId) ? 'active-user-row' : '' %>">
                 <td><a href="<%= syzoj.utils.makeUrl(['user', item.user.id]) %>"><%= item.user.username %></a><% if (item.user.nameplate) { %><%- item.user.nameplate %><% } %></td>
                 <td> <%= item.total %> </td>
                 <% for (const problem of problems) { %>
                 <td>
-                    <% 
+                    <%
                     if (problem.playerStatusMap.has(item.user.id)) { 
                      const judge_state = problem.playerStatusMap.get(item.user.id);
                      const meta = getStatusMeta(judge_state.status);
