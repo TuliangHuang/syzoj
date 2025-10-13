@@ -28,16 +28,24 @@
           <% } %>
           <label for="title">题目名称</label>
           <input class="font-content" type="text" id="title" name="title" value="<%= problem.title %>">
-          <label style="margin-top: 15px; ">标签</label>
-          <select class="ui fluid search dropdown" multiple="" id="search_tags" name="tags">
-            <% for (let tag of problem.tags) { %>
-              <option value="<%= tag.id %>" selected><%= tag.name %></option>
-            <% } %>
-          </select>
-          <div class="fields">
+          <div class="fields" style="margin-bottom: 0px; ">
+            <div class="fourteen wide field">
+              <label style="margin-top: 15px; ">标签</label>
+              <select class="ui fluid search dropdown" multiple="" id="search_tags" name="tags">
+                <% for (let tag of problem.tags) { %>
+                  <option value="<%= tag.id %>" selected><%= tag.name %></option>
+                <% } %>
+              </select>
+            </div>
+            <div class="two wide field">
+              <label style="margin-top: 15px; " for="difficulty">难度</label>
+              <input class="font-content" type="number" id="difficulty" name="difficulty" value="<%= problem.difficulty == null ? '' : problem.difficulty %>">
+            </div>
+          </div>
+          <div class="fields" style="margin-bottom: 0px; ">
             <div class="seven wide field">
               <label style="margin-top: 15px; " for="source">原题链接</label>
-            <input class="font-content" type="text" id="source" name="source" value="<%= problem.source %>">
+              <input class="font-content" type="text" id="source" name="source" value="<%= problem.source %>">
             </div>
             <div class="seven wide field">
               <label style="margin-top: 15px; " for="luogu_url">洛谷链接</label>

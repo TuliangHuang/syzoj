@@ -98,7 +98,7 @@ app.get('/problems', async (req, res) => {
   try {
     const sort = req.query.sort || syzoj.config.sorting.problem.field;
     const order = req.query.order || syzoj.config.sorting.problem.order;
-    if (!['id', 'title', 'rating', 'ac_num', 'submit_num', 'ac_rate', 'publicize_time'].includes(sort) || !['asc', 'desc'].includes(order)) {
+    if (!['id', 'title', 'rating', 'ac_num', 'submit_num', 'ac_rate', 'publicize_time', 'difficulty'].includes(sort) || !['asc', 'desc'].includes(order)) {
       throw new ErrorMessage('错误的排序参数。');
     }
 
@@ -146,7 +146,7 @@ app.get('/problems/search', async (req, res) => {
     let id = parseInt(req.query.keyword) || 0;
     const sort = req.query.sort || syzoj.config.sorting.problem.field;
     const order = req.query.order || syzoj.config.sorting.problem.order;
-    if (!['id', 'title', 'rating', 'ac_num', 'submit_num', 'ac_rate'].includes(sort) || !['asc', 'desc'].includes(order)) {
+    if (!['id', 'title', 'rating', 'ac_num', 'submit_num', 'ac_rate', 'difficulty'].includes(sort) || !['asc', 'desc'].includes(order)) {
       throw new ErrorMessage('错误的排序参数。');
     }
 
@@ -484,6 +484,10 @@ app.post('/problem/:id/edit', async (req, res) => {
     problem.example = req.body.example;
     problem.limit_and_hint = req.body.limit_and_hint;
     problem.is_anonymous = (req.body.is_anonymous === 'on');
+    if (req.body.difficulty !== undefined) {
+      const diff = parseInt(req.body.difficulty);
+      problem.difficulty = Number.isFinite(diff) ? diff : null;
+    }
 
     if (req.body.raw_code) {
       const result = syzoj.utils.parseMarkdown(req.body.raw_code);

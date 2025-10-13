@@ -115,6 +115,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
         <% } %>
         <th class="one wide"><%- createSortableTitle('id', '编号', true) %></th>
         <th class="left aligned"><%- createSortableTitle('title', '题目名称', true) %></th>
+        <th class="one wide"><%- createSortableTitle('difficulty', '难度', false) %></th>
         <th class="one wide"><%- createSortableTitle('ac_num', '通过', false) %></th>
       </tr>
     </thead>
@@ -160,6 +161,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
                 %>
               </div>
             </td>
+            <td><%= (problem.difficulty == null ? '' : problem.difficulty) %></td>
             <td><%= problem.ac_num %></td>
         </tr>
         <% } %>
