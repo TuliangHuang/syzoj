@@ -22,6 +22,12 @@
   .font-content pre { margin: 0 0 1em 0; }
   /* Scope: tighten segment horizontally for this page */
   #question_content .ui.segment.with-lines { padding-left: 0 !important; padding-right: 0 !important; }
+  /* When a UI segment directly contains an option code block grid, make its border transparent and remove vertical padding */
+  .ui.segment:has(.option-content .codebox-grid) {
+    border-color: transparent !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
 </style>
 
 <span id="question_content">
@@ -135,21 +141,23 @@ $(function(){
       var codeEl = grid.querySelector('code.code-with-lines');
       var lnEl = grid.querySelector('.line-numbers');
       if (!codeEl || !lnEl) return;
-      if (lnEl.getAttribute('data-ln-applied') === '1' && lnEl.getAttribute('data-ln-for') === (codeEl.textContent || codeEl.innerHTML)) return;
+      var rawText = codeEl.textContent || '';
+      // Use a trimmed copy for counting lines (do not mutate highlighted HTML)
+      var countedText = rawText.replace(/(?:\r\n|\r|\n)+$/, '');
+      if (lnEl.getAttribute('data-ln-applied') === '1' && lnEl.getAttribute('data-ln-for') === countedText) return;
 
-      var text = codeEl.textContent || '';
-      var lines = text.split(/\r\n|\r|\n/);
+      var lines = countedText.split(/\r\n|\r|\n/);
       if (lines.length <= 1) {
         lnEl.innerHTML = '';
         lnEl.setAttribute('data-ln-applied', '1');
-        lnEl.setAttribute('data-ln-for', codeEl.innerHTML);
+        lnEl.setAttribute('data-ln-for', countedText);
         return;
       }
       var nums = [];
       for (var i = 1; i <= lines.length; i++) nums.push('<span class="line-number">' + i + '</span>');
       lnEl.innerHTML = nums.join('');
       lnEl.setAttribute('data-ln-applied', '1');
-      lnEl.setAttribute('data-ln-for', codeEl.innerHTML);
+      lnEl.setAttribute('data-ln-for', countedText);
 
       var pre = grid.querySelector('pre');
       if (pre) {
