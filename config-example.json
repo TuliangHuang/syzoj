@@ -40,7 +40,7 @@
   },
   "sorting": {
     "ranklist": {
-      "field": "rating",
+      "field": "ac_num",
       "order": "desc"
     },
     "problem": {

@@ -85,7 +85,7 @@
             <tr>
               <th style="width: 50px; ">#</th>
               <th style="width: 170px; ">用户名</th>
-              <th style="width: 50px; ">积分</th>
+              <th style="width: 50px; ">通过</th>
             </tr>
           </thead>
           <script data-cfasync="false">
@@ -109,7 +109,7 @@
             <tr>
               <td><b><%= i %></b></td>
               <td><a href="<%= syzoj.utils.makeUrl(['user', user.id]) %>"><%= user.username %></a><% if (user.nameplate) { %><%- user.nameplate %><% } %></td>
-              <td><%= user.rating %></td>
+              <td><%= user.ac_num %></td>
             </tr>
             <% } %>
           </tbody>
