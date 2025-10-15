@@ -30,6 +30,39 @@ let JSDOM = require('jsdom').JSDOM;
 let renderer = require('./libs/renderer');
 
 module.exports = {
+  // Compare filenames by underscore-separated tokens with natural order inside each token
+  compareFilenamesByUnderscore(a, b) {
+    function toSegments(name) {
+      if (!name || typeof name !== 'string') return [];
+      const base = path.parse(name).name;
+      const parts = base.split('_');
+      const segs = [];
+      for (let p of parts) {
+        const chunks = p.match(/(\d+|\D+)/g) || [p];
+        for (let c of chunks) {
+          if (/^\d+$/.test(c)) segs.push({ t: 0, n: parseInt(c, 10), s: c });
+          else segs.push({ t: 1, s: c });
+        }
+        // keep underscore boundary priority by inserting a lightweight separator
+        segs.push({ t: 2, s: '' });
+      }
+      return segs;
+    }
+    const sa = toSegments(a), sb = toSegments(b);
+    const m = Math.max(sa.length, sb.length);
+    for (let i = 0; i < m; i++) {
+      const xa = sa[i], xb = sb[i];
+      if (xa == null) return -1;
+      if (xb == null) return 1;
+      if (xa.t === 0 && xb.t === 0) { // both numbers
+        if (xa.n !== xb.n) return xa.n - xb.n;
+        continue;
+      }
+      if (xa.t !== xb.t) return xa.t - xb.t; // numbers < strings < separators
+      if (xa.s !== xb.s) return xa.s < xb.s ? -1 : 1;
+    }
+    return 0;
+  },
   resolvePath(s) {
     let a = Array.from(arguments);
     a.unshift(__dirname);
@@ -461,15 +494,7 @@ module.exports = {
 
         res[0].type = 'sum';
         res[0].score = 100;
-        res[0].cases.forEach((e) => { e.key = (e.input.match(/\d+/g) || []).map((x) => parseInt(x)).concat(e.input); });
-        res[0].cases.sort((a, b) => {
-          for (let i = 0; i < Math.max(a.key.length, b.key.length); ++i) {
-            if (a.key[i] == undefined) return -1;
-            if (b.key[i] == undefined) return +1;
-            if (a.key[i] !== b.key[i]) return (a.key[i] < b.key[i] ? -1 : +1);
-          }
-          return 0;
-        });
+        res[0].cases.sort((a, b) => syzoj.utils.compareFilenamesByUnderscore(a.input, b.input));
 
         res.spj = list.some(s => s.startsWith('spj_'));
       } else {
