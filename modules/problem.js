@@ -328,6 +328,10 @@ app.get('/problem/:id', async (req, res) => {
 
     let discussionCount = await Article.count({ problem_id: id });
 
+    // For problemset entry (non-contest view), do not display File IO hints
+    // so the page shows standard IO regardless of problem's stored setting.
+    problem.file_io = false;
+
     res.render('problem', {
       problem: problem,
       state: state,

@@ -289,13 +289,27 @@ module.exports.judge = async function (judge_state, problem, priority) {
       break;
     default:
       type = enums.ProblemType.Standard;
+      // Decide File IO usage based on submission context:
+      // - Normal/problemset submissions: do NOT use File IO
+      // - NOI contests: use File IO
+      let useFileIO = false;
+      if (judge_state.type === 1 && judge_state.type_info) {
+        try {
+          const Contest = syzoj.model('contest');
+          const contest = await Contest.findById(judge_state.type_info);
+          if (contest && contest.type === 'noi') useFileIO = true;
+        } catch (e) {
+          // If contest lookup fails, fall back to not using File IO
+        }
+      }
+
       param = {
         language: judge_state.language,
         code: running_code,
         timeLimit: problem.time_limit,
         memoryLimit: problem.memory_limit,
-        fileIOInput: problem.file_io ? problem.file_io_input_name : null,
-        fileIOOutput: problem.file_io ? problem.file_io_output_name : null
+        fileIOInput: useFileIO ? problem.file_io_input_name : null,
+        fileIOOutput: useFileIO ? problem.file_io_output_name : null
       };
       break;
   }

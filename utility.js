@@ -677,6 +677,33 @@ module.exports = {
       attempt();
     });
   },
+  async retryOnDeadlock(fn, options) {
+    const maxRetries = options && Number.isInteger(options.retries) ? options.retries : 5;
+    const baseDelayMs = options && Number.isInteger(options.baseDelayMs) ? options.baseDelayMs : 50;
+    function isDeadlock(err) {
+      // TypeORM QueryFailedError wrappers and mysql2 errors
+      const code = err && (err.code || (err.driverError && err.driverError.code));
+      const sqlState = err && (err.sqlState || (err.driverError && err.driverError.sqlState));
+      return code === 'ER_LOCK_DEADLOCK' || sqlState === '40001';
+    }
+    function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
+    let attempt = 0;
+    for (;;) {
+      try {
+        return await fn();
+      } catch (e) {
+        if (isDeadlock(e) && attempt < maxRetries) {
+          const jitter = Math.floor(Math.random() * baseDelayMs);
+          const delay = baseDelayMs * Math.pow(2, attempt) + jitter; // exponential backoff with jitter
+          console.warn(`Deadlock detected, retrying in ${delay} ms (attempt ${attempt + 1}/${maxRetries})`);
+          await sleep(delay);
+          attempt++;
+          continue;
+        }
+        throw e;
+      }
+    }
+  },
   getCurrentLocation(req, hostOnly) {
     const currentProto = req.get("X-Forwarded-Proto") || req.protocol;
     const host = req.get('host');

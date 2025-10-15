@@ -375,15 +375,16 @@ export default class Problem extends Model {
   }
 
   async updateStatistics(user_id) {
-    await Promise.all(Object.keys(statisticsTypes).map(async type => {
-      if (this.type === ProblemType.SubmitAnswer && statisticsCodeOnly.includes(type)) return;
+    // Sequentially process each type to reduce lock contention on the same row/key
+    for (const type of Object.keys(statisticsTypes)) {
+      if (this.type === ProblemType.SubmitAnswer && statisticsCodeOnly.includes(type)) continue;
 
       await syzoj.utils.lock(['Problem::UpdateStatistics', this.id, type], async () => {
         let [column, order] = statisticsTypes[type];
-        // For submit-answer problems, use file size (code_length) for shortest/longest
         if (this.type === ProblemType.SubmitAnswer && (type === 'shortest' || type === 'longest')) {
           column = 'code_length';
         }
+
         const result = await JudgeState.createQueryBuilder()
                                        .select([column, "id"])
                                        .where("user_id = :user_id", { user_id })
@@ -394,37 +395,31 @@ export default class Problem extends Model {
                                        .getRawMany();
         const resultRow = result[0];
 
-        let toDelete = false;
-        if (!resultRow || resultRow[column] == null) {
-          toDelete = true;
-        }
-
         const baseColumns = {
           user_id,
           problem_id: this.id,
           type: type as StatisticsType
         };
 
-        let record = await SubmissionStatistics.findOne({ where: baseColumns });
+        const toDelete = !resultRow || resultRow[column] == null;
 
-        if (toDelete) {
-          if (record) {
-            await record.remove();
+        await syzoj.utils.retryOnDeadlock(async () => {
+          let record = await SubmissionStatistics.findOne({ where: baseColumns });
+
+          if (toDelete) {
+            if (record) await record.remove();
+            return;
           }
 
-          return;
-        }
-
-        if (!record) {
-          record = SubmissionStatistics.create(baseColumns);
-        }
-
-        (record as any).key = resultRow[column];
-        (record as any).submission_id = resultRow["id"];
-
-        await record.save();
+          if (!record) {
+            record = SubmissionStatistics.create(baseColumns);
+          }
+          (record as any).key = resultRow[column];
+          (record as any).submission_id = resultRow["id"];
+          await record.save();
+        }, { retries: 5, baseDelayMs: 50 });
       });
-    }));
+    }
   }
 
   async countStatistics(type) {
