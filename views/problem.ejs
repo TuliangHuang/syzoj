@@ -33,38 +33,65 @@ if (isVJudge) testcases = [];
         <% } %>
       </h1>
     </div>
-    <% if (problem.type !== 'submit-answer') { %>
-      <div class="row" style="margin-top: -15px">
-          <div class="ui label">内存限制<div class="detail"><%= problem.memory_limit %> MiB</div></div>
-          <div class="ui label">时间限制<div class="detail"><%= problem.time_limit %> ms</div></div>
-          <% if (problem.type === 'interaction') { %>
-            <div class="ui label">题目类型<div class="detail">交互</div></div>
-          <% } else if (problem.file_io) { %>
-            <div class="ui label">文件输入输出<div class="detail"><%= problem.file_io_input_name %> ≫ <%= problem.file_io_output_name %></div></div>
-          <% } else { %>
-            <div class="ui label">标准输入输出</div>
-          <% } %>
-      </div>
-    <% } %>
-    <% if (problem.type !== 'interaction') { %>
-        <div class="row" style="margin-top: -<%= problem.type === 'submit-answer' ? 15 : 23 %>px">
-          <div class="ui label">
-            题目类型
-            <div class="detail">
-              <%= { 'submit-answer': '答案提交', 'interaction': '交互', 'traditional': '传统', 'vjudge:luogu': 'VJudge（洛谷）' }[problem.type] %>
-            </div>
-          </div>
-          <div class="ui label">
-            评测方式
-            <div class="detail">
-              <%= isVJudge ? "VJudge" : (testcases && !testcases.error) ? (testcases.spj ? 'Special Judge' : '文本比较') : '无测试数据' %>
-            </div>
+    <%
+      const isSubmitAnswer = problem.type === 'submit-answer';
+      const isInteraction = problem.type === 'interaction';
+      const rowOffset = -23;
+      const firstRowOffset = -15;
+      const typeDisplayMap = { 'submit-answer': '答案提交', 'interaction': '交互', 'traditional': '传统', 'vjudge:luogu': 'VJudge（洛谷）' };
+      const typeDisplay = typeDisplayMap[problem.type];
+      const judgeMethod = isVJudge ? 'VJudge' : ((testcases && !testcases.error) ? (testcases.spj ? 'Special Judge' : '文本比较') : '无测试数据');
+      const canShowUploader = problem.allowedManage || !problem.is_anonymous;
+    %>
+    <% if (isSubmitAnswer) { %>
+      <div class="row" style="margin-top: <%= firstRowOffset %>px">
+        <div class="ui label">
+          题目类型
+          <div class="detail">
+            <%= typeDisplay %>
           </div>
         </div>
+        <div class="ui label">
+          评测方式
+          <div class="detail">
+            <%= judgeMethod %>
+          </div>
+        </div>
+      </div>
+    <% } else if (isInteraction) { %>
+      <div class="row" style="margin-top: <%= firstRowOffset %>px">
+        <div class="ui label">内存限制<div class="detail"><%= problem.memory_limit %> MiB</div></div>
+        <div class="ui label">时间限制<div class="detail"><%= problem.time_limit %> ms</div></div>
+        <div class="ui label">题目类型<div class="detail">交互</div></div>
+      </div>
+    <% } else { %>
+      <div class="row" style="margin-top: <%= firstRowOffset %>px">
+        <div class="ui label">内存限制<div class="detail"><%= problem.memory_limit %> MiB</div></div>
+        <div class="ui label">时间限制<div class="detail"><%= problem.time_limit %> ms</div></div>
+        <% if (problem.file_io) { %>
+          <div class="ui label">文件输入输出<div class="detail"><%= problem.file_io_input_name %> ≫ <%= problem.file_io_output_name %></div></div>
+        <% } else { %>
+          <div class="ui label">标准输入输出</div>
+        <% } %>
+      </div>
+      <div class="row" style="margin-top: <%= rowOffset %>px">
+        <div class="ui label">
+          题目类型
+          <div class="detail">
+            <%= typeDisplay %>
+          </div>
+        </div>
+        <div class="ui label">
+          评测方式
+          <div class="detail">
+            <%= judgeMethod %>
+          </div>
+        </div>
+      </div>
     <% } %>
     <% if (!contest || contest.ended) { %>
-      <div class="row" style="margin-top: -<%= problem.type === 'submit-answer' ? 15 : 23 %>px">
-        <% if (problem.allowedManage || !problem.is_anonymous) { %>
+      <div class="row" style="margin-top: <%= rowOffset %>px">
+        <% if (canShowUploader) { %>
           <div class="ui label">
             上传者
             <a class="detail" href="<%= syzoj.utils.makeUrl(['user', problem.user_id]) %>"><%= problem.user.username %></a>
@@ -76,7 +103,7 @@ if (isVJudge) testcases = [];
             <% if (problem.publicizer) { %>
               <a class="detail" href="<%= syzoj.utils.makeUrl(['user', problem.publicizer_id]) %>"><%= problem.publicizer.username %></a>
             <% } else { %>
-              <div class="detail">未知<div>
+              <div class="detail">未知</div>
             <% } %>
           </div>
         <% } %>
