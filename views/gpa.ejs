@@ -1,0 +1,379 @@
+<% this.title = 'GPA 计算器'; %>
+<% include header %>
+<div class="ui segment">
+  <h2 class="ui header">GPA 计算器</h2>
+  <div class="ui form">
+    <div class="field">
+      <label>输入两列数据（每行：Name Points）</label>
+      <textarea id="gpa-input" rows="10"></textarea>
+    </div>
+    <div class="field">
+      <div class="ui buttons">
+        <button class="ui primary button" id="btn-parse">解析并计算</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ui divider" id="divider-top" style="display:none;"></div>
+
+  <div class="ui three statistics" id="gpa-stats" style="display:none;">
+    <div class="statistic">
+      <div class="value" id="stat-unweighted">-</div>
+      <div class="label">Unweighted GPA</div>
+    </div>
+    <div class="statistic">
+      <div class="value" id="stat-weighted">-</div>
+      <div class="label">Weighted GPA</div>
+    </div>
+    <div class="statistic">
+      <div class="value" id="stat-credits">-</div>
+      <div class="label">Total Credits</div>
+    </div>
+  </div>
+
+  <div class="ui divider" id="divider-bottom" style="display:none;"></div>
+
+  <table class="ui celled table" id="gpa-table" style="display:none;">
+    <thead>
+      <tr>
+        <th>Official Name</th>
+        <th>Points</th>
+        <th>GPA</th>
+        <th>Full GPA</th>
+        <th>Credit</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div id="copy-container" style="display:none; margin-top: 8px; ">
+    <button class="ui button" id="btn-copy-tsv">复制表格到剪贴板</button>
+  </div>
+</div>
+
+<div class="ui modal" id="modal-course">
+  <div class="header">新增或编辑课程</div>
+  <div class="content">
+    <div class="ui form">
+      <div class="field">
+        <label>Name</label>
+        <div class="ui tiny grey message" id="alias-hint" style="margin-top: 6px; "></div>
+        <label>Official Name（可选）</label>
+        <div class="ui search" id="official-search">
+          <div class="ui icon input">
+            <input class="prompt" type="text" id="official-name" placeholder="搜索或输入官方名称">
+            <i class="search icon"></i>
+          </div>
+          <div class="results"></div>
+        </div>
+      </div>
+      <div class="two fields">
+        <div class="field">
+          <label>Credit（必填）</label>
+          <input type="number" step="0.25" id="course-credit" placeholder="0.5">
+        </div>
+        <div class="field">
+          <label>Full GPA（必填）</label>
+          <input type="number" step="0.5" id="course-full-gpa" placeholder="4.0">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="actions">
+    <div class="ui cancel button">取消</div>
+    <div class="ui primary button" id="btn-course-save">保存</div>
+  </div>
+  <input type="hidden" id="editing-alias-name">
+  <input type="hidden" id="editing-row-index">
+  <input type="hidden" id="editing-course-id">
+  <input type="hidden" id="selected-official-id">
+  <input type="hidden" id="selected-official-name">
+  <input type="hidden" id="selected-official-credit">
+  <input type="hidden" id="selected-official-full-gpa">
+</div>
+
+<script>
+(function(){
+  function clampPoints(p){
+    if (p == null || isNaN(p)) return null;
+    let v = Math.round(Number(p));
+    if (v < 0) v = 0; if (v > 100) v = 100; return v;
+  }
+  function gpaFromPoints4(points){
+    if (points == null) return 0;
+    const p = clampPoints(points);
+    if (p >= 93) return 4.0;
+    if (p >= 90) return 3.75;
+    if (p >= 87) return 3.5;
+    if (p >= 83) return 3.0;
+    if (p >= 80) return 2.75;
+    if (p >= 77) return 2.5;
+    if (p >= 73) return 2.0;
+    if (p >= 70) return 1.75;
+    if (p >= 65) return 1.5;
+    if (p >= 60) return 1.0;
+    return 0.0;
+  }
+  function gpaFromPoints(points, full){
+    const base = gpaFromPoints4(points);
+    const x = Number(full) - 4.0;
+    if (isNaN(x) || x <= 0) return base;
+    if (base <= 0) return 0; // special case
+    return base + x;
+  }
+
+  function parseInput(raw){
+    const lines = String(raw || '').split(/\n+/).map(s=>s.trim()).filter(Boolean);
+    return lines.map(line=>{
+      const m = line.match(/^(.*?)([-+]?\d+(?:\.\d+)?)\s*$/);
+      if (!m) return { name: line, points: null };
+      const points = Number(m[2]);
+      const name = String(m[1]||'').trim();
+      return { name, points };
+    });
+  }
+
+  function tsvEscape(v){
+    if (v == null) return '';
+    const s = String(v);
+    if (s.includes('\t') || s.includes('\n')) return '"'+s.replace(/"/g,'""')+'"';
+    return s;
+  }
+
+  async function resolveCourse(name){
+    const res = await $.getJSON('/api/v2/nebs-courses/resolve', { name });
+    return res;
+  }
+  async function searchOfficial(keyword){
+    const res = await $.getJSON('/api/v2/nebs-courses/search', { keyword });
+    return res.results || [];
+  }
+  async function upsertCourse(payload){
+    const res = await $.ajax({ url:'/api/v2/nebs-courses', method:'POST', data: payload });
+    return res;
+  }
+
+  function showStats(unweighted, weighted, credits){
+    $('#stat-unweighted').text(unweighted.toFixed(3));
+    $('#stat-weighted').text(weighted.toFixed(3));
+    $('#stat-credits').text(credits.toFixed(2));
+    $('#gpa-stats').show();
+    $('#divider-top').show();
+  }
+
+  function renderTable(rows){
+    const $tb = $('#gpa-table tbody').empty();
+    rows.forEach((r, idx)=>{
+      const tr = $(
+        '<tr>'+
+        '<td class="col-name"></td>'+
+        '<td class="col-points"></td>'+
+        '<td class="col-gpa"></td>'+
+        '<td class="col-full"></td>'+
+        '<td class="col-credit"></td>'+
+        '<td><button class="ui tiny button btn-edit">编辑</button></td>'+
+        '</tr>'
+      );
+      tr.find('.col-name').text(r.official_name || r.name);
+      tr.find('.col-points').text(r.points == null ? '' : r.points);
+      tr.find('.col-gpa').text(r.gpa == null ? '' : r.gpa.toFixed(3));
+      tr.find('.col-full').text(r.full_gpa == null ? '' : r.full_gpa);
+      tr.find('.col-credit').text(r.credit == null ? '' : r.credit);
+      tr.find('.btn-edit').on('click', function(){ openEditModal(idx, r); });
+      $tb.append(tr);
+    });
+    $('#gpa-table').show();
+    $('#divider-bottom').show();
+    $('#copy-container').show();
+  }
+
+  function computeAll(items){
+    let totalCredits = 0;
+    let sumWeighted = 0; // weighted GPA sum credit*gpa with course full
+    let sumUnweighted = 0; // unweighted GPA sum credit*min(gpa,4)
+
+    const rows = items.map(item=>{
+      const points = clampPoints(item.points);
+      const credit = Number(item.credit || 0);
+      const full = Number(item.full_gpa || 4.0);
+      const gpa = gpaFromPoints(points, full);
+      const unweightedGpa = gpaFromPoints(points, 4.0);
+      totalCredits += credit;
+      sumWeighted += gpa * credit;
+      sumUnweighted += unweightedGpa * credit;
+      return {
+        name: item.name,
+        official_name: item.official_name,
+        points,
+        credit,
+        full_gpa: full,
+        gpa
+      };
+    });
+
+    const weighted = totalCredits ? (sumWeighted / totalCredits) : 0;
+    const unweighted = totalCredits ? (sumUnweighted / totalCredits) : 0;
+    return { rows, weighted, unweighted, totalCredits };
+  }
+
+  async function ensureCourse(item){
+    const r = await resolveCourse(item.name);
+    if (r && r.found) return r.course; // {id,name,credit,full_gpa}
+    // open modal to create
+    $('#alias-hint').text(item.name);
+    $('#editing-alias-name').val(item.name);
+    $('#editing-row-index').val(item.index);
+    $('#editing-course-id').val('');
+    $('#official-name').val('');
+    $('#selected-official-id').val('');
+    $('#selected-official-name').val('');
+    $('#selected-official-credit').val('');
+    $('#selected-official-full-gpa').val('');
+    $('#course-credit').val('0.5');
+    $('#course-full-gpa').val('4.0');
+    $('#modal-course').modal('show');
+
+    return new Promise((resolve)=>{
+      $('#btn-course-save').off('click').on('click', async function(){
+        const aliasName = $('#editing-alias-name').val();
+        let officialId = $('#selected-official-id').val();
+        let officialName = $('#official-name').val().trim();
+        // If official name equals the alias (case/space-insensitive), treat as not filled
+        const norm = s => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        if (officialName && norm(officialName) === norm(aliasName)) {
+          officialName = '';
+          $('#official-name').val('');
+          $('#selected-official-id').val('');
+        }
+        const credit = Number($('#course-credit').val());
+        const full = Number($('#course-full-gpa').val());
+        if (!credit || !full) { alert('请填写完整的学分与满绩'); return; }
+        const payload = {
+          alias_name: aliasName,
+          official_id: officialId || undefined,
+          official_name: officialId ? undefined : (officialName || undefined),
+          credit,
+          full_gpa: full
+        };
+        try{
+          const res = await upsertCourse(payload);
+          $('#modal-course').modal('hide');
+          resolve(res.course);
+        }catch(e){
+          alert('保存失败');
+        }
+      });
+    });
+  }
+
+  function openEditModal(idx, row){
+    $('#editing-alias-name').val(row.name);
+    $('#editing-row-index').val(idx);
+    $('#editing-course-id').val('');
+    $('#official-name').val(row.official_name || row.name);
+    $('#alias-hint').text((row.name || ''));
+    $('#selected-official-id').val('');
+    $('#selected-official-name').val('');
+    $('#selected-official-credit').val('');
+    $('#selected-official-full-gpa').val('');
+    $('#course-credit').val(String(row.credit || 0.5));
+    $('#course-full-gpa').val(String(row.full_gpa || 4.0));
+    // Bind save for edit flow: upsert then re-run parse
+    $('#btn-course-save').off('click').on('click', async function(){
+      const aliasName = $('#editing-alias-name').val();
+      let officialId = $('#selected-official-id').val();
+      let officialName = $('#official-name').val().trim();
+      const norm = s => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+      if (officialName && norm(officialName) === norm(aliasName)) {
+        officialName = '';
+        $('#official-name').val('');
+        $('#selected-official-id').val('');
+        officialId = '';
+      }
+      const credit = Number($('#course-credit').val());
+      const full = Number($('#course-full-gpa').val());
+      if (!credit || !full) { alert('请填写完整的学分与满绩'); return; }
+      const payload = {
+        alias_name: aliasName,
+        official_id: officialId || undefined,
+        official_name: officialId ? undefined : (officialName || undefined),
+        credit,
+        full_gpa: full
+      };
+      try{
+        await upsertCourse(payload);
+        $('#modal-course').modal('hide');
+        // Trigger recompute
+        $('#btn-parse').click();
+      }catch(e){
+        alert('保存失败');
+      }
+    });
+    $('#modal-course').modal('show');
+  }
+
+  $(function(){
+    $('#official-search').search({
+      apiSettings: {
+        responseAsync: async function(settings, callback){
+          try{
+            const list = await searchOfficial(settings.urlData.query || '');
+            callback({ success:true, results: list.map(x=>({ title: x.name, description: `credit ${x.credit}, full ${x.full_gpa}`, id: x.id, raw: x })) });
+          }catch(e){ callback({ success:true, results: [] }); }
+        }
+      },
+      fields: { results: 'results', title: 'title', description: 'description' },
+      minCharacters: 1,
+      onSelect: function(result){
+        if (result && result.raw){
+          $('#selected-official-id').val(result.raw.id);
+          $('#official-name').val(result.raw.name);
+          $('#course-credit').val(result.raw.credit);
+          $('#course-full-gpa').val(result.raw.full_gpa);
+        }
+      }
+    });
+  });
+
+  $(function(){
+    $('#btn-parse').on('click', async function(){
+        const items = parseInput($('#gpa-input').val()).map((x,i)=>({ ...x, index: i }));
+        const enriched = [];
+        for (const it of items){
+        const course = await ensureCourse(it);
+        enriched.push({
+            name: it.name,
+            official_name: course.name,
+            credit: course.credit,
+            full_gpa: course.full_gpa,
+            points: it.points
+        });
+        }
+        const { rows, unweighted, weighted, totalCredits } = (function(){
+        const r = computeAll(enriched);
+        return { rows: r.rows, unweighted: r.unweighted, weighted: r.weighted, totalCredits: r.totalCredits };
+        })();
+        showStats(unweighted, weighted, totalCredits);
+        renderTable(rows);
+        $('#gpa-table').data('rows', rows);
+    });
+  });
+
+  $('#btn-copy-tsv').on('click', function(){
+    const rows = $('#gpa-table').data('rows') || [];
+    const tsv = ['Official Name\tPoints\tGPA\tFull GPA\tCredit'].concat(rows.map(r=>[
+      tsvEscape(r.official_name || r.name),
+      tsvEscape(r.points),
+      tsvEscape(r.gpa != null ? r.gpa.toFixed(3) : ''),
+      tsvEscape(r.full_gpa),
+      tsvEscape(r.credit)
+    ].join('\t'))).join('\n');
+    const ta = document.createElement('textarea');
+    ta.value = tsv; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+  });
+})();
+</script>
+
+<% include footer %>

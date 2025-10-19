@@ -208,6 +208,125 @@ app.apiRouter.post('/api/v2/question/render', async (req, res) => {
   }
 });
 
+// GPA Courses: resolve by alias name
+app.get('/api/v2/nebs-courses/resolve', async (req, res) => {
+  try {
+    const NebsCourseGpa = syzoj.model('nebs_course_gpa');
+    const name = String(req.query.name || '').trim();
+    if (!name) return res.json({ success: true, found: false });
+    let alias = await NebsCourseGpa.findOne({ where: { name } });
+    if (!alias) return res.json({ success: true, found: false });
+    let target = alias;
+    if (alias.official_id) {
+      const official = await NebsCourseGpa.findById(alias.official_id);
+      if (official) target = official;
+    }
+    return res.json({ success: true, found: true, course: { id: target.id, name: target.name, credit: target.credit || 0.5, full_gpa: target.full_gpa || 4.0 } });
+  } catch (e) {
+    syzoj.log(e);
+    res.json({ success: false });
+  }
+});
+
+// GPA Courses: search official courses by keyword (only official entries: official_id is null)
+app.get('/api/v2/nebs-courses/search', async (req, res) => {
+  try {
+    const NebsCourseGpa = syzoj.model('nebs_course_gpa');
+    const keyword = String(req.query.keyword || '').trim();
+    if (!keyword) return res.json({ success: true, results: [] });
+    const list = await NebsCourseGpa.find({
+      where: {
+        name: TypeORM.Like(`%${keyword}%`),
+        official_id: null
+      },
+      order: { name: 'ASC' }
+    });
+    const results = list.map(x => ({ id: x.id, name: x.name, credit: x.credit || 0.5, full_gpa: x.full_gpa || 4.0 }));
+    res.json({ success: true, results });
+  } catch (e) {
+    syzoj.log(e);
+    res.json({ success: false, results: [] });
+  }
+});
+
+// GPA Courses: create or link alias
+app.post('/api/v2/nebs-courses', async (req, res) => {
+  try {
+    // permission: only admin or username === 'ping'
+    if (!res.locals.user || !(res.locals.user.is_admin || (String(res.locals.user.username || '').toLowerCase() === 'ping'))) {
+      return res.status(403).json({ success: false, error: '权限不足。' });
+    }
+
+    const NebsCourseGpa = syzoj.model('nebs_course_gpa');
+    const aliasName = String(req.body.alias_name || '').trim();
+    const officialId = req.body.official_id ? parseInt(req.body.official_id) : null;
+    let officialName = req.body.official_name ? String(req.body.official_name).trim() : '';
+    const credit = req.body.credit != null ? Number(req.body.credit) : null;
+    const full = req.body.full_gpa != null ? Number(req.body.full_gpa) : null;
+
+    if (!aliasName) return res.status(400).json({ success: false, error: 'alias 不能为空' });
+
+    const normalize = s => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    if (officialName && normalize(officialName) === normalize(aliasName)) {
+      officialName = '';
+    }
+
+    let targetOfficial = null;
+    if (officialId) {
+      targetOfficial = await NebsCourseGpa.findById(officialId);
+      if (!targetOfficial || targetOfficial.official_id) return res.status(400).json({ success: false, error: '无效的 official_id' });
+    } else {
+      // create/find official by name
+      const name = officialName || aliasName;
+      let existed = await NebsCourseGpa.findOne({ where: { name } });
+      if (existed) {
+        if (existed.official_id) {
+          // if points to another, follow to official
+          const off = await NebsCourseGpa.findById(existed.official_id);
+          targetOfficial = off || existed;
+        } else {
+          targetOfficial = existed;
+        }
+      } else {
+        if (credit == null || full == null) return res.status(400).json({ success: false, error: '缺少学分或满绩' });
+        let created = NebsCourseGpa.create();
+        created.name = name;
+        created.official_id = null;
+        created.credit = credit;
+        created.full_gpa = full;
+        await created.save();
+        targetOfficial = created;
+      }
+    }
+
+    // ensure alias exists and points to official
+    let alias = await NebsCourseGpa.findOne({ where: { name: aliasName } });
+    if (!alias) {
+      alias = NebsCourseGpa.create();
+      alias.name = aliasName;
+    }
+    if (targetOfficial && alias.id === targetOfficial.id) {
+      // alias is same as official; make sure it's official (no redirect)
+      alias.official_id = null;
+      if (credit != null) alias.credit = credit;
+      if (full != null) alias.full_gpa = full;
+    } else {
+      alias.official_id = targetOfficial ? targetOfficial.id : null;
+      if (!alias.official_id) {
+        if (credit != null) alias.credit = credit;
+        if (full != null) alias.full_gpa = full;
+      }
+    }
+    await alias.save();
+
+    const ret = targetOfficial || alias;
+    return res.json({ success: true, course: { id: ret.id, name: ret.name, credit: ret.credit || 0.5, full_gpa: ret.full_gpa || 4.0 } });
+  } catch (e) {
+    syzoj.log(e);
+    res.status(500).json({ success: false });
+  }
+});
+
 // Render question items partial with provided data (server-side EJS)
 app.apiRouter.post('/api/v2/question/items/render', async (req, res) => {
   try {
