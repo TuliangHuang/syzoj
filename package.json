@@ -83,7 +83,7 @@
     "stream-to-string": "^1.2.0",
     "superagent": "^10.2.3",
     "superagent-proxy": "^3.0.0",
-    "syzoj-renderer": "^1.2.5",
+    "syzoj-renderer": "link:../renderer",
     "tempfile": "^2.0.0",
     "tmp-promise": "^1.0.3",
     "typeorm": "^0.2.16",
