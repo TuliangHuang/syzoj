@@ -113,6 +113,12 @@ app.post('/contest/:id/edit', async (req, res) => {
     contest.end_time = syzoj.utils.parseDate(req.body.end_time);
     contest.is_public = req.body.is_public === 'on';
     contest.hide_statistics = req.body.hide_statistics === 'on';
+    // show_ranklist: open 强制 false；其他类型按开关保存
+    if (req.body.type === 'open') {
+      contest.show_ranklist = false;
+    } else {
+      contest.show_ranklist = req.body.show_ranklist === 'on';
+    }
 
     await contest.save();
 
@@ -311,10 +317,11 @@ app.get('/contest/:id/ranklist', async (req, res) => {
     // if contest is non-public, both system administrators and contest administrators can see it.
     if (!contest.is_public && (!res.locals.user || (!res.locals.user.is_admin && !contest.admins.includes(res.locals.user.id.toString())))) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
 
-    if ([contest.allowedSeeingResult() && contest.allowedSeeingOthers(),
-    contest.isEnded(),
-    await contest.isSupervisior(curUser)].every(x => !x))
-      throw new ErrorMessage('您没有权限进行此操作。');
+    // 访问排行榜权限：OPEN 禁止；其余为 seeResult 或 show_ranklist 或比赛结束或负责人
+    const seeResult = (contest.type === 'open') || (await contest.isSupervisior(curUser) || contest.isEnded());
+    const canSeeByFlag = !!contest.show_ranklist;
+    const canSee = (contest.type !== 'open') && (seeResult || canSeeByFlag || contest.isEnded() || await contest.isSupervisior(curUser));
+    if (!canSee) throw new ErrorMessage('您没有权限进行此操作。');
 
     await contest.loadRelationships();
 
@@ -407,7 +414,7 @@ app.get('/contest/:id/upsolving', async (req, res) => {
     if (!contest.is_public && (!res.locals.user || (!res.locals.user.is_admin && !contest.admins.includes(res.locals.user.id.toString())))) throw new ErrorMessage('比赛未公开，请耐心等待 (´∀ `)');
 
     if (contest.type !== 'open') {
-      if ([contest.allowedSeeingResult() && contest.allowedSeeingOthers(),
+      if ([contest.allowedSeeingOthers(),
       contest.isEnded(),
       await contest.isSupervisior(curUser)].every(x => !x))
         throw new ErrorMessage('您没有权限进行此操作。');
