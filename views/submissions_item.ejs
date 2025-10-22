@@ -103,7 +103,7 @@ Vue.component('submission-item', {
     <% } else { %>
     <span v-if="data.info.language"><b>{{ data.info.language }}</b> / </span>
     <% } %>
-    {{ formatSize(data.info.codeSize, 1) }}
+    <span :title="data.info && data.info.tokenCount != null ? (data.info.tokenCount + ' tok') : null">{{ formatSize(data.info.codeSize, 1) }}</span>
   </td>
   <td><a :href="userLink">{{ data.info.user }}</a></td>
   <td>{{ data.info.submitTime }}</td>
