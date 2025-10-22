@@ -291,6 +291,8 @@ function applyLineNumbers() {
 
     var text = codeEl.textContent || '';
     var lines = text.split(/\r\n|\r|\n/);
+    // Trim trailing empty lines (whitespace-only) so they are not numbered
+    while (lines.length > 0 && /^\s*$/.test(lines[lines.length - 1])) lines.pop();
     if (lines.length <= 1) {
       lnEl.innerHTML = '';
       lnEl.setAttribute('data-ln-applied', '1');
@@ -298,7 +300,7 @@ function applyLineNumbers() {
       return;
     }
     var nums = [];
-    for (var i = 1; i <= lines.length; i++) nums.push('<span class=\"line-number\" title=\"L' + i + '\">' + i + '</span>');
+    for (var i = 1; i <= lines.length; i++) nums.push('<span class="line-number" title="L' + i + '">' + i + '</span>');
     lnEl.innerHTML = '<div class="ln-highlights"></div>' + nums.join('');
     // re-grab highlight container in case rebuilt
     lnHlEl = grid.querySelector('.ln-highlights');
@@ -321,6 +323,10 @@ function applyLineNumbers() {
       if (from == null || to == null) return;
       var a = Math.min(from, to), b = Math.max(from, to);
       var lineEls = lnEl.querySelectorAll(':scope > .line-number');
+      var max = lineEls.length;
+      if (max === 0) return;
+      a = Math.max(1, Math.min(a, max));
+      b = Math.max(1, Math.min(b, max));
       for (var i = 0; i < lineEls.length; i++) {
         var n = i + 1;
         if (n >= a && n <= b) lineEls[i].classList.add('selected');
