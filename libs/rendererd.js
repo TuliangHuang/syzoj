@@ -22,6 +22,18 @@ const LRUCache = require('lru-cache');
 const cache = new LRUCache({ max: parseInt(process.argv[2]) });
 
 async function highlight(code, lang) {
+  // Normalize input for highlighter: ensure string and unify line endings to LF
+  try {
+    if (code == null) code = '';
+    if (code instanceof Buffer) code = code.toString('utf8');
+    if (typeof code !== 'string') code = String(code);
+    // Convert CRLF and CR to LF to avoid extra visual newlines in highlighted HTML
+    code = code.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  } catch (e) {
+    // If normalization fails for any reason, fall back to best-effort string
+    try { code = String(code); } catch (_) { code = ''; }
+  }
+
   return await renderer.highlight(code, lang, cache, {
     wrapper: null
   });
