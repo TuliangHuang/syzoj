@@ -113,7 +113,7 @@ pre > code.code-with-lines .line-content {
       </tr>
     </thead>
     <tbody>
-      <tr is="submission-item" v-bind:data="roughData" :config="displayConfig" :show-rejudge="showRejudge" :progress="getProgress()" :compiling="detailResult && !detailResult.compile"></tr>
+      <tr is="submission-item" v-bind:data="roughData" :config="displayConfig" :show-rejudge="showRejudge" :show-unrate="showUnrate" :progress="getProgress()" :compiling="detailResult && !detailResult.compile"></tr>
     </tbody>
   </table>
 
@@ -389,6 +389,9 @@ const vueApp = new Vue({
     },
     showRejudge() {
       return this.displayConfig.showRejudge && (!this.roughData.running);
+    },
+    showUnrate() {
+      return this.displayConfig.showUnrate === true;
     }
   },
   methods: {

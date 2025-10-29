@@ -207,6 +207,16 @@ app.get('/submission/:id', async (req, res) => {
 
     displayConfig.showRejudge = await judge.problem.isAllowedEditBy(res.locals.user);
     displayConfig.showOptions = true;
+
+    let canUnrate = false;
+    if (judge.type === 1) {
+      const contestForUnrate = await Contest.findById(judge.type_info);
+      if (contestForUnrate) {
+        canUnrate = await contestForUnrate.isSupervisior(curUser);
+      }
+    }
+    displayConfig.showUnrate = !!canUnrate;
+
     res.render('submission', {
       info: getSubmissionInfo(judge, displayConfig),
       roughResult: getRoughResult(judge, displayConfig, false),
@@ -336,5 +346,40 @@ app.post('/submission/:id/rejudge', async (req, res) => {
     res.render('error', {
       err: e
     });
+  }
+});
+
+app.post('/submission/:id/unrate', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const judge = await JudgeState.findById(id);
+    if (!judge) throw new ErrorMessage('提交记录 ID 不正确。');
+
+    if (judge.type !== 1) throw new ErrorMessage('该提交不是比赛提交。');
+
+    const contest = await Contest.findById(judge.type_info);
+    const curUser = res.locals.user;
+    let canUnrate = false;
+    if (contest) {
+      canUnrate = !!(curUser && await contest.isSupervisior(curUser));
+    } else {
+      // Contest record missing: fallback to problem edit permission
+      await judge.loadRelationships();
+      canUnrate = !!(await judge.problem.isAllowedEditBy(curUser));
+    }
+    if (!canUnrate) throw new ErrorMessage('您没有权限进行此操作。');
+
+    judge.type = 0;
+    judge.type_info = null;
+    await judge.save();
+
+    if (contest) {
+      await contest.reset();
+    }
+
+    res.redirect(syzoj.utils.makeUrl(['submission', id]));
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', { err: e });
   }
 });

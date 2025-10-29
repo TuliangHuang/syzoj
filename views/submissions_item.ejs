@@ -20,7 +20,7 @@ const userUrl = <%- serializejs(syzoj.utils.makeUrl(['user', '20000528'])) %>;
 
 Vue.component('submission-item', {
   template: '#submissionItemTemplate',
-  props: ['data', 'config', 'showRejudge', 'progress', 'compiling', 'rough'],
+  props: ['data', 'config', 'showRejudge', 'showUnrate', 'progress', 'compiling', 'rough'],
   computed: {
     statusString() {
       const data = this.data;
@@ -110,6 +110,29 @@ Vue.component('submission-item', {
   <td v-if="config.showOptions">
     <% if (active === 'submission') { %>
       <a class="ui blue mini button" :href="'/compare?head=' + data.info.submissionId" title="Compare two submissions">Compare...</a>  
+      <template v-if="showUnrate">
+        <a class="ui red mini button" href="#" @click.prevent="$('#modal-unrate').modal('show')">Unrate</a>
+        <div class="ui basic modal" id="modal-unrate">
+          <div class="ui icon header">
+            <i class="flag outline icon"></i>
+            <p style="margin-top: 15px; ">取消比赛计分（Unrate）</p>
+          </div>
+          <div class="content" style="text-align: center; ">
+            <p>确认将该提交从比赛统计中移除并设为普通提交吗？</p>
+            <p>该操作会重新计算对应比赛的排名。</p>
+          </div>
+          <div class="actions">
+            <div class="ui red basic cancel inverted button">
+              <i class="remove icon"></i>
+              否
+            </div>
+            <a class="ui green ok inverted button" :href-post="submissionLink + '/unrate'">
+              <i class="checkmark icon"></i>
+              是
+            </a>
+          </div>
+        </div>
+      </template>
     <% } %>
   </td>
   <td v-if="showRejudge">
