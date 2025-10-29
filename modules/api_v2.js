@@ -14,6 +14,7 @@ app.get('/api/v2/search/users/:keyword*?', async (req, res) => {
     }
     if (keyword != null && String(keyword).length >= 2) {
       conditions.push({ username: TypeORM.Like(`%${req.params.keyword}%`) });
+      conditions.push({ nickname: TypeORM.Like(`%${req.params.keyword}%`) });
     }
     if (conditions.length === 0) {
       res.send({ success: true, results: [] });
@@ -27,7 +28,15 @@ app.get('/api/v2/search/users/:keyword*?', async (req, res) => {
 
       let result = [];
 
-      result = users.map(x => ({ name: `${x.username}`, value: x.id, url: syzoj.utils.makeUrl(['user', x.id]) }));
+      result = users.map(x => {
+        const nickname = x.nickname ? String(x.nickname).trim() : '';
+        const username = x.username ? String(x.username).trim() : '';
+        const labelParts = [];
+        labelParts.push(`#${x.id}`);
+        if (nickname) labelParts.push(nickname);
+        if (username) labelParts.push(`(${username})`);
+        return { name: labelParts.join(' '), value: x.id, url: syzoj.utils.makeUrl(['user', x.id]) };
+      });
       res.send({ success: true, results: result });
     }
   } catch (e) {

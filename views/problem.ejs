@@ -358,7 +358,26 @@ if (isVJudge) testcases = [];
                   </div>
                 </div>
               </div>
-              <div class="ui center aligned vertical segment" style="padding-bottom: 0; "><button type="submit" class="ui labeled icon button"><i class="ui edit icon"></i>提交</button></div>
+              <div class="ui center aligned vertical segment" style="padding-bottom: 0; ">
+                <% if (user && user.is_admin) { %>
+                <div class="proxy-user-container right floated" style="display: inline-block; margin-top: -6px; margin-left: 8px; ">
+                  <button type="button" class="ui icon circular mini button" id="proxy_user_toggle" title="选择代理用户"><i class="user icon"></i></button>
+                  <div class="selector-wrap" style="display: none; ">
+                    <div class="ui form" style="display: inline-block; ">
+                      <div class="field" style="min-width: 220px; ">
+                        <div id="proxy_user_dropdown" class="ui search selection dropdown">
+                          <input type="hidden" name="proxy_user_id">
+                          <i class="dropdown icon"></i>
+                          <div class="default text">选择代理用户...</div>
+                          <div class="menu"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <% } %>
+                <button type="submit" class="ui labeled icon button"><i class="ui edit icon"></i>提交</button>
+              </div>
             <% } else { %>
               <input name="language" type="hidden" id="form">
               <input name="code" type="hidden">
@@ -406,6 +425,23 @@ if (isVJudge) testcases = [];
                 </div>
               </div>
               <div class="ui center aligned vertical segment" style="padding-bottom: 0; ">
+                <% if (user && user.is_admin) { %>
+                <div class="proxy-user-container left floated" style="display: inline-block; margin-top: -6px; margin-right: 8px; ">
+                  <button type="button" class="ui icon circular mini button" id="proxy_user_toggle" title="选择代理用户"><i class="user icon"></i></button>
+                  <div class="selector-wrap" style="display: none; ">
+                    <div class="ui form" style="display: inline-block; ">
+                      <div class="field" style="min-width: 220px; ">
+                        <div id="proxy_user_dropdown" class="ui search selection dropdown">
+                          <input type="hidden" name="proxy_user_id">
+                          <i class="dropdown icon"></i>
+                          <div class="default text">选择代理用户...</div>
+                          <div class="menu"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <% } %>
                 <button type="submit" class="ui labeled icon button"><i class="ui edit icon"></i>提交</button>
               </div>
             <% } %>
@@ -524,4 +560,30 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+<% if (user && user.is_admin) { %>
+<script>
+$(function() {
+  $('#proxy_user_dropdown').dropdown({
+    apiSettings: { url: '/api/v2/search/users/{query}', cache: false },
+    clearable: true,
+    minCharacters: 1,
+    message: { noResults: '无匹配用户' }
+  });
+  $('#proxy_user_toggle').on('click', function() {
+    var wrap = $('.proxy-user-container .selector-wrap');
+    var hidden = wrap.css('display') === 'none';
+    if (hidden) {
+      wrap.css('display', 'inline-block');
+      // Focus the search input once visible
+      setTimeout(function() {
+        var input = $('#proxy_user_dropdown').find('input.search');
+        if (input.length) input.focus();
+      }, 0);
+    } else {
+      wrap.css('display', 'none');
+    }
+  });
+});
+</script>
+<% } %>
 <% include footer %>

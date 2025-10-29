@@ -5,6 +5,7 @@ let Contest = syzoj.model('contest');
 let ProblemTag = syzoj.model('problem_tag');
 let ProblemTagMap = syzoj.model('problem_tag_map');
 let Article = syzoj.model('article');
+let User = syzoj.model('user');
 
 const TypeORM = require('typeorm');
 
@@ -643,6 +644,17 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
     if (problem.type !== 'submit-answer' && !(vjudgeLanguages ? Object.keys(vjudgeLanguages) : syzoj.config.enabled_languages).includes(req.body.language)) throw new ErrorMessage('不支持该语言。');
     if (!curUser) throw new ErrorMessage('请登录后继续。', { '登录': syzoj.utils.makeUrl(['login'], { 'url': syzoj.utils.makeUrl(['problem', id]) }) });
 
+    // Determine the effective submitter (admin may proxy as another user)
+    let submitAsUser = curUser;
+    if (curUser && curUser.is_admin && req.body && req.body.proxy_user_id) {
+      const proxyId = parseInt(req.body.proxy_user_id);
+      if (!isNaN(proxyId)) {
+        const target = await User.findById(proxyId);
+        if (!target) throw new ErrorMessage('代提交目标用户不存在。');
+        submitAsUser = target;
+      }
+    }
+
     let judge_state;
     if (problem.type === 'submit-answer') {
       let File = syzoj.model('file'), path;
@@ -672,7 +684,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
         code_length: size,
         token_count: null,
         language: null,
-        user_id: curUser.id,
+        user_id: submitAsUser.id,
         problem_id: id,
         is_public: problem.is_public
       });
@@ -694,7 +706,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
         code_length: Buffer.from(code).length,
         token_count: countCodeTokens(code, req.body.language),
         language: req.body.language,
-        user_id: curUser.id,
+        user_id: submitAsUser.id,
         problem_id: id,
         is_public: problem.is_public
       });
@@ -728,7 +740,7 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
         await contest.newSubmission(judge_state);
       }
     } else {
-      if (!await problem.isAllowedUseBy(curUser)) throw new ErrorMessage('您没有权限进行此操作。');
+      if (!await problem.isAllowedUseBy(submitAsUser)) throw new ErrorMessage('您没有权限进行此操作。');
       judge_state.type = 0;
       await judge_state.save();
     }
