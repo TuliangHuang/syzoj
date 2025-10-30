@@ -107,6 +107,8 @@ export default class Problem extends Model {
   @TypeORM.Column({ nullable: true, type: "boolean" })
   is_public: boolean;
 
+  // Deprecated: 保留作兼容与展示用途；评测与保存逻辑已不再依赖该字段。
+  // 控制器在比赛（NOI）场景可能临时设置该标志以便前端展示。
   @TypeORM.Column({ nullable: true, type: "boolean" })
   file_io: boolean;
 
@@ -325,11 +327,6 @@ export default class Problem extends Model {
       let filenameRE = /^[\w \-\+\.]*$/;
       if (this.file_io_input_name && !filenameRE.test(this.file_io_input_name)) return 'Invalid input file name';
       if (this.file_io_output_name && !filenameRE.test(this.file_io_output_name)) return 'Invalid output file name';
-
-      if (this.file_io) {
-        if (!this.file_io_input_name) return 'No input file name';
-        if (!this.file_io_output_name) return 'No output file name';
-      }
     }
 
     return null;

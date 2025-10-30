@@ -27,48 +27,6 @@
               </div>
             </div>
             <div id="io-type"<% if (problem.type === 'interaction') { %> style="display: none; "<% } %>>
-              <% if (!problem.file_io) { %>
-              <div class="inline fields">
-                <label>IO 方式</label>
-                <div class="field">
-                  <div class="ui radio checkbox">
-                    <input name="io_method" value="std-io" id="std-io" type="radio" onclick="goDisable()" checked>
-                    <label for="std-io">标准 IO</label>
-                  </div>
-                </div>
-                <div class="field">
-                  <div class="ui radio checkbox">
-                    <input name="io_method" value="file-io" id="file-io" type="radio" onclick="goEnable()">
-                    <label for="file-io">文件 IO</label>
-                  </div>
-                </div>
-              </div>
-              <div class="two fields">
-                <div class="field">
-                  <label for="file_io_input_name">输入文件名</label>
-                  <input type="text" id="file-io-input-name" name="file_io_input_name" value="<%= problem.file_io_input_name %>" disabled>
-                </div>
-                <div class="field">
-                  <label for="file_io_output_name">输出文件名</label>
-                  <input type="text" id="file-io-output-name" name="file_io_output_name" value="<%= problem.file_io_output_name %>" disabled>
-                </div>
-              </div>
-              <% } else { %>
-              <div class="inline fields">
-                <label>IO 方式</label>
-                <div class="field">
-                  <div class="ui radio checkbox" id="std-io-div">
-                    <input name="io_method" value="std-io" id="std-io" type="radio" onclick="goDisable()">
-                    <label for="std-io">标准 IO</label>
-                  </div>
-                </div>
-                <div class="field">
-                  <div class="ui radio checkbox">
-                    <input name="io_method" value="file-io" id="file-io" type="radio" onclick="goEnable()" checked>
-                    <label for="file-io">文件 IO</label>
-                  </div>
-                </div>
-              </div>
               <div class="two fields">
                 <div class="field">
                   <label for="file_io_input_name">输入文件名</label>
@@ -79,7 +37,9 @@
                   <input type="text" id="file-io-output-name" name="file_io_output_name" value="<%= problem.file_io_output_name %>">
                 </div>
               </div>
-              <% } %>
+              <div class="field" style="margin-top: -6px; margin-bottom: 16px; ">
+                <small style="opacity: .75; ">仅在 NOI 赛制下生效，其余情况下使用标准 IO</small>
+              </div>
             </div>
           </div>
           <div class="ui <%= problem.type === 'submit-answer' ? 'active ' : '' %>tab" data-tab="submit-answer" style="margin-bottom: 10px; ">
@@ -102,15 +62,6 @@
   </div>
 <div>
 <script>
-function goEnable() {
-  document.getElementById('file-io-input-name').disabled = false;
-  document.getElementById('file-io-output-name').disabled = false;
-}
-function goDisable() {
-  document.getElementById('file-io-input-name').disabled = true;
-  document.getElementById('file-io-output-name').disabled = true;
-}
-
 $(function () {
   $('#file-io-input-name').on('input keyup change', function (e) {
     var prob = $('#file-io-input-name').val();

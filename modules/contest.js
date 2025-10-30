@@ -731,6 +731,9 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
 
     await problem.loadRelationships();
 
+    // For contest view: show File IO hint only for NOI contests when filenames are set
+    problem.file_io = (contest.type === 'noi') && !!problem.file_io_input_name && !!problem.file_io_output_name;
+
     res.render('problem', {
       pid: pid,
       contest: contest,
