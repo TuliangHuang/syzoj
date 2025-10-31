@@ -26,20 +26,12 @@ function processOverallResult(source, config) {
             systemMessage: source.systemMessage
         };
     }
-    function compareFileNames(a, b) { return syzoj.utils.compareFilenamesByUnderscore(a, b); }
-    function caseFileName(cs) {
-        const r = cs && cs.result;
-        // prefer input filename, then output
-        return (r && r.input && r.input.name) || (r && r.output && r.output.name) || '';
-    }
     return {
         compile: source.compile,
         judge: config.showDetailResult ? (source.judge && {
             subtasks: source.judge.subtasks && source.judge.subtasks.map(st => ({
                 score: st.score,
                 cases: st.cases
-                    .slice()
-                    .sort((a, b) => compareFileNames(caseFileName(a), caseFileName(b)))
                     .map(cs => ({
                     status: cs.status,
                     result: cs.result && {

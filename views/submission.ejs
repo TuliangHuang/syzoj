@@ -150,7 +150,7 @@ pre > code.code-with-lines .line-content {
       </div>
       <div class="content" :class="singleSubtask ? 'active' : ''">
         <div class="accordion">
-          <template v-for="curCase, $caseIndex in subtask.cases">
+          <template v-for="curCase, $caseIndex in subtask.cases" :key="$caseIndex">
             <div class="title" :class="checkTestcaseOK(curCase) || curCase.errorMessage ? '' : 'unexpandable'">
               <div class="ui grid">
                 <div class="three wide column">
