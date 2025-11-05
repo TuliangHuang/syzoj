@@ -1,25 +1,8 @@
 <% this.title = (question && question.title ? question.title : '习题') + ' - 习题'; %>
 <% include header %>
+<% include question_utility %>
 
 <style>
-  /* Grid layout for aligned line numbers + code (consistent with submission page) */
-  .codebox-grid { display: grid; grid-template-columns: 4.5em 1fr; align-items: stretch; }
-  .codebox-grid .line-numbers {
-    text-align: right;
-    margin-right: 0;
-    color: rgba(0, 0, 0, 0.4);
-    user-select: none;
-    -webkit-user-select: none;
-    overflow: hidden;
-    position: relative;
-    font-family: "Fira Mono", "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "source-code-pro", monospace;
-  }
-  .codebox-grid .line-numbers .line-number { display: block; width: 3.25em; margin-right: 1.25em; }
-  .codebox-grid pre { margin-top: 0; margin-bottom: 0; overflow: auto; position: relative; padding: 0; }
-  /* Match fonts between line numbers and code for perfect vertical alignment */
-  .codebox-grid pre, .codebox-grid pre code { font-family: "Fira Mono", "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "source-code-pro", monospace; }
-  pre > code.code-with-lines { display: block; padding: 0; }
-  .font-content pre { margin: 0 0 1em 0; }
   /* Scope: tighten segment horizontally for this page */
   #question_content .ui.segment.with-lines { padding-left: 0 !important; padding-right: 0 !important; }
   /* When a UI segment directly contains an option code block grid, make its border transparent and remove vertical padding */
@@ -28,6 +11,7 @@
     padding-top: 0 !important;
     padding-bottom: 0 !important;
   }
+  .font-content pre { margin: 0 0 1em 0; }
 </style>
 
 <span id="question_content">
@@ -121,55 +105,7 @@
 $(function(){
   $('.ui.radio.checkbox').checkbox();
   $('.ui.checkbox').checkbox();
-  function prepareCodeGrids($root){
-    $root.find('pre > code').each(function(){
-      var code = this;
-      if (code.getAttribute('data-ln-processed') === '1') return;
-      var pre = code.parentNode;
-      var $pre = $(pre);
-      var $grid = $('<div class="codebox-grid"></div>');
-      $pre.before($grid);
-      $grid.append('<div class="line-numbers"></div>');
-      $grid.append($pre);
-      if (!$(code).hasClass('code-with-lines')) $(code).addClass('code-with-lines');
-      code.setAttribute('data-ln-processed', '1');
-    });
-  }
-  function applyLineNumbers($scope){
-    $scope.find('.codebox-grid').each(function(){
-      var grid = this;
-      var codeEl = grid.querySelector('code.code-with-lines');
-      var lnEl = grid.querySelector('.line-numbers');
-      if (!codeEl || !lnEl) return;
-      var rawText = codeEl.textContent || '';
-      // Use a trimmed copy for counting lines (do not mutate highlighted HTML)
-      var countedText = rawText.replace(/(?:\r\n|\r|\n)+$/, '');
-      if (lnEl.getAttribute('data-ln-applied') === '1' && lnEl.getAttribute('data-ln-for') === countedText) return;
-
-      var lines = countedText.split(/\r\n|\r|\n/);
-      if (lines.length <= 1) {
-        lnEl.innerHTML = '';
-        lnEl.setAttribute('data-ln-applied', '1');
-        lnEl.setAttribute('data-ln-for', countedText);
-        return;
-      }
-      var nums = [];
-      for (var i = 1; i <= lines.length; i++) nums.push('<span class="line-number">' + i + '</span>');
-      lnEl.innerHTML = nums.join('');
-      lnEl.setAttribute('data-ln-applied', '1');
-      lnEl.setAttribute('data-ln-for', countedText);
-
-      var pre = grid.querySelector('pre');
-      if (pre) {
-        pre.addEventListener('scroll', function () {
-          lnEl.scrollTop = pre.scrollTop;
-        });
-      }
-    });
-  }
-  var $scope = $('.font-content');
-  prepareCodeGrids($scope);
-  applyLineNumbers($scope);
+  QuestionCodeLines.init($('.font-content'));
 });
 </script>
 
