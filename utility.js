@@ -72,7 +72,7 @@ module.exports = {
     let replaceUI = s => {
       if (noReplaceUI) return s;
 
-      s = s.split('<pre>').join('<div class="ui existing segment with-lines"><pre style="margin-top: 0; margin-bottom: 0; ">').split('</pre>').join('</pre></div>')
+      s = s.split('<pre>').join('<div class="ui existing segment with-lines"><pre>').split('</pre>').join('</pre></div>')
            .split('<table>').join('<table class="ui structured celled table">')
            .split('<hr>').join('<div class="ui hidden section divider"></div>')
            .split(/(?<!-)--(?!-)/).join('')

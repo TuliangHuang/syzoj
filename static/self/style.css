@@ -79,6 +79,7 @@ th {
 }
 
 pre {
+    margin: 0;
     tab-size: 4;
     overflow: auto;
     position: relative;
