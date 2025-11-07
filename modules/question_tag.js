@@ -4,19 +4,14 @@ let QuestionTagMap = syzoj.model('question_tag_map');
 
 const { tagColorOrder } = require('../constants');
 
-async function getQuestionTags(questionId) {
-  let maps = await QuestionTagMap.find({ where: { question_id: questionId } });
-  let tagIDs = maps.map(x => x.tag_id);
-  return await tagIDs.mapAsync(async tagID => QuestionTag.findById(tagID));
-}
-
 // Tag filter page
 app.get('/questions/tag/:tagIDs', async (req, res) => {
   try {
     let tagIDs = Array.from(new Set(req.params.tagIDs.split(',').map(x => parseInt(x)))).filter(x => x);
     let tags = await tagIDs.mapAsync(async tagID => QuestionTag.findById(tagID));
-    const sort = req.query.sort || 'id';
-    const order = req.query.order || 'desc';
+    // Reuse problem.order
+    const sort = req.query.sort || syzoj.config.sorting.problem.field;
+    const order = req.query.order || syzoj.config.sorting.problem.order;
     if (!['id', 'title'].includes(sort) || !['asc', 'desc'].includes(order)) {
       throw new ErrorMessage('错误的排序参数。');
     }
@@ -37,7 +32,7 @@ app.get('/questions/tag/:tagIDs', async (req, res) => {
 
     questions = await questions.mapAsync(async q => {
       q = await Question.findById(q.id);
-      q.tags = await getQuestionTags(q.id);
+      q.tags = await q.getTags();
       return q;
     });
 
