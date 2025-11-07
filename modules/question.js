@@ -61,7 +61,7 @@ app.get('/question/:id', async (req, res) => {
     res.render('question', {
       question,
       parent,
-      descriptionHtml: rendered.description,
+      description: rendered.description,
       items: rendered.items || [],
       numberingMode: rendered.numberingMode,
       showAllPoints: rendered.showAllPoints,
