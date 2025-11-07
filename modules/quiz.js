@@ -263,7 +263,7 @@ app.get('/quiz/:id/question/:qid', async (req, res) => {
       dir,
       question,
       parent,
-      descriptionHtml: rendered.description,
+      description: rendered.description,
       items: itemsForView,
       numberingMode: rendered.numberingMode,
       showAllPoints,

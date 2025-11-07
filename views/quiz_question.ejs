@@ -2,11 +2,6 @@
 <% include header %>
 <% include question_utility %>
 
-<style>
-  /* Scope: tighten segment horizontally for this page */
-  #question_content .ui.segment.with-lines { padding-left: 0 !important; padding-right: 0 !important; }
-  </style>
-
 <span id="question_content">
 <div class="ui center aligned grid">
   <div class="row">
@@ -34,24 +29,11 @@
   <div class="row" style="padding-bottom: 0; ">
     <div class="column">
       <h2 class="ui header"><%= (question && question.type) ? question.type : '题目' %></h2>
-      <% if (descriptionHtml) { %>
-      <div class="font-content"><%- descriptionHtml %></div>
-      <% } %>
+      <% var quizMode = true; %>
+      <% var formAction = syzoj.utils.makeUrl(['quiz', quiz.id, 'question', qid, 'save'], aid ? { aid } : null); %>
+      <% include question_content %>
     </div>
   </div>
-  <% if (items && items.length) { %>
-  <div class="row">
-    <div class="column">
-      <form id="qq-form" class="ui form" method="post" action="<%= syzoj.utils.makeUrl(['quiz', quiz.id, 'question', qid, 'save'], aid ? { aid } : null) %>">
-        <input type="hidden" name="aid" value="<%= aid || '' %>">
-        <div class="field">
-          <% include question_items %>
-        </div>
-        <div id="autosave-status" class="ui tiny text" style="margin-top: 6px; color: rgba(0,0,0,.5); "></div>
-      </form>
-    </div>
-  </div>
-  <% } %>
 </div>
 
 <div class="ui center aligned grid" style="margin-top: 20px;">

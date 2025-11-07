@@ -89,6 +89,14 @@ img {
 	max-width: 100%;
 }
 
+/* Widen page container for wide two-column display mode */
+@media (min-width: 1200px) {
+  .ui.container:has(.wide-two-col-display-mode) {
+    max-width: 1600px !important;
+    width: 1600px !important;
+  }
+}
+
 table.center.aligned ul, table.center.aligned ol {
 	display: inline-block;
 	text-align: left;

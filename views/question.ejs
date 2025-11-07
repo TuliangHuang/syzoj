@@ -2,21 +2,6 @@
 <% include header %>
 <% include question_utility %>
 
-<style>
-  /* Scope: tighten segment horizontally for this page */
-  #question_content .ui.segment.with-lines { padding-left: 0 !important; padding-right: 0 !important; }
-  /* When a UI segment directly contains an option code block grid, make its border transparent and remove vertical padding */
-  .ui.segment:has(.option-content .codebox-grid) {
-    border-color: transparent !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-  }
-  /* Widen container only when description+items two-column grid is present */
-  @media (min-width: 1200px) {
-    .ui.container:has(#question_content .desc-items-grid) { max-width: 1600px !important; width: 1600px !important; }
-  }
-</style>
-
 <span id="question_content">
 <div class="ui center aligned grid">
   <div class="row">
@@ -51,31 +36,8 @@
   <div class="row">
     <div class="column">
       <h2 class="ui header"><%= (question && question.type) ? question.type : '题目' %></h2>
-      <% if (description && items && items.length) { %>
-      <div class="ui stackable grid desc-items-grid">
-        <div class="eight wide column">
-          <div class="font-content"><%- description %></div>
-        </div>
-        <div class="eight wide column">
-          <div class="ui form">
-            <div class="field">
-              <% include question_items %>
-            </div>
-          </div>
-        </div>
-      </div>
-      <% } else { %>
-        <% if (description) { %>
-        <div class="font-content"><%- description %></div>
-        <% } %>
-        <% if (items && items.length) { %>
-          <div class="ui form" style="margin-top: 1rem;">
-            <div class="field">
-              <% include question_items %>
-            </div>
-          </div>
-        <% } %>
-      <% } %>
+      <% var quizMode = false; %>
+      <% include question_content %>
     </div>
   </div>
 
