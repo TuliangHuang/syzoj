@@ -1,8 +1,8 @@
 <% this.title = '首页'; %>
 <% include header %>
 <div class="padding">
-  <div class="ui stackable grid">
-    <div class="eleven wide column">
+  <div id="home-grid" class="ui stackable grid">
+    <div id="home-left-col" class="eleven wide column">
       <h4 class="ui top attached block header"><i class="ui bullhorn icon"></i>公告</h4>
       <div class="ui bottom attached segment">
         <table class="ui very basic table" style="padding: 10px;">
@@ -65,7 +65,7 @@
         </table>
       </div>
     </div>
-    <div class="right floated five wide column">
+    <div id="home-right-col" class="right floated five wide column">
       <h4 class="ui top attached block header"><i class="ui search icon"></i>搜索题目</h4>
       <div class="ui bottom attached segment">
         <form action="<%= syzoj.utils.makeUrl(['problems', 'search']) %>" method="get">
@@ -141,6 +141,34 @@ $(function () {
       title: 'name'
     }
   });
+
+  function updateHomeColumns() {
+    var grid = document.getElementById('home-grid');
+    var left = document.getElementById('home-left-col');
+    var right = document.getElementById('home-right-col');
+    if (!grid || !left || !right) return;
+
+    // 估算右列在显示时的宽度（5/16 的栅格宽）
+    var gridWidth = grid.clientWidth;
+    var expectedRightWidth = gridWidth * 5 / 16;
+    var deviceWidth = (window.screen && window.screen.width) || window.innerWidth;
+
+    if (expectedRightWidth < 300 || deviceWidth < 768) {
+      // 隐藏右列，左列占满
+      right.style.display = 'none';
+      right.classList.replace('five', 'zero');
+      left.classList.replace('eleven', 'sixteen');
+    } else {
+      // 还原
+      right.style.display = 'inline-block';
+      right.classList.replace('zero', 'five');
+      left.classList.replace('sixteen', 'eleven');
+    }
+  }
+
+  updateHomeColumns();
+  window.addEventListener('resize', updateHomeColumns, { passive: true });
+  window.addEventListener('orientationchange', updateHomeColumns, { passive: true });
 });
 </script>
 <% include footer %>
