@@ -71,3 +71,16 @@ app.get('/help', async (req, res) => {
     });
   }
 });
+
+// 临时脚本路由，用于非标准化的脚本运行
+app.get('/script', async (req, res) => {
+  try {
+    console.log("hello world");
+    res.redirect('/home');
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
