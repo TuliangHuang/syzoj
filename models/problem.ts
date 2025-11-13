@@ -615,7 +615,7 @@ export default class Problem extends Model {
   async delete() {
     const entityManager = TypeORM.getManager();
 
-    let oldTestdataDir = this.getTestdataPath(), oldTestdataZip = this.getTestdataPath();
+    let oldTestdataDir = this.getTestdataPath(), oldTestdataZip = this.getTestdataArchivePath();
     await fs.remove(oldTestdataDir);
     await fs.remove(oldTestdataZip);
 
