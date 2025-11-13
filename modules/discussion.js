@@ -161,6 +161,26 @@ app.get('/slides/:id', async (req, res) => {
   }
 });
 
+app.get('/article/:id/raw', async (req, res) => {
+  try {
+    let id = parseInt(req.params.id);
+    let article = await Article.findById(id);
+    if (!article) throw new ErrorMessage('无此帖子。');
+
+    if (!await article.isAllowedViewBy(res.locals.user)) {
+      throw new ErrorMessage('您没有权限查看此帖子。');
+    }
+
+    res.setHeader('Content-Type', 'text/plain; charset=UTF-8');
+    res.send(article.content || '');
+  } catch (e) {
+    syzoj.log(e);
+    res.render('error', {
+      err: e
+    });
+  }
+});
+
 app.get('/article/:id', async (req, res) => {
   try {
     let id = parseInt(req.params.id);

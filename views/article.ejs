@@ -32,6 +32,7 @@
   <div class="row"><div class="column">
     <div class="ui tiny buttons">
       <a class=" ui teal button" href="<%= syzoj.utils.makeUrl(['slides', article.id]) %>">演示</a>
+      <div class="ui button" id="btn-copy-md">导出</div>
     </div>
     <div class="ui tiny buttons right floated">
       <% if (article.allowedEdit) { %>
@@ -133,5 +134,54 @@
     </form>
   </div></div>
   <% } %>
+  <script>
+    (function () {
+      var btn = document.getElementById('btn-copy-md');
+      if (!btn) return;
+      btn.addEventListener('click', async function () {
+        try {
+          var self = this;
+          var original = self.textContent;
+          self.classList.add('disabled', 'loading');
+          self.textContent = '复制中...';
+          const url = '<%= syzoj.utils.makeUrl(['article', article.id, 'raw']) %>';
+          const resp = await fetch(url, { credentials: 'same-origin' });
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          const text = await resp.text();
+          await (async function copyToClipboard(t) {
+            if (navigator.clipboard && window.isSecureContext) {
+              return navigator.clipboard.writeText(t);
+            } else {
+              const ta = document.createElement('textarea');
+              ta.value = t;
+              ta.setAttribute('readonly', '');
+              ta.style.position = 'fixed';
+              ta.style.top = '-9999px';
+              document.body.appendChild(ta);
+              ta.select();
+              ta.setSelectionRange(0, ta.value.length);
+              const ok = document.execCommand('copy');
+              document.body.removeChild(ta);
+              if (!ok) throw new Error('复制命令被浏览器拒绝');
+            }
+          })(text);
+          self.classList.remove('disabled', 'loading');
+          self.classList.add('green');
+          self.textContent = '已复制';
+          setTimeout(function () {
+            self.classList.remove('green');
+            self.textContent = original;
+          }, 1500);
+        } catch (e) {
+          alert('复制失败：' + (e && e.message ? e.message : '未知错误'));
+          try {
+            var self2 = this;
+            self2.classList.remove('disabled', 'loading');
+            self2.textContent = '导出';
+          } catch (_) {}
+        }
+      });
+    })();
+  </script>
 </div>
 <% include footer %>
