@@ -13,26 +13,24 @@ function setLoginCookie(username, password, res) {
 // Login
 app.post('/api/login', async (req, res) => {
   try {
-    res.setHeader('Content-Type', 'application/json');
     let user = await User.fromName(req.body.username);
 
     if (!user) throw 1001;
-    else if (user.password == null || user.password === '') res.send({ error_code: 1003 });
-    else if (user.password !== req.body.password) res.send({ error_code: 1002 });
+    else if (user.password == null || user.password === '') res.json({ error_code: 1003 });
+    else if (user.password !== req.body.password) res.json({ error_code: 1002 });
     else {
       req.session.user_id = user.id;
       setLoginCookie(user.username, user.password, res);
-      res.send({ error_code: 1 });
+      res.json({ error_code: 1 });
     }
   } catch (e) {
     syzoj.log(e);
-    res.send({ error_code: e });
+    res.json({ error_code: e });
   }
 });
 
 app.post('/api/forget', async (req, res) => {
   try {
-    res.setHeader('Content-Type', 'application/json');
     let user = await User.fromEmail(req.body.email);
     if (!user) throw 1001;
     let sendObj = {
@@ -51,24 +49,22 @@ app.post('/api/forget', async (req, res) => {
         `<p>请点击该链接来重置密码：</p><p><a href="${vurl}">${vurl}</a></p><p>链接有效期为 12h。如果您不是 ${user.username}，请忽略此邮件。</p>`
       );
     } catch (e) {
-      return res.send({
+      return res.json({
         error_code: 2010,
         message: require('util').inspect(e)
       });
-      return null;
     }
 
-    res.send({ error_code: 1 });
+    res.json({ error_code: 1 });
   } catch (e) {
     syzoj.log(e);
-    res.send(JSON.stringify({ error_code: e }));
+    res.json({ error_code: e });
   }
 });
 
 // Sign up
 app.post('/api/sign_up', async (req, res) => {
   try {
-    res.setHeader('Content-Type', 'application/json');
     let user = await User.fromName(req.body.username);
     if (user) throw 2008;
     // Make email optional; if provided (non-empty after trim), ensure it's unique
@@ -95,7 +91,7 @@ app.post('/api/sign_up', async (req, res) => {
       } });
       if (existingPending && existingPending.status === 'pending') {
         // Treat as already submitted
-        return res.send(JSON.stringify({ error_code: 2 }));
+        return res.json({ error_code: 2 });
       }
 
       const reqRecord = await RegistrationRequest.create({
@@ -132,13 +128,13 @@ app.post('/api/sign_up', async (req, res) => {
           );
         }
       } catch (e) {
-        return res.send({
+        return res.json({
           error_code: 2010,
           message: require('util').inspect(e)
         });
       }
 
-      return res.send(JSON.stringify({ error_code: 2 }));
+      return res.json({ error_code: 2 });
     } else {
       user = await User.create({
         username: req.body.username,
@@ -153,11 +149,11 @@ app.post('/api/sign_up', async (req, res) => {
       req.session.user_id = user.id;
       setLoginCookie(user.username, user.password, res);
 
-      res.send(JSON.stringify({ error_code: 1 }));
+      res.json({ error_code: 1 });
     }
   } catch (e) {
     syzoj.log(e);
-    res.send(JSON.stringify({ error_code: e }));
+    res.json({ error_code: e });
   }
 });
 
@@ -181,7 +177,6 @@ app.get('/api/forget_confirm', async (req, res) => {
 
 app.post('/api/reset_password', async (req, res) => {
   try {
-    res.setHeader('Content-Type', 'application/json');
     let obj;
     try {
       obj = jwt.verify(req.body.token, syzoj.config.email_jwt_secret, { subject: 'forget' });
@@ -195,13 +190,13 @@ app.post('/api/reset_password', async (req, res) => {
     user.password = req.body.password;
     await user.save();
 
-    res.send(JSON.stringify({ error_code: 1 }));
+    res.json({ error_code: 1 });
   } catch (e) {
     syzoj.log(e);
     if (typeof e === 'number') {
-      res.send(JSON.stringify({ error_code: e }));
+      res.json({ error_code: e });
     } else {
-      res.send(JSON.stringify({ error_code: 1000 }));
+      res.json({ error_code: 1000 });
     }
   }
 });

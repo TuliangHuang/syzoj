@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const url = require('url');
 
-app.get('/api/v2/search/users/:keyword*?', async (req, res) => {
+app.apiRouter.get('/api/v2/search/users/:keyword*?', async (req, res) => {
   try {
     let User = syzoj.model('user');
 
@@ -17,7 +17,7 @@ app.get('/api/v2/search/users/:keyword*?', async (req, res) => {
       conditions.push({ nickname: TypeORM.Like(`%${req.params.keyword}%`) });
     }
     if (conditions.length === 0) {
-      res.send({ success: true, results: [] });
+      res.json({ success: true, results: [] });
     } else {
       let users = await User.find({
         where: conditions,
@@ -37,15 +37,15 @@ app.get('/api/v2/search/users/:keyword*?', async (req, res) => {
         if (username) labelParts.push(`(${username})`);
         return { name: labelParts.join(' '), value: x.id, url: syzoj.utils.makeUrl(['user', x.id]) };
       });
-      res.send({ success: true, results: result });
+      res.json({ success: true, results: result });
     }
   } catch (e) {
     syzoj.log(e);
-    res.send({ success: false });
+    res.json({ success: false });
   }
 });
 
-app.get('/api/v2/search/problems/:keyword*?', async (req, res) => {
+app.apiRouter.get('/api/v2/search/problems/:keyword*?', async (req, res) => {
   try {
     let Problem = syzoj.model('problem');
 
@@ -75,14 +75,14 @@ app.get('/api/v2/search/problems/:keyword*?', async (req, res) => {
     });
 
     result = result.map(x => ({ name: `#${x.id}. ${x.title}`, value: x.id, url: syzoj.utils.makeUrl(['problem', x.id]) }));
-    res.send({ success: true, results: result });
+    res.json({ success: true, results: result });
   } catch (e) {
     syzoj.log(e);
-    res.send({ success: false });
+    res.json({ success: false });
   }
 });
 
-app.get('/api/v2/search/tags/:keyword*?', async (req, res) => {
+app.apiRouter.get('/api/v2/search/tags/:keyword*?', async (req, res) => {
   try {
     let ProblemTag = syzoj.model('problem_tag');
 
@@ -108,15 +108,15 @@ app.get('/api/v2/search/tags/:keyword*?', async (req, res) => {
     let result = tags.slice(0, syzoj.config.page.edit_problem_tag_list);
 
     result = result.map(x => ({ name: x.name, value: x.id }));
-    res.send({ success: true, results: result });
+    res.json({ success: true, results: result });
   } catch (e) {
     syzoj.log(e);
-    res.send({ success: false });
+    res.json({ success: false });
   }
 });
 
 // search question tags
-app.get('/api/v2/search/question-tags/:keyword*?', async (req, res) => {
+app.apiRouter.get('/api/v2/search/question-tags/:keyword*?', async (req, res) => {
   try {
     let QuestionTag = syzoj.model('question_tag');
 
@@ -143,10 +143,10 @@ app.get('/api/v2/search/question-tags/:keyword*?', async (req, res) => {
 
     let result = tags.slice(0, syzoj.config.page.edit_problem_tag_list)
                      .map(x => ({ name: x.name, value: String(x.id) }));
-    res.send({ success: true, results: result });
+    res.json({ success: true, results: result });
   } catch (e) {
     syzoj.log(e);
-    res.send({ success: false, results: [] });
+    res.json({ success: false, results: [] });
   }
 });
 
@@ -210,15 +210,15 @@ app.apiRouter.post('/api/v2/question/render', async (req, res) => {
       } catch (e) {}
     }
     const rendered = await syzoj.utils.renderQuestion(combined, req.body.noReplaceUI === 'true');
-    res.send({ success: true, description: rendered.description, items: rendered.items || [], numberingMode: rendered.numberingMode, showAllPoints: rendered.showAllPoints });
+    res.json({ success: true, description: rendered.description, items: rendered.items || [], numberingMode: rendered.numberingMode, showAllPoints: rendered.showAllPoints });
   } catch (e) {
     syzoj.log(e);
-    res.send({ success: false, error: e.toString() });
+    res.json({ success: false, error: e.toString() });
   }
 });
 
 // GPA Courses: resolve by alias name
-app.get('/api/v2/nebs-courses/resolve', async (req, res) => {
+app.apiRouter.get('/api/v2/nebs-courses/resolve', async (req, res) => {
   try {
     const NebsCourseGpa = syzoj.model('nebs_course_gpa');
     const name = String(req.query.name || '').trim();
@@ -238,7 +238,7 @@ app.get('/api/v2/nebs-courses/resolve', async (req, res) => {
 });
 
 // GPA Courses: search official courses by keyword (only official entries: official_id is null)
-app.get('/api/v2/nebs-courses/search', async (req, res) => {
+app.apiRouter.get('/api/v2/nebs-courses/search', async (req, res) => {
   try {
     const NebsCourseGpa = syzoj.model('nebs_course_gpa');
     const keyword = String(req.query.keyword || '').trim();
@@ -259,7 +259,7 @@ app.get('/api/v2/nebs-courses/search', async (req, res) => {
 });
 
 // GPA Courses: create or link alias
-app.post('/api/v2/nebs-courses', async (req, res) => {
+app.apiRouter.post('/api/v2/nebs-courses', async (req, res) => {
   try {
     // permission: only admin or username === 'ping'
     if (!res.locals.user || !(res.locals.user.is_admin || (String(res.locals.user.username || '').toLowerCase() === 'ping'))) {
@@ -349,7 +349,7 @@ app.apiRouter.post('/api/v2/question/items/render', async (req, res) => {
     res.render('question_items', { items, showAllPoints });
   } catch (e) {
     syzoj.log(e);
-    res.send({ success: false, error: e.toString() });
+    res.json({ success: false, error: e.toString() });
   }
 });
 
