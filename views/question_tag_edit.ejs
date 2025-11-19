@@ -69,33 +69,6 @@
 <script>
 $(function () {
   $('#tag_color').dropdown();
-  var isNew = (parseInt('<%= tag.id || 0 %>') === 0);
-  if (isNew) {
-    var $form = $('.ui.form');
-    $form.on('submit', function (e) {
-      e.preventDefault();
-      var name = ($form.find('input[name="name"]').val() || '').trim();
-      var color = $('#tag_color').dropdown('get value');
-      if (!name) {
-        return syzoj.alert('标签名称不能为空。');
-      }
-      $.ajax({
-        url: '/api/v2/question-tags',
-        method: 'POST',
-        data: { name: name, color: color },
-        success: function (resp) {
-          if (resp && resp.success && resp.tag && resp.tag.id) {
-            window.location.href = syzoj.utils.makeUrl(['questions', 'tag', resp.tag.id]);
-          } else {
-            syzoj.alert('创建失败，请稍后重试。');
-          }
-        },
-        error: function () {
-          syzoj.alert('创建失败，请稍后重试。');
-        }
-      });
-    });
-  }
 });
   </script>
 <% include footer %>
