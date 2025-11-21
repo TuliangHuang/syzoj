@@ -481,7 +481,20 @@ if (isVJudge) testcases = [];
           .not($(this))
           .removeClass('active')
       ;
-      // Language switching is no-op for simple editor
+      // Switch Monaco editor language by recreating editor with the new mode
+      try {
+        var newMode = $(this).data('mode');
+        if (!newMode) return;
+        var editorElement = document.getElementById('editor');
+        var content = (window.editor && typeof window.editor.getValue === 'function') ? window.editor.getValue() : '';
+        if (window.editor && typeof window.editor.dispose === 'function') {
+          window.editor.dispose();
+        }
+        var newEditor = window.createCodeEditor(editorElement, newMode, content);
+        window.editor = newEditor;
+      } catch (e) {
+        console.error('Failed to switch editor language:', e);
+      }
     });
   });
 </script>
