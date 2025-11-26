@@ -8,11 +8,7 @@ let zh = require('../libs/timeago');
 TimeAgo.locale(zh);
 const timeAgo = new TimeAgo('zh-CN');
 
-app.get('/', (req, res) => {
-  res.redirect('/home');
-});
-
-app.get('/home', async (req, res) => {
+app.get('/', async (req, res) => {
   try {
     let ranklist = await User.queryRange([1, syzoj.config.page.ranklist_index], { is_show: true }, {
       [syzoj.config.sorting.ranklist.field]: syzoj.config.sorting.ranklist.order
