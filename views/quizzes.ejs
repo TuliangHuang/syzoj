@@ -17,7 +17,7 @@
         <tr>
           <th class="left aligned">小测名称</th>
           <th class="left aligned">描述</th>
-          <th class="left aligned">题目数</th>
+          <th class="right aligned">题目数</th>
         </tr>
       </thead>
       <tbody>
@@ -25,7 +25,7 @@
         <tr>
           <td class="left aligned"><a href="<%= syzoj.utils.makeUrl(['quiz', item.quiz.id]) %>"><%= item.quiz.title || ('#' + item.quiz.id) %></a></td>
           <td class="left aligned font-content"><%= item.quiz.description || '' %></td>
-          <td class="left aligned"><%= item.count %></td>
+          <td class="right aligned"><%= item.count %></td>
         </tr>
         <% } %>
       </tbody>
