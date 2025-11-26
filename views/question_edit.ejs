@@ -27,6 +27,28 @@
   .add-tag-row { display: flex; align-items: center; gap: 8px; }
   .add-tag-row .flex-1 { flex: 1 1 auto; }
   .add-tag-inline { display: flex; align-items: center; gap: 6px; }
+  /* Collapsible fields */
+  .ui.form .field.collapsible > label {
+    cursor: pointer;
+    position: relative;
+    padding-right: 1.2em;
+    user-select: none;
+  }
+  .ui.form .field.collapsible > label .collapse-caret {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: color .15s ease;
+    color: rgba(0,0,0,.6);
+  }
+  .ui.form .field.collapsible .collapsible-body {
+    display: none;
+    margin-top: 8px;
+  }
+  .ui.form .field.collapsible.is-open .collapsible-body {
+    display: block;
+  }
 </style>
 <div class="padding">
   <form method="post" action="<%= syzoj.utils.makeUrl(['question', req.params.id, 'edit']) %>">
@@ -148,15 +170,15 @@
         </div>
         <div class="field spaced-block">
           <label for="description">题目描述</label>
-          <textarea class="markdown-edit" rows="15" id="description" name="description"><%= question.description %></textarea>
+          <textarea class="markdown-edit" rows="30" id="description" name="description"><%= question.description %></textarea>
         </div>
         <div class="field spaced-block">
           <label for="answer">标准答案</label>
-          <textarea class="markdown-edit" rows="10" id="answer" name="answer"><%= question.answer %></textarea>
+          <textarea class="markdown-edit" rows="30" id="answer" name="answer"><%= question.answer %></textarea>
         </div>
         <div class="field spaced-block">
           <label for="tutorial">题解</label>
-          <textarea class="markdown-edit" rows="10" id="tutorial" name="tutorial"><%= question.tutorial %></textarea>
+          <textarea class="markdown-edit" rows="30" id="tutorial" name="tutorial"><%= question.tutorial %></textarea>
         </div>
       </div></div>
     </div>
@@ -254,6 +276,43 @@ $(function () {
     render($("#pv-tutorial"), $("#tutorial"));
   });
   $('.tabular.menu .item').tab();
+});
+</script>
+<script>
+$(function () {
+  var $editForm = $('.ui.bottom.attached.tab.segment[data-tab="edit"] .ui.form');
+
+  // Wrap only fields that contain a textarea into collapsible sections
+  $editForm.find('.field').each(function () {
+    var $field = $(this);
+    if ($field.find('textarea').length === 0) return;
+    if ($field.hasClass('collapsible') || $field.find('.collapsible-body').length > 0) return;
+    var $label = $field.children('label').first();
+    if ($label.length === 0) return;
+    var $others = $field.children().not($label);
+    if ($others.length === 0) return;
+    if ($label.find('.collapse-caret').length === 0) {
+      $label.append('<i class="caret left icon collapse-caret" aria-hidden="true"></i>');
+    }
+    var $body = $('<div class="collapsible-body"></div>');
+    $others.appendTo($body);
+    $field.addClass('collapsible');
+    $field.append($body);
+    // Toggle behavior on label
+    $label.attr('role', 'button').attr('tabindex', '0');
+    function updateCaretIcon() {
+      var $icon = $label.find('.collapse-caret');
+      var isOpen = $field.hasClass('is-open');
+      $icon.removeClass('right down left dropdown');
+      $icon.addClass(isOpen ? 'down' : 'left');
+    }
+    // Default open for description section
+    if ($field.find('textarea#description').length > 0) {
+      $field.addClass('is-open');
+    }
+    $label.on('click', function () { $field.toggleClass('is-open'); updateCaretIcon(); });
+    updateCaretIcon();
+  });
 });
 </script>
 <script>
