@@ -128,17 +128,65 @@ if (isVJudge) testcases = [];
      </div>
     <% } %>
     <% if (problem.tags && problem.tags.length) { %>
-      <div class="row" style="margin-top: -23px">
+      <div class="row show_tag_controled" id="problem_tag_row" style="margin-top: -23px; white-space: normal;">
         <% for (let tag of problem.tags) { %>
           <a href="<%= syzoj.utils.makeUrl(['problems', 'tag', tag.id]) %>" class="ui <%= tag.color %> label">
             <%= tag.name %>
           </a>
         <% } %>
         <% if (problem.difficulty != null) { %>
-          <span class="ui black basic label"><%= problem.difficulty %></span>
+          <span class="ui black basic label difficulty_tag_inline"><%= problem.difficulty %></span>
         <% } %>
       </div>
     <% } %>
+    <script data-cfasync="false">
+    (function () {
+      if (typeof window === 'undefined' || typeof document === 'undefined') return;
+      if (typeof window.renderShowTagStyle !== 'function') {
+        window.renderShowTagStyle = function (visible) {
+          return visible
+            ? '.show_tag_controled { white-space: nowrap; overflow: hidden; }\n.difficulty_tag_column { display: table-cell; }\n.difficulty_tag_inline { display: inline-block; }'
+            : '.show_tag_controled { width: 0; white-space: nowrap; overflow: hidden; }\n.difficulty_tag_column, .difficulty_tag_inline { display: none; }';
+        };
+      }
+
+      function ensureShowTagStyle() {
+        var styleEl = document.getElementById('show_tag_style');
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = 'show_tag_style';
+          document.head.appendChild(styleEl);
+        }
+        return styleEl;
+      }
+
+      function applyShowTagPreference() {
+        var show = true;
+        try {
+          show = localStorage.getItem('show_tag') !== '0';
+        } catch (e) {
+          show = true;
+        }
+
+        var styleEl = ensureShowTagStyle();
+        if (styleEl) {
+          styleEl.innerHTML = window.renderShowTagStyle(show);
+        }
+
+        var tagRow = document.getElementById('problem_tag_row');
+        if (tagRow) {
+          tagRow.style.display = show ? '' : 'none';
+        }
+      }
+
+      applyShowTagPreference();
+      window.addEventListener('storage', function (event) {
+        if (event && event.key === 'show_tag') {
+          applyShowTagPreference();
+        }
+      });
+    })();
+    </script>
 </div>
 <div class="ui grid">
   <div class="row">

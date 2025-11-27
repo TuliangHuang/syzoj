@@ -38,12 +38,19 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
         <div class="ui toggle checkbox" id="show_tag">
           <style id="show_tag_style"></style>
           <script data-cfasync="false">
+          if (typeof window.renderShowTagStyle !== 'function') {
+            window.renderShowTagStyle = function (visible) {
+              return visible
+                ? '.show_tag_controled { white-space: nowrap; overflow: hidden; }\n.difficulty_tag_column { display: table-cell; }\n.difficulty_tag_inline { display: inline-block; }'
+                : '.show_tag_controled { width: 0; white-space: nowrap; overflow: hidden; }\n.difficulty_tag_column, .difficulty_tag_inline { display: none; }';
+            };
+          }
           if (localStorage.getItem('show_tag') !== '0') {
             document.write('<input type="checkbox" checked>');
-            document.getElementById('show_tag_style').innerHTML = '.show_tag_controled { white-space: nowrap; overflow: hidden; }';
+            document.getElementById('show_tag_style').innerHTML = window.renderShowTagStyle(true);
           } else {
             document.write('<input type="checkbox">');
-            document.getElementById('show_tag_style').innerHTML = '.show_tag_controled { width: 0; white-space: nowrap; overflow: hidden; }';
+            document.getElementById('show_tag_style').innerHTML = window.renderShowTagStyle(false);
           }
           </script>
 
@@ -52,15 +59,11 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
             $('#show_tag').checkbox('setting', 'onChange', function () {
               let checked = $('#show_tag').checkbox('is checked');
               localStorage.setItem('show_tag', checked ? '1' : '0');
-              if (checked) {
-                document.getElementById('show_tag_style').innerHTML = '.show_tag_controled { white-space: nowrap; overflow: hidden; }';
-              } else {
-                document.getElementById('show_tag_style').innerHTML = '.show_tag_controled { width: 0; white-space: nowrap; overflow: hidden; }';
-              }
+              document.getElementById('show_tag_style').innerHTML = window.renderShowTagStyle(checked);
             });
           });
           </script>
-          <label>显示分类标签</label>
+          <label>显示标签</label>
         </div>
         <div style="margin-left: 10px; display: inline-block; ">
           <% if (allowedManageTag) { %>
@@ -115,7 +118,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
         <% } %>
         <th class="one wide"><%- createSortableTitle('id', '编号', true) %></th>
         <th class="left aligned"><%- createSortableTitle('title', '题目名称', true) %></th>
-        <th class="one wide"><%- createSortableTitle('difficulty', '难度', false) %></th>
+        <th class="one wide difficulty_tag_column"><%- createSortableTitle('difficulty', '难度', false) %></th>
         <th class="one wide"><%- createSortableTitle('ac_num', '通过', false) %></th>
       </tr>
     </thead>
@@ -161,7 +164,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
                 %>
               </div>
             </td>
-            <td><%= (problem.difficulty == null ? '' : problem.difficulty) %></td>
+            <td class="difficulty_tag_column"><%= (problem.difficulty == null ? '' : problem.difficulty) %></td>
             <td><%= problem.ac_num %></td>
         </tr>
         <% } %>
