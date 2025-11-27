@@ -6,7 +6,9 @@
    - formAction: string (required if wrapItemsInForm)
    - aid: attempt id (optional) passed as hidden if provided
 */ %>
-<% if (description && items && items.length) { %>
+<% var useDoubleColumn = (typeof doubleColumn !== 'undefined') ? doubleColumn : ((typeof question !== 'undefined' && question) ? question.is_double_column : false); %>
+<% useDoubleColumn = !!useDoubleColumn; %>
+<% if (useDoubleColumn && description && items && items.length) { %>
 <div class="ui stackable grid">
   <div class="eight wide column">
     <div class="font-content"><%- description %></div>

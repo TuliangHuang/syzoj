@@ -35,6 +35,9 @@ export default class Question extends Model {
   @TypeORM.Column({ nullable: true, type: "text" })
   tutorial: string;
 
+  @TypeORM.Column({ nullable: false, type: "boolean", default: false })
+  is_double_column: boolean;
+
   async getTags() {
     let tagIDs;
     const questionTagCache: LRU<number, number[]> = (Question as any)._tagCache || ((Question as any)._tagCache = new LRU<number, number[]>({ max: syzoj.config.db.cache_size }));

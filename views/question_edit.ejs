@@ -180,6 +180,13 @@
           <label for="tutorial">题解</label>
           <textarea class="markdown-edit" rows="30" id="tutorial" name="tutorial"><%= question.tutorial %></textarea>
         </div>
+        <div class="field spaced-block">
+          <div class="ui <% if (question.is_double_column) { %>checked <% } %>checkbox" style="margin-top: 5px; ">
+            <input name="is_double_column" type="checkbox" value="1" <% if (question.is_double_column) { %>checked=""<% } %>>
+            <label><strong>双栏显示</strong></label>
+            <p style="margin-top: 5px; ">开启后，题目描述和小问会左右并排显示。</p>
+          </div>
+        </div>
       </div></div>
     </div>
     <div class="ui bottom attached tab segment" data-tab="preview" id="preview">

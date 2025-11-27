@@ -248,6 +248,8 @@ app.post('/question/:id/edit', async (req, res) => {
     question.description = req.body.description;
     question.answer = req.body.answer;
     question.tutorial = req.body.tutorial;
+    const boolInput = (req.body.is_double_column || '').toString().toLowerCase();
+    question.is_double_column = boolInput === 'on' || boolInput === '1' || boolInput === 'true';
 
     if (!question.title) throw new ErrorMessage('题目名不能为空。');
 
