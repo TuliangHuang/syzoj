@@ -4,6 +4,56 @@
   .problem_header{
     text-align: center;
   }
+  .difficulty-input-wrapper {
+    position: relative;
+    width: 100%;
+  }
+  .difficulty-input-wrapper input {
+    width: 100%;
+    padding-right: 32px;
+    -moz-appearance: textfield;
+  }
+  .difficulty-input-wrapper input::-webkit-outer-spin-button,
+  .difficulty-input-wrapper input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .difficulty-input-wrapper::after {
+    content: '\f0d7';
+    font-family: 'Icons';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: rgba(0,0,0,0.4);
+  }
+  .difficulty-preset-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    background: #fff;
+    border: 1px solid rgba(34,36,38,.15);
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    z-index: 5;
+    margin-top: 2px;
+    max-height: 220px;
+    overflow-y: auto;
+    display: none;
+  }
+  .difficulty-preset-menu.visible {
+    display: block;
+  }
+  .difficulty-preset-menu .item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .difficulty-preset-menu .item:hover {
+    background: rgba(0,0,0,0.05);
+  }
 </style>
 <div class="padding">
     <form method="post" action="<%= syzoj.utils.makeUrl(['problem', req.params.id, 'edit']) %>">
@@ -26,6 +76,9 @@
 
             <div style="margin-top: 15px; "></div>
           <% } %>
+          <%
+            const difficultyPresets = (syzoj.constants && syzoj.constants.difficultyColorStops) || [];
+          %>
           <label for="title">题目名称</label>
           <input class="font-content" type="text" id="title" name="title" value="<%= problem.title %>">
           <div class="fields" style="margin-bottom: 0px; ">
@@ -39,7 +92,14 @@
             </div>
             <div class="two wide field">
               <label style="margin-top: 15px; " for="difficulty">难度</label>
-              <input class="font-content" type="number" id="difficulty" name="difficulty" value="<%= problem.difficulty == null ? '' : problem.difficulty %>">
+              <div class="ui input difficulty-input-wrapper">
+                <input class="font-content" type="number" id="difficulty" name="difficulty" step="100" value="<%= problem.difficulty == null ? '' : problem.difficulty %>" style="<% if (problem.difficulty != null && syzoj.utils && syzoj.utils.getDifficultyColor) { %>color: <%= syzoj.utils.getDifficultyColor(problem.difficulty) %>;<% } %>" autocomplete="off">
+                <div class="difficulty-preset-menu" id="difficulty_preset_menu">
+                  <% difficultyPresets.forEach(function (preset) { %>
+                    <div class="item" data-value="<%= preset.value %>" style="<% if (preset && Array.isArray(preset.color)) { %>color: rgb(<%= preset.color.join(', ') %>);<% } %>"><%= preset.value %></div>
+                  <% }); %>
+                </div>
+              </div>
             </div>
           </div>
           <div class="fields" style="margin-bottom: 0px; ">
@@ -138,6 +198,77 @@ $(function () {
         cache: false
       }
     });
+});
+</script>
+<script>
+$(function() {
+  const difficultyColorStops = <%- JSON.stringify(difficultyPresets) %>;
+
+  function getDifficultyColor(value) {
+    if (!difficultyColorStops.length) return '';
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return '';
+    if (numericValue <= difficultyColorStops[0].value) {
+      return `rgb(${difficultyColorStops[0].color.join(', ')})`;
+    }
+    if (numericValue >= difficultyColorStops[difficultyColorStops.length - 1].value) {
+      return `rgb(${difficultyColorStops[difficultyColorStops.length - 1].color.join(', ')})`;
+    }
+    for (let i = 0; i < difficultyColorStops.length - 1; i++) {
+      const start = difficultyColorStops[i];
+      const end = difficultyColorStops[i + 1];
+      if (numericValue >= start.value && numericValue <= end.value) {
+        const ratio = (numericValue - start.value) / (end.value - start.value);
+        const interpolated = start.color.map((component, idx) =>
+          Math.round(component + (end.color[idx] - component) * ratio)
+        );
+        return `rgb(${interpolated.join(', ')})`;
+      }
+    }
+    return '';
+  }
+
+  function applyDifficultyColorStyle(value) {
+    const color = getDifficultyColor(value);
+    $('#difficulty').css('color', color || '');
+  }
+
+  const $difficulty = $('#difficulty');
+  const $presetMenu = $('#difficulty_preset_menu');
+  let hideMenuTimer = null;
+
+  function showPresetMenu() {
+    clearTimeout(hideMenuTimer);
+    $presetMenu.addClass('visible');
+  }
+
+  function scheduleHidePresetMenu() {
+    hideMenuTimer = setTimeout(() => $presetMenu.removeClass('visible'), 120);
+  }
+
+  $difficulty.on('focus click', function () {
+    showPresetMenu();
+  });
+
+  $difficulty.on('blur', function () {
+    scheduleHidePresetMenu();
+  });
+
+  $presetMenu.on('mousedown', '.item', function (e) {
+    e.preventDefault();
+    const value = $(this).data('value');
+    if (value !== undefined) {
+      $difficulty.val(value).trigger('change');
+      applyDifficultyColorStyle(value);
+    }
+    $presetMenu.removeClass('visible');
+  });
+
+  $('#difficulty').on('input change', function () {
+    applyDifficultyColorStyle($(this).val());
+  });
+
+  applyDifficultyColorStyle($difficulty.val());
 });
 </script>
 <% include footer %>

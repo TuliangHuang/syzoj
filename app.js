@@ -76,6 +76,7 @@ global.syzoj = {
   configInFile: configInFile,
   reloadConfig: () => syzoj.config = loadConfig(syzoj.configInFile),
   languages: require('./language-config.json'),
+  constants: require('./constants'),
   configDir: options.config,
   models: [],
   modules: [],

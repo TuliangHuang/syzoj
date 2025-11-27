@@ -118,7 +118,7 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
         <% } %>
         <th class="one wide"><%- createSortableTitle('id', '编号', true) %></th>
         <th class="left aligned"><%- createSortableTitle('title', '题目名称', true) %></th>
-        <th class="one wide difficulty_tag_column"><%- createSortableTitle('difficulty', '难度', false) %></th>
+        <th class="one wide difficulty_tag_column show_tag_controled"><%- createSortableTitle('difficulty', '难度', false) %></th>
         <th class="one wide"><%- createSortableTitle('ac_num', '通过', false) %></th>
       </tr>
     </thead>
@@ -164,7 +164,15 @@ if (typeof tags !== 'undefined') tagIDs = tags.map(x => x.id);
                 %>
               </div>
             </td>
-            <td class="difficulty_tag_column"><%= (problem.difficulty == null ? '' : problem.difficulty) %></td>
+            <td class="difficulty_tag_column">
+              <% if (problem.difficulty != null) { 
+                   const difficultyColor = ((syzoj.utils && syzoj.utils.getDifficultyColor)
+                    ? syzoj.utils.getDifficultyColor(problem.difficulty)
+                    : null) || 'rgb(27, 28, 29)';
+              %>
+                <span class="difficulty_tag_inline" style="color: <%= difficultyColor %>; font-weight: 600;"><%= problem.difficulty %></span>
+              <% } %>
+            </td>
             <td><%= problem.ac_num %></td>
         </tr>
         <% } %>

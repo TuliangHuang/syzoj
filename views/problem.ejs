@@ -134,8 +134,12 @@ if (isVJudge) testcases = [];
             <%= tag.name %>
           </a>
         <% } %>
-        <% if (problem.difficulty != null) { %>
-          <span class="ui black basic label difficulty_tag_inline"><%= problem.difficulty %></span>
+        <% if (problem.difficulty != null) { 
+             const difficultyColor = ((syzoj.utils && syzoj.utils.getDifficultyColor)
+              ? syzoj.utils.getDifficultyColor(problem.difficulty)
+              : null) || 'rgb(27, 28, 29)';
+        %>
+          <span class="ui basic label difficulty_tag_inline" style="color: <%= difficultyColor %>; border-color: <%= difficultyColor %>;"><%= problem.difficulty %></span>
         <% } %>
       </div>
     <% } %>

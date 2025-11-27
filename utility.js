@@ -219,6 +219,34 @@ module.exports = {
   parseLuoguUrl(url) {
     return url.split('/').pop();
   },
+  // Return an RGB string for given difficulty using configured color stops.
+  getDifficultyColor(value) {
+    const stops = (syzoj.constants && syzoj.constants.difficultyColorStops) || [];
+    if (value == null || !stops.length) return null;
+    const numericValue = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(numericValue)) return null;
+
+    if (numericValue <= stops[0].value) {
+      return `rgb(${stops[0].color.join(', ')})`;
+    }
+    if (numericValue >= stops[stops.length - 1].value) {
+      return `rgb(${stops[stops.length - 1].color.join(', ')})`;
+    }
+
+    for (let i = 0; i < stops.length - 1; i++) {
+      const start = stops[i];
+      const end = stops[i + 1];
+      if (numericValue >= start.value && numericValue <= end.value) {
+        const ratio = (numericValue - start.value) / (end.value - start.value);
+        const interpolated = start.color.map((component, idx) =>
+          Math.round(component + (end.color[idx] - component) * ratio)
+        );
+        return `rgb(${interpolated.join(', ')})`;
+      }
+    }
+
+    return null;
+  },
   async renderQuestion(markdown, noReplaceUI) {
     const text = String(markdown || '');
 
