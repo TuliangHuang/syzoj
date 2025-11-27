@@ -83,9 +83,9 @@
         <table class="ui very basic center aligned table" style="table-layout: fixed; ">
           <thead>
             <tr>
-              <th style="width: 50px; ">#</th>
-              <th style="width: 170px; ">用户名</th>
-              <th style="width: 50px; ">通过</th>
+              <th style="width: 16%; ">#</th>
+              <th>用户名</th>
+              <th style="width: 16%;">通过</th>
             </tr>
           </thead>
           <script data-cfasync="false">
@@ -142,18 +142,16 @@ $(function () {
     }
   });
 
+  var semanticComputerMin = 992;
+
   function updateHomeColumns() {
-    var grid = document.getElementById('home-grid');
     var left = document.getElementById('home-left-col');
     var right = document.getElementById('home-right-col');
-    if (!grid || !left || !right) return;
+    if (!left || !right) return;
 
-    // 估算右列在显示时的宽度（5/16 的栅格宽）
-    var gridWidth = grid.clientWidth;
-    var expectedRightWidth = gridWidth * 5 / 16;
-    var deviceWidth = (window.screen && window.screen.width) || window.innerWidth;
+    var deviceWidth = window.innerWidth || (window.screen && window.screen.width) || 0;
 
-    if (expectedRightWidth < 300 || deviceWidth < 768) {
+    if (deviceWidth < semanticComputerMin) {
       // 隐藏右列，左列占满
       right.style.display = 'none';
       right.classList.replace('five', 'zero');

@@ -89,6 +89,58 @@ img {
 	max-width: 100%;
 }
 
+:root {
+  /* Semantic UI 2.4 default breakpoints */
+  --semantic-mobile-max: 767px;          /* @largestMobileScreen */
+  --semantic-tablet-min: 768px;          /* @tabletBreakpoint */
+  --semantic-tablet-max: 991px;          /* @largestTabletScreen */
+  --semantic-computer-min: 992px;        /* @computerBreakpoint */
+  --semantic-small-monitor-max: 1199px;  /* @largestSmallMonitor */
+  --semantic-large-monitor-min: 1200px;  /* @largeMonitorBreakpoint */
+}
+
+/* Responsive header navigation */
+.header-nav-container {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+}
+
+.header-nav-container .right.menu {
+  margin-left: auto;
+}
+
+.header-left-items {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.1em;
+}
+
+.header-mobile-menu {
+  display: none !important;
+  align-items: center;
+  cursor: pointer;
+}
+
+.header-mobile-menu>i.icon {
+  margin: 0;
+}
+
+.header-mobile-menu .menu {
+  min-width: 220px;
+}
+
+@media (max-width: 991px) {
+  .header-left-items {
+    display: none;
+  }
+
+  .header-mobile-menu {
+    display: flex !important;
+  }
+}
 /* Widen page container for wide two-column display mode */
 @media (min-width: 1600px) {
   .ui.container {
