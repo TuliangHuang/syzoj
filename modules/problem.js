@@ -18,6 +18,12 @@ const { tagColorOrder } = require('../constants');
 let CodeFormatter = syzoj.lib('code_formatter');
 const { countCodeTokens } = syzoj.lib('tokenizer');
 
+function resolveRedirectUrl(candidate, fallback) {
+  if (typeof candidate !== 'string') return fallback;
+  if (!candidate.startsWith('/') || candidate.startsWith('//')) return fallback;
+  return candidate;
+}
+
 async function hydrateProblemsForList(problems, user) {
   if (!problems || problems.length === 0) return;
 
@@ -432,8 +438,12 @@ app.get('/problem/:id/edit', async (req, res) => {
 
     problem.allowedManage = await problem.isAllowedManageBy(res.locals.user);
 
+    const defaultRedirect = problem.id ? syzoj.utils.makeUrl(['problem', problem.id]) : syzoj.utils.makeUrl(['problems']);
+    const redirectTo = resolveRedirectUrl(req.query.url, defaultRedirect);
+
     res.render('problem_edit', {
-      problem: problem
+      problem: problem,
+      redirectTo
     });
   } catch (e) {
     syzoj.log(e);
@@ -518,7 +528,10 @@ app.post('/problem/:id/edit', async (req, res) => {
     let newTagIDs = await req.body.tags.map(x => parseInt(x)).filterAsync(async x => ProblemTag.findById(x));
     await problem.setTags(newTagIDs);
 
-    res.redirect(syzoj.utils.makeUrl(['problem', problem.id]));
+    const defaultRedirect = syzoj.utils.makeUrl(['problem', problem.id]);
+    const redirectTarget = resolveRedirectUrl(req.body.redirect || req.body.url, defaultRedirect);
+
+    res.redirect(redirectTarget);
   } catch (e) {
     syzoj.log(e);
     res.render('error', {

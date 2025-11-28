@@ -226,7 +226,7 @@ if (isVJudge) testcases = [];
       <% if (!contest) { %>
         <div class="ui tiny buttons right floated">
           <% if (problem.allowedEdit) { %>
-            <a class="ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'edit']) %>">编辑</a>
+            <a class="ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'edit'], { url: req.originalUrl }) %>">编辑</a>
             <% if (!isVJudge) { %>
             <a class="ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'testdata']) %>">数据</a>
             <a class="ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'manage']) %>">管理</a>
@@ -265,7 +265,7 @@ if (isVJudge) testcases = [];
       <% } else { %>
         <div class="ui tiny buttons right floated">
           <% if (problem.allowedEdit) { %>
-            <a class="ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'edit']) %>">编辑</a>
+            <a class="ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'edit'], { url: req.originalUrl }) %>">编辑</a>
             <% if (!isVJudge) { %>
             <a class="ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'testdata']) %>">数据</a>
             <a class="ui button" href="<%= syzoj.utils.makeUrl(['problem', problem.id, 'manage']) %>">管理</a>

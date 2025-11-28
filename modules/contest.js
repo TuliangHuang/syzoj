@@ -708,6 +708,7 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
     let problem_id = problems_id[pid - 1];
     let problem = await Problem.findById(problem_id);
     await problem.loadRelationships();
+    problem.tags = await problem.getTags();
 
     // Expose permissions for editing/managing the problem while viewed in contest
     problem.allowedEdit = await problem.isAllowedEditBy(res.locals.user);
@@ -728,8 +729,6 @@ app.get('/contest/:id/problem/:pid', async (req, res) => {
 
     let state = await problem.getJudgeState(res.locals.user, false);
     let testcases = await syzoj.utils.parseTestdata(problem.getTestdataPath(), problem.type === 'submit-answer');
-
-    await problem.loadRelationships();
 
     // For contest view: show File IO hint only for NOI contests when filenames are set
     problem.file_io = (contest.type === 'noi') && !!problem.file_io_input_name && !!problem.file_io_output_name;
