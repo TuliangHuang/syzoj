@@ -33,14 +33,44 @@ let subtaskType = {
           <% for (let testcase of subtask.cases) { %>
             <% if (problem.type === 'submit-answer') { %>
               <tr class="center aligned">
-                <td style="width: 33%; "><%= testcase.input || '-' %></td>
-                <td style="width: 33%; "><%= testcase.output || '-' %></td>
-                <td style="width: 33%; "><%= testcase.answer || '-' %></td>
+                <td style="width: 33%; ">
+                  <% if (testcase.input) { %>
+                    <a href="javascript:void(0)" class="preview-link" title="预览 <%= testcase.input %>" data-filename="<%= testcase.input %>" data-url="<%= syzoj.utils.makeUrl(['problem', problem.id, 'testdata', 'preview', testcase.input]) %>"><%= testcase.input %></a>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+                <td style="width: 33%; ">
+                  <% if (testcase.output) { %>
+                    <a href="javascript:void(0)" class="preview-link" title="预览 <%= testcase.output %>" data-filename="<%= testcase.output %>" data-url="<%= syzoj.utils.makeUrl(['problem', problem.id, 'testdata', 'preview', testcase.output]) %>"><%= testcase.output %></a>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+                <td style="width: 33%; ">
+                  <% if (testcase.answer) { %>
+                    <a href="javascript:void(0)" class="preview-link" title="预览 <%= testcase.answer %>" data-filename="<%= testcase.answer %>" data-url="<%= syzoj.utils.makeUrl(['problem', problem.id, 'testdata', 'preview', testcase.answer]) %>"><%= testcase.answer %></a>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
               </tr>
             <% } else { %>
               <tr class="center aligned">
-                <td style="width: 50%; "><%= testcase.input || '-' %></td>
-                <td style="width: 50%; "><%= testcase.output || '-' %></td>
+                <td style="width: 50%; ">
+                  <% if (testcase.input) { %>
+                    <a href="javascript:void(0)" class="preview-link" title="预览 <%= testcase.input %>" data-filename="<%= testcase.input %>" data-url="<%= syzoj.utils.makeUrl(['problem', problem.id, 'testdata', 'preview', testcase.input]) %>"><%= testcase.input %></a>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+                <td style="width: 50%; ">
+                  <% if (testcase.output) { %>
+                    <a href="javascript:void(0)" class="preview-link" title="预览 <%= testcase.output %>" data-filename="<%= testcase.output %>" data-url="<%= syzoj.utils.makeUrl(['problem', problem.id, 'testdata', 'preview', testcase.output]) %>"><%= testcase.output %></a>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
               </tr>
             <% } %>
           <% } %>
@@ -49,4 +79,104 @@ let subtaskType = {
   </table>
 <% } else { %>
   <h4 style="text-align: center; ">无测试数据</h4>
+<% } %>
+
+<% if (!locals.__problemPreviewInjected) { locals.__problemPreviewInjected = true; %>
+<style>
+  #file-preview-overlay { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,0.2); z-index: 1000; display: none; }
+  #file-preview-modal { position: absolute; top: 10%; left: 50%; transform: translateX(-50%); width: 60%; max-width: 800px; background: #fff; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 2px 16px rgba(0,0,0,0.2); }
+  #file-preview-header { padding: 12px 14px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+  #file-preview-body { padding: 12px 14px; max-height: 60vh; overflow: auto; }
+  #file-preview-body pre { white-space: pre-wrap; word-break: break-word; margin: 0; outline: none; }
+</style>
+<div id="file-preview-overlay">
+  <div id="file-preview-modal" onclick="event.stopPropagation()">
+    <div id="file-preview-header">
+      <span id="file-preview-title"></span>
+      <a class="ui icon button" id="file-preview-close" style="margin: 0; "><i class="close icon"></i></a>
+    </div>
+    <div id="file-preview-body">
+      <pre id="file-preview-content" tabindex="0" role="textbox" aria-label="测试数据预览"></pre>
+      <div id="file-preview-truncated" style="display: none; color: #999; margin-top: 8px; ">仅显示前 64KB。</div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  if (window.__problemPreviewBound) return;
+  window.__problemPreviewBound = true;
+
+  $(function () {
+    var $overlay = $('#file-preview-overlay');
+    var $content = $('#file-preview-content');
+    var $truncated = $('#file-preview-truncated');
+    var $title = $('#file-preview-title');
+
+    function focusContent() {
+      $content.trigger('focus');
+    }
+
+    function selectAllContent() {
+      var el = $content.get(0);
+      if (!el) return;
+      var selection = window.getSelection ? window.getSelection() : null;
+      if (!selection || !document.createRange) return;
+      var range = document.createRange();
+      range.selectNodeContents(el);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    function closePreview() {
+      $overlay.hide();
+      $content.text('');
+      $truncated.hide();
+    }
+
+    $(document).on('click', '.preview-link', function (e) {
+      e.preventDefault();
+      var url = $(this).data('url');
+      var name = $(this).data('filename');
+      $title.text(name);
+      $content.text('加载中...');
+      $truncated.hide();
+      $overlay.show();
+      focusContent();
+      $.getJSON(url).done(function (resp) {
+        if (resp && resp.success) {
+          $content.text(resp.content || '');
+          if (resp.truncated) $truncated.show();
+        } else {
+          $content.text('无法加载预览。');
+        }
+        focusContent();
+      }).fail(function () {
+        $content.text('无法加载预览。');
+      });
+    });
+
+    $content.on('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        selectAllContent();
+      }
+    });
+
+    $content.on('mousedown', function () {
+      focusContent();
+    });
+
+    $overlay.on('click', function () {
+      closePreview();
+    });
+    $('#file-preview-close').on('click', function (e) {
+      e.preventDefault();
+      closePreview();
+    });
+    $(document).on('keydown', function (e) {
+      if (e.key === 'Escape') closePreview();
+    });
+  });
+})();
+</script>
 <% } %>

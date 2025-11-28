@@ -158,65 +158,6 @@ function getIcon(filename) {
         }
         </script>
       <% } %>
-      <style>
-        #file-preview-overlay { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,0.2); z-index: 1000; display: none; }
-        #file-preview-modal { position: absolute; top: 10%; left: 50%; transform: translateX(-50%); width: 60%; max-width: 800px; background: #fff; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 2px 16px rgba(0,0,0,0.2); }
-        #file-preview-header { padding: 12px 14px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
-        #file-preview-body { padding: 12px 14px; max-height: 60vh; overflow: auto; }
-        #file-preview-body pre { white-space: pre-wrap; word-break: break-word; margin: 0; }
-      </style>
-      <div id="file-preview-overlay">
-        <div id="file-preview-modal" onclick="event.stopPropagation()">
-          <div id="file-preview-header">
-            <span id="file-preview-title"></span>
-            <a class="ui icon button" id="file-preview-close" style="margin: 0; "><i class="close icon"></i></a>
-          </div>
-          <div id="file-preview-body">
-            <pre id="file-preview-content"></pre>
-            <div id="file-preview-truncated" style="display: none; color: #999; margin-top: 8px; ">仅显示前 64KB。</div>
-          </div>
-        </div>
-      </div>
-      <script>
-      $(function () {
-        function closePreview() {
-          $('#file-preview-overlay').hide();
-          $('#file-preview-content').text('');
-          $('#file-preview-truncated').hide();
-        }
-
-        $(document).on('click', '.preview-link', function (e) {
-          e.preventDefault();
-          var url = $(this).data('url');
-          var name = $(this).data('filename');
-          $('#file-preview-title').text(name);
-          $('#file-preview-content').text('加载中...');
-          $('#file-preview-truncated').hide();
-          $('#file-preview-overlay').show();
-          $.getJSON(url).done(function (resp) {
-            if (resp && resp.success) {
-              $('#file-preview-content').text(resp.content || '');
-              if (resp.truncated) $('#file-preview-truncated').show();
-            } else {
-              $('#file-preview-content').text('无法加载预览。');
-            }
-          }).fail(function () {
-            $('#file-preview-content').text('无法加载预览。');
-          });
-        });
-
-        $('#file-preview-overlay').on('click', function () {
-          closePreview();
-        });
-        $('#file-preview-close').on('click', function (e) {
-          e.preventDefault();
-          closePreview();
-        });
-        $(document).on('keydown', function (e) {
-          if (e.key === 'Escape') closePreview();
-        });
-      });
-      </script>
     </div>
   </div>
 </div>
