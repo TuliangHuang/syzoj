@@ -183,22 +183,36 @@ $(function () {
 </script>
 <script>
 $(function () {
-  $('#search_tags')
-    .dropdown({
-      debug: true,
-      saveRemoteData: false,
-      apiSettings: {
-        url: '/api/v2/search/tags/{query}',
-        onResponse: function (response) {
-          var a = $('#search_tags').val().map(function (x) { return parseInt(x) });
-          if (response.results) {
-            response.results = response.results.filter(function(x) { return !a.includes(parseInt(x.value));});
-          }
-          return response;
-        },
-        cache: false
-      }
-    });
+  var $tagsDropdown = $('#search_tags');
+
+  function getSelectedTagIds() {
+    var selected = $tagsDropdown.val() || [];
+    return selected
+      .map(function (x) { return parseInt(x, 10); })
+      .filter(function (x) { return !isNaN(x); });
+  }
+
+  $tagsDropdown.dropdown({
+    debug: true,
+    saveRemoteData: false,
+    onAdd: function () {
+      // Close the menu once a tag is added to avoid back-to-back selections
+      $tagsDropdown.dropdown('hide');
+    },
+    apiSettings: {
+      url: '/api/v2/search/tags/{query}',
+      onResponse: function (response) {
+        var selectedIds = getSelectedTagIds();
+        if (response.results) {
+          response.results = response.results.filter(function (x) {
+            return !selectedIds.includes(parseInt(x.value, 10));
+          });
+        }
+        return response;
+      },
+      cache: false
+    }
+  });
 });
 </script>
 <script>
