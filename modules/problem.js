@@ -438,9 +438,7 @@ app.get('/problem/:id/edit', async (req, res) => {
 
     problem.allowedManage = await problem.isAllowedManageBy(res.locals.user);
 
-    const defaultRedirect = problem.id ? syzoj.utils.makeUrl(['problem', problem.id]) : syzoj.utils.makeUrl(['problems']);
-    const redirectTo = resolveRedirectUrl(req.query.url, defaultRedirect);
-
+    const redirectTo = resolveRedirectUrl(req.query.url, '');
     res.render('problem_edit', {
       problem: problem,
       redirectTo
