@@ -390,6 +390,7 @@ module.exports = {
 
     const cfPattern = /^#\s*CF(\d+)([A-Z])\b[:\s-]*(.+)/;
     const usacoPattern = /^#\s*P\d+\s*\[USACO(\d{2})([A-Z]{3,4})\]\s*(.+)/;
+    const atPattern = /^#\s*AT_([A-Za-z0-9_]+)\s*(?:\[[^\]]*\])?[:\s-]*(.*)/;
 
     const tierMap = { B: 'Bronze', S: 'Silver', G: 'Gold', P: 'Platinum' };
     const tierOrder = ['B', 'S', 'G', 'P'];
@@ -405,6 +406,24 @@ module.exports = {
       JAN: '1', FEB: '2', MAR: '3', APR: '4', MAY: '5', JUN: '6',
       JUL: '7', AUG: '8', SEP: '9', OCT: '10', NOV: '11', DEC: '12'
     };
+
+    function capitalizeToken(str) {
+      if (!str) return '';
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function formatAtContest(tokens) {
+      if (!tokens.length) return '';
+      const atMatch = tokens[0].match(/^(abc|agc|arc)(\d+)$/i);
+      if (atMatch) {
+        const [, div, numRaw] = atMatch;
+        const padded = numRaw.padStart(3, '0');
+        const extra = tokens.slice(1).map(capitalizeToken).join(' ');
+        const base = `AtCoder ${div.toUpperCase()} ${padded}`;
+        return extra ? `${base} ${extra}` : base;
+      }
+      return tokens.map(capitalizeToken).join(' ');
+    }
 
     for (const line of lines) {
       if (!line.startsWith('# ')) continue;
@@ -427,6 +446,18 @@ module.exports = {
         const name = parts.join(' ');
 
         result.title = `「USACO ${yyyy}${mm} ${tier}」${name}`;
+      } else if (m = line.match(atPattern)) {
+        const [, rawId, restRaw] = m;
+        const rest = (restRaw || '').trim();
+        const parts = rawId.split('_').filter(Boolean);
+        if (!parts.length) {
+          result.title = line.slice(2).trim();
+        } else {
+          const problemCode = parts.pop().toUpperCase();
+          const contestPart = formatAtContest(parts);
+          const display = contestPart ? `${contestPart} ${problemCode}` : problemCode;
+          result.title = `「${display.trim()}」${rest}`;
+        }
       } else {
         result.title = line.slice(2).trim();
       }
