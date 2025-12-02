@@ -184,6 +184,7 @@ $(function () {
 <script>
 $(function () {
   var $tagsDropdown = $('#search_tags');
+  var MIN_TAG_SEARCH_LENGTH = 1;
 
   function getSelectedTagIds() {
     var selected = $tagsDropdown.val() || [];
@@ -192,9 +193,25 @@ $(function () {
       .filter(function (x) { return !isNaN(x); });
   }
 
+  function getCurrentSearchTerm() {
+    var dropdownModule = $tagsDropdown.data('module-dropdown');
+    if (dropdownModule && dropdownModule.$search && dropdownModule.$search.length) {
+      return dropdownModule.$search.val() || '';
+    }
+    return '';
+  }
+
+  function hideDropdownIfEmpty() {
+    if (!getCurrentSearchTerm().trim()) {
+      $tagsDropdown.dropdown('hide');
+    }
+  }
+
   $tagsDropdown.dropdown({
     debug: true,
     saveRemoteData: false,
+    showOnFocus: false,
+    minCharacters: MIN_TAG_SEARCH_LENGTH,
     onAdd: function () {
       // Close the menu once a tag is added to avoid back-to-back selections
       $tagsDropdown.dropdown('hide');
@@ -213,6 +230,26 @@ $(function () {
       cache: false
     }
   });
+
+  var dropdownModule = $tagsDropdown.data('module-dropdown');
+  if (dropdownModule && dropdownModule.$search && dropdownModule.$search.length) {
+    function syncDropdownVisibility() {
+      var term = getCurrentSearchTerm().trim();
+      if (!term) {
+        $tagsDropdown.dropdown('hide');
+        return;
+      }
+      if (term.length >= MIN_TAG_SEARCH_LENGTH) {
+        $tagsDropdown.dropdown('show');
+      }
+    }
+
+    dropdownModule.$search.on('input', function () {
+      syncDropdownVisibility();
+    });
+
+    syncDropdownVisibility();
+  }
 });
 </script>
 <script>
