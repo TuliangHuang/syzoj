@@ -567,11 +567,17 @@ export default class Problem extends Model {
     const entityManager = TypeORM.getManager();
 
     id = parseInt(id);
-    await entityManager.query('UPDATE `problem`               SET `id`         = ' + id + ' WHERE `id`         = ' + this.id);
-    await entityManager.query('UPDATE `judge_state`           SET `problem_id` = ' + id + ' WHERE `problem_id` = ' + this.id);
-    await entityManager.query('UPDATE `problem_tag_map`       SET `problem_id` = ' + id + ' WHERE `problem_id` = ' + this.id);
-    await entityManager.query('UPDATE `article`               SET `problem_id` = ' + id + ' WHERE `problem_id` = ' + this.id);
-    await entityManager.query('UPDATE `submission_statistics` SET `problem_id` = ' + id + ' WHERE `problem_id` = ' + this.id);
+    const oldID = this.id;
+
+    if (id === oldID) return;
+
+    let oldTestdataDir = this.getTestdataPath(), oldTestdataZip = this.getTestdataArchivePath();
+
+    await entityManager.query('UPDATE `problem`               SET `id`         = ' + id + ' WHERE `id`         = ' + oldID);
+    await entityManager.query('UPDATE `judge_state`           SET `problem_id` = ' + id + ' WHERE `problem_id` = ' + oldID);
+    await entityManager.query('UPDATE `problem_tag_map`       SET `problem_id` = ' + id + ' WHERE `problem_id` = ' + oldID);
+    await entityManager.query('UPDATE `article`               SET `problem_id` = ' + id + ' WHERE `problem_id` = ' + oldID);
+    await entityManager.query('UPDATE `submission_statistics` SET `problem_id` = ' + id + ' WHERE `problem_id` = ' + oldID);
 
     let contests = await Contest.find();
     for (let contest of contests) {
@@ -579,7 +585,7 @@ export default class Problem extends Model {
 
       let flag = false;
       for (let i in problemIDs) {
-        if (problemIDs[i] === this.id) {
+        if (problemIDs[i] === oldID) {
           problemIDs[i] = id;
           flag = true;
         }
@@ -591,25 +597,22 @@ export default class Problem extends Model {
       }
     }
 
-    let oldTestdataDir = this.getTestdataPath(), oldTestdataZip = this.getTestdataArchivePath();
-
-    const oldID = this.id;
     this.id = id;
 
     // Move testdata
     let newTestdataDir = this.getTestdataPath(), newTestdataZip = this.getTestdataArchivePath();
-    if (await syzoj.utils.isDir(oldTestdataDir)) {
-      await fs.move(oldTestdataDir, newTestdataDir);
+    try {
+      if (await syzoj.utils.isDir(oldTestdataDir)) {
+        await fs.move(oldTestdataDir, newTestdataDir, { overwrite: true });
+      }
+      if (await syzoj.utils.isFile(oldTestdataZip)) {
+        await fs.move(oldTestdataZip, newTestdataZip, { overwrite: true });
+      }
+      await this.save();
+    } finally {
+      await Problem.deleteFromCache(oldID);
+      await problemTagCache.del(oldID);
     }
-
-    if (await syzoj.utils.isFile(oldTestdataZip)) {
-      await fs.move(oldTestdataZip, newTestdataZip);
-    }
-
-    await this.save();
-
-    await Problem.deleteFromCache(oldID);
-    await problemTagCache.del(oldID);
   }
 
   async delete() {
