@@ -335,7 +335,13 @@ if (isVJudge) testcases = [];
           const formUrl = syzoj.utils.makeUrl(['problem', problem.id, 'submit'], { contest_id: (contest && contest.running) ? contest.id : undefined });
           %>
           <% if (contest && !contest.running) { %>
-            <div class="ui warning message">比赛未在进行，提交被视为非比赛提交。</div>
+            <div class="ui warning message">
+              <% if (contest.type === 'noi') { %>
+                比赛未在进行，提交被视为非比赛提交，请勿使用文件输入输出。
+              <% } else { %>
+                比赛未在进行，提交被视为非比赛提交。
+              <% } %>
+            </div>
           <% } %>
           <form action="<%= formUrl %>" method="post" onsubmit="return submit_code()" id="submit_code" enctype="multipart/form-data">
             <% if (problem.type === 'submit-answer') { %>
