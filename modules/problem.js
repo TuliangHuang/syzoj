@@ -455,6 +455,7 @@ app.post('/problem/:id/edit', async (req, res) => {
   try {
     let id = parseInt(req.params.id) || 0;
     let problem = await Problem.findById(id);
+    let isNewProblem = false;
     if (!problem) {
       if (!res.locals.user) throw new ErrorMessage('请登录后继续。', { '登录': syzoj.utils.makeUrl(['login'], { 'url': req.originalUrl }) });
 
@@ -463,6 +464,7 @@ app.post('/problem/:id/edit', async (req, res) => {
         memory_limit: syzoj.config.default.problem.memory_limit,
         type: 'traditional'
       });
+      isNewProblem = true;
 
       if (await res.locals.user.hasPrivilege('manage_problem')) {
         let customID = parseInt(req.body.id);
@@ -535,6 +537,35 @@ app.post('/problem/:id/edit', async (req, res) => {
     }
 
     let newTagIDs = await req.body.tags.map(x => parseInt(x)).filterAsync(async x => ProblemTag.findById(x));
+
+    // Auto-add tags based on problem title for new problems
+    if (isNewProblem) {
+      const autoTagNames = ['AtCoder', 'BZOJ', 'COCI', 'CodeChef', 'Codeforces', 'IOI', 'Luogu', 'POI', 'ROIR', 'USACO'];
+
+      // Extract content within 「」 brackets
+      const bracketMatch = problem.title.match(/「([^」]*)」/);
+      if (bracketMatch && bracketMatch[1]) {
+        const bracketContent = bracketMatch[1];
+
+        // Check each auto tag name
+        for (const tagName of autoTagNames) {
+          if (bracketContent.includes(tagName)) {
+            // Find the tag by name
+            const tag = await ProblemTag.findOne({
+              where: {
+                name: tagName
+              }
+            });
+
+            // If tag exists and not already in newTagIDs, add it
+            if (tag && !newTagIDs.includes(tag.id)) {
+              newTagIDs.push(tag.id);
+            }
+          }
+        }
+      }
+    }
+
     await problem.setTags(newTagIDs);
 
     const defaultRedirect = syzoj.utils.makeUrl(['problem', problem.id]);
