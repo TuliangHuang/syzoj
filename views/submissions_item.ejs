@@ -64,16 +64,10 @@ Vue.component('submission-item', {
 <tr>
   <td><a :href="submissionLink"><b>#{{ data.info.submissionId }}</b></a></td>
   <td ref="problemLabel">
-    <% if (active === 'submissions') { %>
-      <a ref="problemLabelTextFit" :href="problemLink">
-        <b> #{{ config.inContest ? alpha(data.info.problemId) : data.info.problemId }}. </b>
-        {{ cleanTitle(data.info.problemName) }}
-      </a>
-    <% } else { %>
-      <a ref="problemLabelTextFit" :href="problemLink">
-        <b> #{{ config.inContest ? alpha(data.info.problemId) : data.info.problemId }} </b>
-      </a>
-    <% } %>
+    <a ref="problemLabelTextFit" :href="problemLink">
+      <b> #{{ config.inContest ? alpha(data.info.problemId) : data.info.problemId }}. </b>
+      {{ cleanTitle(data.info.problemName) }}
+    </a>
   </td>
   <td><a :href="submissionLink"><b><status-label :status="statusString" :progress="progress"></status-label></b></a></td>
 

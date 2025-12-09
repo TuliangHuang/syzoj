@@ -556,8 +556,14 @@ app.get('/contest/:id/submissions', async (req, res) => {
     }
 
     if (req.query.problem_id) {
-      problem_id = problems_id[parseInt(req.query.problem_id) - 1] || 0;
-      query.andWhere('problem_id = :problem_id', { problem_id })
+      let problem_id_idx = -1;
+      if (/^\d+$/.test(req.query.problem_id)) {
+        problem_id_idx = parseInt(req.query.problem_id) - 1;
+      } else if (/^[A-Za-z]$/.test(req.query.problem_id)) {
+        problem_id_idx = req.query.problem_id.toUpperCase().charCodeAt(0) - 65;
+      }
+      let problem_id = problems_id[problem_id_idx] || 0;
+      query.andWhere('problem_id = :problem_id', { problem_id });
     }
     // 限制题目范围为本场比赛题目
     if (Array.isArray(problems_id) && problems_id.length) {

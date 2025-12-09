@@ -59,11 +59,14 @@
 <body style="position: relative; margin-top: 49px; height: calc(100% - 49px); overflow-y: overlay; ">
     <%
       const activeKey = typeof active === 'string' ? active : '';
+      const contestMatch = req.originalUrl.match(/^\/contest\/(\d+)\/.+/);
+      const contestUrl = contestMatch ? `/contest/${contestMatch[1]}` : '/contests';
+      const contestIcon = contestMatch ? 'calendar alternate' : 'calendar';
       const headerNavItems = [
         { isActive: activeKey === '', icon: 'home', text: '首页', href: '/' },
         { isActive: activeKey.startsWith('problem'), icon: 'list', text: '题库', href: '/problems' },
         { isActive: activeKey.startsWith('question'), icon: 'book', text: '习题', href: syzoj.utils.makeUrl(['questions']) },
-        { isActive: activeKey.startsWith('contest'), icon: 'calendar', text: '比赛', href: '/contests' },
+        { isActive: activeKey.startsWith('contest'), icon: contestIcon, text: '比赛', href: contestUrl },
         { isActive: activeKey.startsWith('quiz'), icon: 'hourglass half', text: '小测', href: '/quizzes' },
         { isActive: activeKey.startsWith('submission'), icon: 'tasks', text: '评测', href: '/submissions' },
         { isActive: activeKey.startsWith('ranklist'), icon: 'signal', text: '排名', href: '/ranklist' },

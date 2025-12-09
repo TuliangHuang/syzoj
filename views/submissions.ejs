@@ -14,7 +14,7 @@
     </div>
   <% } %>
 
-  <form action="<%= syzoj.utils.makeUrl(displayConfig.inContest && contest.type !== 'open' ? ['contest', contest.id, 'submissions'] : ['submissions']) %>" class="ui mini form" method="get" role="form" id="form">
+  <form action="<%= syzoj.utils.makeUrl(displayConfig.inContest ? ['contest', contest.id, 'submissions'] : ['submissions']) %>" class="ui mini form" method="get" role="form" id="form">
     <input type="hidden" name="contest" value="<%= form.contest %>" />
     <div class="inline fields" style="margin-bottom: 25px; white-space: nowrap; ">
       <label style="font-size: 1.2em; margin-right: 1px; ">题目：</label>
@@ -25,9 +25,9 @@
       <% } %>
       <% if (displayConfig.showScore) { %>
         <label style="font-size: 1.2em; margin-right: 1px; ">分数：</label>
-        <div class="field" style="padding-right: 6px; "><input name="min_score" style="width: 45px; " type="text" value="<%= form.min_score || 0 %>"></div>
+        <div class="field" style="padding-right: 6px; "><input name="min_score" style="width: 45px; " type="text" value="<%= form.min_score || '' %>"></div>
         <label style="font-size: 1.2em; margin-right: 7px; ">～</label>
-        <div class="field"><input name="max_score" style="width: 45px; " type="text" value="<%= form.max_score || 100 %>"></div>
+        <div class="field"><input name="max_score" style="width: 45px; " type="text" value="<%= form.max_score || '' %>"></div>
       <% } %>
       <label style="font-size: 1.2em; margin-right: 1px; ">语言：</label>
       <div class="field">
@@ -134,6 +134,14 @@
 $(function () {
   $('#select_language').dropdown();
   $('#select_status').dropdown();
+  $('#form').submit(function () {
+    $(this).find("input[name]").each(function () {
+      if (!$(this).val()) {
+        $(this).prop('disabled', true);
+      }
+    });
+    return true;
+  });
 });
 const itemList = <%- serializejs(items) %>;
 const socketUrl = "/<%= pushType %>";
