@@ -514,6 +514,17 @@ app.post('/problem/:id/edit', async (req, res) => {
 
     if (!problem.title) throw new ErrorMessage('题目名不能为空。');
 
+    // Check if another problem with the same title already exists
+    let existingProblem = await Problem.findOne({
+      where: {
+        title: problem.title
+      }
+    });
+    
+    if (existingProblem && existingProblem.id !== problem.id) {
+      throw new ErrorMessage('题目名已存在，请使用不同的题目名。');
+    }
+
     // Save the problem first, to have the `id` allocated
     await problem.save();
 
